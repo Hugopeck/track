@@ -106,7 +106,7 @@ load_source_tree() {
   TRACK_TODO_TEMP_DIR="$(mktemp -d)"
   trap 'if [[ -n "${TRACK_TODO_TEMP_DIR:-}" ]]; then rm -rf "$TRACK_TODO_TEMP_DIR"; fi' EXIT
   copy_tree_from_ref "origin/$DEFAULT_BRANCH" "$TRACK_TODO_TEMP_DIR"
-  if ! find "$TRACK_TODO_TEMP_DIR/.track/tasks" -maxdepth 1 -type f -name '''*.md''' | grep -q .; then
+  if ! find "$TRACK_TODO_TEMP_DIR/.track/tasks" -maxdepth 1 -type f -name '*.md' | grep -q .; then
     warn_loud "origin/$DEFAULT_BRANCH has no flat task files in .track/tasks/; falling back to local working tree"
     MODE='local'
     SOURCE_ROOT="$ROOT_DIR"

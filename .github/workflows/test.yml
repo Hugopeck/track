@@ -23,3 +23,9 @@ jobs:
 
       - name: Test completion
         run: bash tests/test-complete.sh
+
+      - name: Test common library
+        run: bash tests/test-common.sh
+
+      - name: Test extended validation
+        run: bash tests/test-validate-extended.sh
