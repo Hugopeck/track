@@ -7,13 +7,13 @@ Track is a zero-dependency repo convention that turns `.track/` markdown files, 
 ## Install
 
 ```bash
-claude plugin install hugopeck/trac
+claude plugin install hugopeck/track
 ```
 
 Or test locally:
 
 ```bash
-claude --plugin-dir ./path/to/trac
+claude --plugin-dir ./path/to/track
 ```
 
 ## Quick Start
