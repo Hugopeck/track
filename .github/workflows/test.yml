@@ -1,0 +1,25 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test-scripts:
+    name: Test Track Scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test validation
+        run: bash tests/test-validate.sh
+
+      - name: Test TODO generation
+        run: bash tests/test-todo.sh
+
+      - name: Test PR lint
+        run: bash tests/test-pr-lint.sh
+
+      - name: Test completion
+        run: bash tests/test-complete.sh

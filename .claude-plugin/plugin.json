@@ -1,0 +1,9 @@
+{
+  "name": "track",
+  "description": "Git-native task coordination. Scaffolds .track/ directories, teaches Claude the Track workflow, and provides task creation, validation, and TODO generation.",
+  "version": "1.0.0",
+  "homepage": "https://github.com/Hugopeck/trac",
+  "author": {
+    "name": "Hugo Peck"
+  }
+}
