@@ -1,5 +1,7 @@
 # Track
 
+[![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/Hugopeck/track/releases) <!-- x-release-please-version -->
+
 Git-native task coordination for Claude Code.
 
 Track is a zero-dependency repo convention that turns `.track/` markdown files, bash scripts, and GitHub PR state into a complete task management system. No database, no web UI, no runtime — just git.
