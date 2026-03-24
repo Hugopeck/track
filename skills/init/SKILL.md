@@ -1,9 +1,10 @@
 ---
 name: init
 description: |
-  Scaffold Track in a repository. Creates .track/ directory, copies scripts and
-  GitHub workflows, appends Track instructions to CLAUDE.md, and creates an
-  initial project. Run this once to set up git-native task coordination.
+  Set up Track from scratch. Scaffold everything an adopting repo needs —
+  directories, scripts, CI workflows, and the CLAUDE.md protocol section — then
+  create a first project to make the system immediately useful. Handle upgrades
+  gracefully.
 disable-model-invocation: true
 allowed-tools:
   - Bash

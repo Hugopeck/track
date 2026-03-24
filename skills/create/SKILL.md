@@ -1,9 +1,9 @@
 ---
 name: create
 description: |
-  Create Track tasks and projects. Accepts a description of what needs to happen,
-  creates properly formatted task files with correct IDs, validates, and regenerates
-  TODO.md. Use when adding new work items to the backlog.
+  Create tasks and projects from natural language. Extract structure from loose
+  descriptions — infer priority, mode, dependencies, and file scopes — then produce
+  properly formatted Track files. Validate everything before reporting success.
 allowed-tools:
   - Bash
   - Read
@@ -113,6 +113,8 @@ Created from: {brief summary of the user's request}
 
 `$ARGUMENTS` is the user's description of what they want to create. Parse it to
 extract the task/project title, context, priority, and any other details.
+
+If the description is vague (e.g., "fix the thing"), ask a clarifying question rather than guessing. A well-specified task saves more time than a fast-created one.
 
 Examples:
 - `/track:create Add rate limiting to the API` → creates a task

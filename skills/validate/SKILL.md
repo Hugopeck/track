@@ -1,8 +1,9 @@
 ---
 name: validate
 description: |
-  Run Track validation and interpret errors. Executes track-validate.sh, reads
-  any failing task files, and suggests fixes.
+  Run validation and make it self-correcting. Execute track-validate.sh, read any
+  failing files, explain what went wrong in plain language, and suggest the exact
+  fix. Every error should lead directly to a resolution.
 disable-model-invocation: true
 allowed-tools:
   - Bash
@@ -25,16 +26,13 @@ Run `track-validate.sh` and help the user fix any validation errors.
    - Suggest the specific fix (which field to change, what value to use)
 4. After the user applies fixes, offer to re-run validation
 
-## Common Errors and Fixes
+## Interpreting Results
 
-| Error | Fix |
-|-------|-----|
-| `missing required field 'X'` | Add the field to frontmatter |
-| `invalid status 'X'` | Use one of: `todo`, `active`, `review`, `done`, `cancelled` |
-| `invalid mode 'X'` | Use one of: `investigate`, `plan`, `implement` |
-| `unknown project_id 'X'` | Create a matching project brief or fix the ID |
-| `dotted id must match project_id` | Ensure the number before the dot matches `project_id` |
-| `cancelled tasks require cancelled_reason` | Add `cancelled_reason:` field |
-| `depends_on references missing task` | Fix the dependency ID or remove it |
-| `active/review task depends on non-done task` | Complete the dependency first or change status |
-| `missing required section` | Add `## Context`, `## Acceptance Criteria`, or `## Notes` |
+Each error message now includes the exact fix needed — read it carefully and apply directly.
+
+**Patterns to watch for:**
+- Multiple `unknown project_id` errors usually mean the project brief wasn't created first
+- Multiple `missing required field` errors on the same file suggest it was created outside Track's conventions — compare against the task format in `/track:work`
+- Dependency errors (`depends on non-done task`) often indicate work started out of order — check whether the dependency is actually needed or can be removed
+
+When validation passes, it reports a summary of task counts by status — use this to confirm the state looks right.

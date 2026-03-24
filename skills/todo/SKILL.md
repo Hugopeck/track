@@ -1,8 +1,9 @@
 ---
 name: todo
 description: |
-  Regenerate TODO.md from .track/ state and live PR metadata. Detects the best
-  mode (full, local, or offline) based on environment availability.
+  Regenerate the shared coordination view. Detect the best mode based on
+  environment (full, local, or offline), run track-todo.sh, and report what
+  changed. TODO.md is the team's window into current state.
 disable-model-invocation: true
 allowed-tools:
   - Bash

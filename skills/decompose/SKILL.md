@@ -1,9 +1,10 @@
 ---
 name: decompose
 description: |
-  Break a goal into Track tasks with correct dependencies and non-overlapping file
-  scopes. Explores the repo to understand module boundaries, proposes a task
-  breakdown, and creates task files after user confirmation.
+  Break an ambiguous goal into concrete, parallelizable tasks. Explore the codebase
+  to find natural seams, propose a breakdown with non-overlapping file scopes, and
+  only create files after the user confirms. Prefer fewer, focused tasks over
+  comprehensive coverage.
 allowed-tools:
   - Bash
   - Read
@@ -49,7 +50,9 @@ Guidelines:
 - Use `depends_on` to sequence foundation work before integration work
 - Prefer small, reviewable PRs — each task should be mergeable on its own
 - `investigate` or `plan` tasks before `implement` tasks when the path is uncertain
+- When uncertain about scope, prefer creating an `investigate` task first rather than guessing at implementation tasks
 - Default to `medium` priority unless the user indicates otherwise
+- Ask clarifying questions if the goal is ambiguous enough that two reasonable engineers would decompose it differently
 
 ### Phase 4: Confirm and create
 

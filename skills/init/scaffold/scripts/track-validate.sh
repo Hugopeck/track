@@ -73,7 +73,7 @@ validate_required_sections() {
   local section
   for section in 'Context' 'Acceptance Criteria' 'Notes'; do
     if ! grep -Eq "^## ${section}[[:space:]]*$" "$file"; then
-      print_error "$file: missing required section '## ${section}'"
+      print_error "$file: missing required section '## ${section}'. Add a '## ${section}' heading with content below it"
     fi
   done
 }
@@ -90,44 +90,44 @@ validate_task_file() {
 
   for key in "${required_fields[@]}"; do
     if ! frontmatter_has_key "$file" "$key"; then
-      print_error "$file: missing required field '$key'"
+      print_error "$file: missing required field '$key'. Add '$key:' to the YAML frontmatter"
     fi
   done
 
   if ! contains_value "$TRACK_status" todo active review done cancelled; then
-    print_error "$file: invalid status '$TRACK_status'"
+    print_error "$file: invalid status '$TRACK_status'. Valid values: todo, active, review, done, cancelled"
   fi
 
   if ! contains_value "$TRACK_mode" investigate plan implement; then
-    print_error "$file: invalid mode '$TRACK_mode'"
+    print_error "$file: invalid mode '$TRACK_mode'. Valid values: investigate, plan, implement"
   fi
 
   if ! contains_value "$TRACK_priority" urgent high medium low; then
-    print_error "$file: invalid priority '$TRACK_priority'"
+    print_error "$file: invalid priority '$TRACK_priority'. Valid values: urgent, high, medium, low"
   fi
 
   if ! contains_value "$TRACK_project_id" "${PROJECT_IDS[@]-}"; then
-    print_error "$file: unknown project_id '$TRACK_project_id'"
+    print_error "$file: unknown project_id '$TRACK_project_id'. Available: ${PROJECT_IDS[*]-none}. Create a project brief at .track/projects/ or fix project_id"
   fi
 
   if track_is_dotted_id "$TRACK_id"; then
     head_project_id="${TRACK_id%%.*}"
     if [[ "$head_project_id" != "$TRACK_project_id" ]]; then
-      print_error "$file: dotted id '$TRACK_id' must match project_id '$TRACK_project_id'"
+      print_error "$file: dotted id '$TRACK_id' prefix must equal project_id '$TRACK_project_id'. Change id to '${TRACK_project_id}.N' or fix project_id"
     fi
   elif track_is_legacy_id "$TRACK_id"; then
     if [[ "$TRACK_status" != 'done' && "$TRACK_status" != 'cancelled' ]]; then
-      print_error "$file: legacy numeric task ids are only allowed for archived done/cancelled tasks"
+      print_error "$file: legacy numeric task ids are only allowed for archived done/cancelled tasks. Use dotted id format (e.g., '1.1') for active work"
     fi
     if [[ "$TRACK_project_id" != '0' ]]; then
-      print_error "$file: legacy numeric task id '$TRACK_id' must use project_id '0'"
+      print_error "$file: legacy numeric task id '$TRACK_id' must use project_id '0'. Set project_id: \"0\""
     fi
   else
-    print_error "$file: task id '$TRACK_id' must be dotted project.task or legacy numeric"
+    print_error "$file: task id '$TRACK_id' must be dotted format (e.g., '1.1') or legacy numeric (e.g., '100')"
   fi
 
   if [[ "$TRACK_status" == 'cancelled' && -z "$TRACK_cancelled_reason" ]]; then
-    print_error "$file: cancelled tasks require cancelled_reason"
+    print_error "$file: cancelled tasks require cancelled_reason. Add 'cancelled_reason: \"reason\"' to the frontmatter"
   fi
 
   validate_required_sections "$file"
@@ -141,7 +141,7 @@ validate_task_file() {
   for dep in "${TRACK_depends_on[@]-}"; do
     [[ -z "$dep" ]] && continue
     if [[ "$dep" == "$TRACK_id" ]]; then
-      print_error "$file: depends_on may not reference task itself ('$dep')"
+      print_error "$file: depends_on may not reference task itself ('$dep'). Remove '$dep' from the depends_on list"
     fi
   done
 }
@@ -151,7 +151,7 @@ validate_duplicate_ids() {
   for ((i = 0; i < ${#TASK_IDS[@]}; i++)); do
     for ((j = i + 1; j < ${#TASK_IDS[@]}; j++)); do
       if [[ "${TASK_IDS[$i]}" == "${TASK_IDS[$j]}" ]]; then
-        print_error "duplicate task id '${TASK_IDS[$i]}' in ${TASK_PATHS[$i]} and ${TASK_PATHS[$j]}"
+        print_error "duplicate task id '${TASK_IDS[$i]}' in ${TASK_PATHS[$i]} and ${TASK_PATHS[$j]}. Each task must have a unique id — rename or delete the duplicate"
       fi
     done
   done
@@ -167,14 +167,14 @@ validate_dependencies() {
     for dep in "${TRACK_depends_on[@]-}"; do
       [[ -z "$dep" ]] && continue
       if ! dep_index="$(find_task_index_by_id "$dep")"; then
-        print_error "${TASK_FILES[$i]}: depends_on references missing task '$dep'"
+        print_error "${TASK_FILES[$i]}: depends_on references missing task '$dep'. Create a task with id '$dep' or remove it from depends_on"
         continue
       fi
 
       dep_status="${TASK_STATUSES[$dep_index]}"
       if [[ "${TASK_STATUSES[$i]}" == 'active' || "${TASK_STATUSES[$i]}" == 'review' ]]; then
         if [[ "$dep_status" != 'done' ]]; then
-          print_error "${TASK_FILES[$i]}: active/review task depends on '$dep' which is '$dep_status'"
+          print_error "${TASK_FILES[$i]}: active/review task depends on '$dep' which is '$dep_status' (not done). Complete '$dep' first, remove the dependency, or set this task to todo"
         fi
       fi
     done
@@ -245,13 +245,13 @@ validate_open_prs() {
 
       file_on_main="$(main_task_file_for_id "$task_id")"
       if [[ -z "$file_on_main" ]]; then
-        print_error "open PR '$url' points to missing task '$task_id' on origin/$DEFAULT_BRANCH"
+        print_error "open PR '$url' references task '$task_id' but no matching task file exists on origin/$DEFAULT_BRANCH. Create the task file or close the orphaned PR"
         continue
       fi
 
       main_status="$(main_task_status_for_path "$file_on_main")"
       if [[ "$main_status" == 'done' || "$main_status" == 'cancelled' ]]; then
-        print_error "open PR '$url' points to terminal task '$task_id' on origin/$DEFAULT_BRANCH"
+        print_error "open PR '$url' references terminal task '$task_id' (done/cancelled) on origin/$DEFAULT_BRANCH. Close the PR or reopen the task"
       fi
     fi
   done <<< "$pr_lines"
@@ -259,7 +259,7 @@ validate_open_prs() {
   for ((i = 0; i < ${#pr_task_ids[@]}; i++)); do
     for ((j = i + 1; j < ${#pr_task_ids[@]}; j++)); do
       if [[ "${pr_task_ids[$i]}" == "${pr_task_ids[$j]}" ]]; then
-        print_error "multiple open PRs map to task '${pr_task_ids[$i]}' (${pr_branches[$i]}, ${pr_branches[$j]})"
+        print_error "multiple open PRs map to task '${pr_task_ids[$i]}' (${pr_branches[$i]}, ${pr_branches[$j]}). Close the duplicate PR — each task should have exactly one open PR"
       fi
     done
   done
@@ -278,7 +278,7 @@ validate_pull_request_context() {
   task_file="$(find "$TASK_DIR" -maxdepth 1 -type f -name "${branch_task_id}-*.md" | head -n 1)"
 
   if [[ -z "$task_file" ]]; then
-    print_error "branch '$head_ref' references task '$branch_task_id' but no matching task file exists"
+    print_error "branch '$head_ref' references task '$branch_task_id' but no matching task file exists in .track/tasks/. Create ${branch_task_id}-{slug}.md or rename the branch"
     return
   fi
 
@@ -288,17 +288,17 @@ validate_pull_request_context() {
   fi
 
   if [[ "$TRACK_status" == 'done' || "$TRACK_status" == 'cancelled' ]]; then
-    print_error "$task_file: task on implementation branch may not be '$TRACK_status' while PR is open"
+    print_error "$task_file: task on implementation branch may not be '$TRACK_status' while PR is open. Set status to 'active' (draft PR) or 'review' (ready PR)"
   fi
 
   if command -v gh >/dev/null 2>&1 && [[ -n "${GH_TOKEN:-${GITHUB_TOKEN:-}}" ]]; then
     pr_draft_state="$(gh pr list --head "$head_ref" --state open --json isDraft --template '{{range .}}{{printf "%t\n" .isDraft}}{{end}}' 2>/dev/null || true)"
     if [[ -n "$pr_draft_state" ]]; then
       if [[ "$pr_draft_state" == 'true' && "$TRACK_status" != 'active' ]]; then
-        print_error "$task_file: draft PRs require raw status 'active'"
+        print_error "$task_file: draft PR requires raw status 'active' but found '$TRACK_status'. Set status: active"
       fi
       if [[ "$pr_draft_state" == 'false' && "$TRACK_status" != 'review' ]]; then
-        print_error "$task_file: ready-for-review PRs require raw status 'review'"
+        print_error "$task_file: ready-for-review PR requires raw status 'review' but found '$TRACK_status'. Set status: review"
       fi
     fi
   fi
@@ -306,7 +306,7 @@ validate_pull_request_context() {
 
 main() {
   if [[ ! -d "$TASK_DIR" ]]; then
-    print_error '.track/tasks directory not found'
+    print_error '.track/tasks directory not found. Run /track:init to scaffold Track, or create .track/tasks/ manually'
     exit "$EXIT_CODE"
   fi
 
@@ -326,7 +326,19 @@ main() {
   fi
 
   if [[ $EXIT_CODE -eq 0 ]]; then
-    echo 'Track validation passed.'
+    local num_tasks=${#TASK_IDS[@]}
+    local num_projects=${#PROJECT_IDS[@]}
+    local num_todo=0 num_active=0 num_review=0 num_done=0
+    local s
+    for s in "${TASK_STATUSES[@]-}"; do
+      case "$s" in
+        todo) num_todo=$((num_todo + 1)) ;;
+        active) num_active=$((num_active + 1)) ;;
+        review) num_review=$((num_review + 1)) ;;
+        done) num_done=$((num_done + 1)) ;;
+      esac
+    done
+    echo "Track validation passed. $num_tasks tasks across $num_projects projects. $num_todo todo, $num_active active, $num_review review, $num_done done."
   fi
 
   exit "$EXIT_CODE"

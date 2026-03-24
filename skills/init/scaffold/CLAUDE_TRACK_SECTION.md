@@ -1,5 +1,7 @@
 ## Track — Task Coordination
 
+Track is a git-native coordination system. It works in the background — follow its conventions and it keeps everything organized. The protocol below is both reference and guide.
+
 Projects and tasks live in `.track/`. `TODO.md` is the generated shared view of current work.
 
 ### Layout
@@ -56,7 +58,10 @@ Append-only log.
 1. Read `TODO.md` or scan `.track/tasks/*.md`
 2. Check `files:` overlap against tasks already shown as `active` / `review`
 3. Pick work that has no unresolved `depends_on` blockers
-4. Use a dedicated worktree or branch per task
+4. Read the task's `## Context` and `## Notes` — previous sessions may have left important context
+5. If the task's mode is `investigate` or `plan`, focus on understanding and documenting findings before writing implementation code
+6. If acceptance criteria seem incomplete, update them before starting
+7. Use a dedicated worktree or branch per task
 
 ### Working a Task (Provisional PR lifecycle)
 1. Create branch `task/{id}-{slug}` from `main`
@@ -104,3 +109,12 @@ Run Track validation after changing task files, project briefs, or task lifecycl
 ```shell
 bash scripts/track-validate.sh
 ```
+
+### Working Principles
+
+- **Investigate before implementing.** When a task has mode `investigate` or `plan`, explore the codebase thoroughly before writing code. Read related files, check for existing patterns, understand dependencies. Only move to implementation when you have a clear path.
+- **Update task files as you work, not after.** When you discover new context, constraints, or dead ends, append to the task's `## Notes` immediately. Future sessions depend on this context.
+- **Check for conflicts before starting.** Scan active and review tasks for overlapping `files:` globs. Starting work on contested files creates merge conflicts.
+- **Scope aggressively.** If a task grows beyond its acceptance criteria, split the new work into a separate task rather than expanding the current one.
+- **Let the system track status.** Don't manually update status fields to show progress. Open a draft PR — Track knows you're active. Mark it ready for review — Track knows you're in review. The PR lifecycle is the status lifecycle.
+- **Validate early and often.** Run `bash scripts/track-validate.sh` after every task file change. Errors caught locally are cheap; errors caught in CI block the team.

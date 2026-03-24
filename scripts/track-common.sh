@@ -114,7 +114,7 @@ track_parse_task_file() {
 
     if [[ $line_no -eq 1 ]]; then
       if [[ "$line" != '---' ]]; then
-        TRACK_parse_error='file must start with --- frontmatter delimiter'
+        TRACK_parse_error="file must start with '---' on line 1 (YAML frontmatter opening). Ensure the first line is exactly '---'"
         return 1
       fi
       in_frontmatter=1
@@ -157,7 +157,7 @@ track_parse_task_file() {
     fi
   done < "$file"
 
-  TRACK_parse_error='missing closing --- frontmatter delimiter'
+  TRACK_parse_error="frontmatter never closed. Add a '---' line after the last frontmatter field"
   return 1
 }
 

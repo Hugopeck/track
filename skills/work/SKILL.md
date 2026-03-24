@@ -1,9 +1,9 @@
 ---
 name: work
 description: |
-  Core Track workflow protocol. Teaches how to read task state, pick work,
-  start tasks, manage PR lifecycle, validate, and regenerate TODO.md. Use when
-  working in any repo that has a .track/ directory.
+  Track's operating protocol. You are a disciplined engineer who reads state
+  before acting, maintains context for future sessions, and lets the PR
+  lifecycle drive status. Loaded automatically in any repo with .track/.
 allowed-tools:
   - Bash
   - Read
@@ -21,6 +21,16 @@ allowed-tools:
 - **Project Brief** — a markdown scope contract in `.track/projects/{project_id}-{slug}.md`
 - **Task** — a Track work item at `.track/tasks/{task_id}-{slug}.md` with YAML frontmatter and required body sections
 - **View / Pointer** — a non-canonical navigation surface; `TODO.md` is the primary Track view
+
+## Working Philosophy
+
+Track coordinates work across sessions and agents. These principles make coordination reliable:
+
+- **Context is perishable.** Every session starts cold. The task file's `## Notes` section is your memory. Write down discoveries, dead ends, design decisions, and open questions as you encounter them — not at the end of a session.
+- **Small beats comprehensive.** A task that ships a focused change and merges is worth more than a task that attempts a complete rewrite and stalls. If you realize a task is larger than expected, split it.
+- **Dependencies are contracts.** When task A depends on task B, A cannot start until B is done. Be conservative adding dependencies — they serialize work. Be precise about what the dependency actually provides.
+- **File scopes prevent collisions.** The `files:` field isn't documentation — it's a coordination mechanism. Two active tasks with overlapping file scopes will produce merge conflicts. Treat `files:` as a mutex.
+- **The PR is the proof.** Don't describe what you'll do — open a draft PR and show what you're doing. The provisional PR lifecycle makes progress visible without status updates.
 
 ## Layout
 
@@ -90,7 +100,10 @@ You don't manually set `status: active` to show progress — opening a draft PR 
 1. Read `TODO.md` or scan `.track/tasks/*.md` for available work
 2. Check `files:` globs against tasks already shown as `active` / `review` — avoid overlap
 3. Pick work that has no unresolved `depends_on` blockers
-4. Use a dedicated worktree or branch per task
+4. Read the task's `## Context` and `## Notes` — previous sessions may have left important context
+5. If the task's mode is `investigate`, focus on understanding and documenting findings rather than writing code
+6. If the acceptance criteria seem incomplete or unclear, update them before starting implementation
+7. Use a dedicated worktree or branch per task
 
 ## Working a Task (Provisional PR Lifecycle)
 
@@ -121,6 +134,16 @@ You don't manually set `status: active` to show progress — opening a draft PR 
 - Create one task per independent unit with non-overlapping `files:` scopes
 - Use `depends_on` to sequence foundation work before integration work
 - Prefer small reviewable PRs over multi-goal tasks
+
+## When to Split a Task
+
+Split a task when any of these are true:
+- The PR will touch more than 500 lines across more than 3 unrelated files
+- You discover a prerequisite that wasn't in the original plan
+- The acceptance criteria have grown beyond the original scope
+- Two logically independent changes are bundled together
+
+To split: create new task(s) with proper `depends_on`, update the original task's acceptance criteria to reflect the reduced scope, and add a note explaining the split.
 
 ## Regenerating TODO.md
 
