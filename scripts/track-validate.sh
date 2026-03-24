@@ -174,7 +174,7 @@ validate_dependencies() {
       dep_status="${TASK_STATUSES[$dep_index]}"
       if [[ "${TASK_STATUSES[$i]}" == 'active' || "${TASK_STATUSES[$i]}" == 'review' ]]; then
         if [[ "$dep_status" != 'done' ]]; then
-          print_error "${TASK_FILES[$i]}: task is ${TASK_STATUSES[$i]} but depends on '$dep' (status: $dep_status, not done). Complete '$dep' first, remove the dependency, or set this task to todo"
+          print_error "${TASK_FILES[$i]}: active/review task depends on '$dep' which is '$dep_status' (not done). Complete '$dep' first, remove the dependency, or set this task to todo"
         fi
       fi
     done
