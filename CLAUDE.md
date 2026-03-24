@@ -63,10 +63,38 @@ Changes to scripts must be mirrored in both locations. The scaffold copies are t
 | `validate` | Run validation and interpret errors |
 | `todo` | Regenerate TODO.md |
 
-## Conventions
+## Conventional Commits
 
-- Use conventional commits: `feat(skills):`, `fix(scripts):`, `docs:`, `ci:`, `chore:`
-- Release-please parses these to generate changelogs and bump the version in `.claude-plugin/plugin.json` — incorrect prefixes produce bad releases
+Every PR title **must** follow conventional commits — CI will reject it otherwise.
+
+```
+type(scope): description
+```
+
+| Type | When to use | Version bump |
+|------|-------------|--------------|
+| `feat` | New user-facing capability | minor |
+| `fix` | Bug fix | patch |
+| `docs` | Documentation only | patch |
+| `refactor` | Code change that doesn't fix a bug or add a feature | patch |
+| `test` | Adding or updating tests | — |
+| `ci` | CI/workflow changes | — |
+| `chore` | Maintenance (deps, config) | — |
+
+Common scopes: `skills`, `scripts`, `init`, `work`, `create`, `decompose`, `validate`, `todo`
+
+Breaking changes: add `!` after the scope (e.g. `feat(scripts)!: redesign validation`) — this triggers a **major** bump.
+
+## Versioning
+
+- Version lives in `.claude-plugin/plugin.json` — do not edit manually
+- **release-please** automates releases: on merge to main, it reads conventional commit prefixes, updates the version, generates `CHANGELOG.md`, and creates a GitHub release
+- Config: `release-please-config.json` / `.release-please-manifest.json`
+- `feat` → minor bump, `fix`/`docs` → patch bump, `!` → major bump
+- `chore` and `ci` commits are hidden from the changelog
+
+## Other Conventions
+
 - Adopting repos are self-contained — they never depend on this plugin at runtime
 - The plugin teaches Claude the Track protocol; the scripts enforce it
 - bash 3.2+ compatibility required (macOS default)
