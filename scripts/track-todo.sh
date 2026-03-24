@@ -396,6 +396,7 @@ generate_todo() {
 
     project_sort_lines=''
     for project_id in "${PROJECT_IDS[@]-}"; do
+      [[ -z "$project_id" ]] && continue
       project_sort_lines+="$(project_sort_key "$project_id")"$'\n'
     done
 

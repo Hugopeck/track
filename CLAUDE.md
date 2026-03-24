@@ -1,139 +1,104 @@
-# Claude Code Instructions
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Context
 
-This is the Track plugin repo. Track is a git-native task coordination system distributed as a Claude Code plugin.
+This is the Track plugin repo. Track is a git-native task coordination system distributed as a Claude Code plugin. No build step, no runtime — the plugin is markdown skills and bash scripts.
 
-## Key Files
+## Commands
 
-- `.claude-plugin/plugin.json` — plugin manifest
-- `skills/init/SKILL.md` — `/track:init` scaffolding skill
-- `skills/init/scaffold/` — files copied into adopting repos
-- `skills/work/SKILL.md` — `/track:work` core workflow protocol
-- `skills/create/SKILL.md` — `/track:create` task/project creation
-- `skills/validate/SKILL.md` — `/track:validate` wrapper
-- `skills/todo/SKILL.md` — `/track:todo` wrapper
-- `skills/decompose/SKILL.md` — `/track:decompose` goal breakdown
-- `tests/` — bash test scripts and fixtures
+```bash
+# Run all tests
+bash tests/test-validate.sh && bash tests/test-todo.sh && bash tests/test-pr-lint.sh && bash tests/test-complete.sh
 
-## Workflow
+# Run a single test
+bash tests/test-validate.sh
 
-- No build step, no runtime — this is a plugin made of markdown and bash
-- Edit skills in `skills/`, test with `claude --plugin-dir .`
-- Scaffold content in `skills/init/scaffold/` is what gets copied into adopting repos
-- Run `/reload-plugins` after editing skills to pick up changes
-- Use conventional commits: `feat(skills):`, `fix(scripts):`, `docs:`
+# Validate .track/ state
+bash scripts/track-validate.sh
 
-## Important Context
+# Regenerate TODO.md
+bash scripts/track-todo.sh              # default: origin/main + live PR data
+bash scripts/track-todo.sh --local      # local working tree
+bash scripts/track-todo.sh --offline    # skip GitHub PR lookup
 
-- Track was extracted from the Archeia monorepo
+# Test plugin locally
+claude --plugin-dir .
+```
+
+After editing skills, run `/reload-plugins` to pick up changes.
+
+## Architecture
+
+The plugin has two layers:
+
+1. **Skills** (`skills/`) — markdown protocols that teach Claude the Track workflow. Each skill has a `SKILL.md` with YAML frontmatter (name, description, allowed-tools) and instructional content.
+2. **Scripts** (`scripts/`) — bash enforcement scripts that validate task files, generate TODO.md, lint PRs, and handle post-merge completion.
+
+### Dual-Copy Scripts
+
+Scripts exist in two identical locations:
+- `scripts/` — used by this repo's own `.track/` (Track dogfoods itself)
+- `skills/init/scaffold/scripts/` — copied into adopting repos by `/track:init`
+
+Changes to scripts must be mirrored in both locations. The scaffold copies are the canonical source that gets distributed.
+
+### Key Files
+
+- `.claude-plugin/plugin.json` — plugin manifest (name, version, description)
+- `skills/init/scaffold/` — everything copied into adopting repos by `/track:init`
+- `skills/init/scaffold/CLAUDE_TRACK_SECTION.md` — the CLAUDE.md section appended to adopting repos
+- `skills/work/SKILL.md` — the core workflow protocol (auto-loaded when `.track/` exists)
+- `scripts/track-common.sh` — shared YAML frontmatter parser and utility functions used by all scripts
+
+### Skill Inventory
+
+| Skill | Purpose |
+|-------|---------|
+| `init` | Scaffold `.track/`, scripts, workflows, and CLAUDE.md section into a new repo |
+| `work` | Core workflow protocol — reading state, picking work, PR lifecycle |
+| `create` | Create tasks and projects |
+| `decompose` | Break a goal into tasks with dependencies |
+| `validate` | Run validation and interpret errors |
+| `todo` | Regenerate TODO.md |
+
+## Conventional Commits
+
+Every PR title **must** follow conventional commits — CI will reject it otherwise.
+
+```
+type(scope): description
+```
+
+| Type | When to use | Version bump |
+|------|-------------|--------------|
+| `feat` | New user-facing capability | minor |
+| `fix` | Bug fix | patch |
+| `docs` | Documentation only | patch |
+| `refactor` | Code change that doesn't fix a bug or add a feature | patch |
+| `test` | Adding or updating tests | — |
+| `ci` | CI/workflow changes | — |
+| `chore` | Maintenance (deps, config) | — |
+
+Common scopes: `skills`, `scripts`, `init`, `work`, `create`, `decompose`, `validate`, `todo`
+
+Breaking changes: add `!` after the scope (e.g. `feat(scripts)!: redesign validation`) — this triggers a **major** bump.
+
+## Versioning
+
+- Version lives in `.claude-plugin/plugin.json` — do not edit manually
+- **release-please** automates releases: on merge to main, it reads conventional commit prefixes, updates the version, generates `CHANGELOG.md`, and creates a GitHub release
+- Config: `release-please-config.json` / `.release-please-manifest.json`
+- `feat` → minor bump, `fix`/`docs` → patch bump, `!` → major bump
+- `chore` and `ci` commits are hidden from the changelog
+
+## Other Conventions
+
 - Adopting repos are self-contained — they never depend on this plugin at runtime
 - The plugin teaches Claude the Track protocol; the scripts enforce it
-- The CLAUDE.md section appended by `/track:init` is the minimal contract; `/track:work` is the full operational guide
+- bash 3.2+ compatibility required (macOS default)
 
 ## Track — Task Coordination
 
-Projects and tasks live in `.track/`. `TODO.md` is the generated shared view of current work.
-
-### Layout
-- `.track/projects/{project_id}-{slug}.md` — project briefs
-- `.track/tasks/{task_id}-{slug}.md` — flat task files
-- `TODO.md` — generated view; gitignored and never canonical
-
-### Task Format
-
-```yaml
----
-id: "{project_id}.{task_id}"
-title: "One-line objective"
-status: todo
-mode: implement
-priority: high
-project_id: "{project_id}"
-created: YYYY-MM-DD
-updated: YYYY-MM-DD
-depends_on: []
-files: []
-pr: ""
----
-
-## Context
-What needs to happen and why.
-
-## Acceptance Criteria
-- [ ] Primary outcome
-
-## Notes
-Append-only log.
-```
-
-### Fields
-- `status`: `todo | active | review | done | cancelled`
-- `mode`: `investigate | plan | implement`
-- `priority`: `urgent | high | medium | low`
-- `project_id`: filename-derived project identifier from `.track/projects/`
-- `depends_on`: blocking task IDs
-- `files`: glob patterns for files the task expects to modify
-- `pr`: optional on raw task files; populated on `done` for historical traceability
-- `cancelled_reason`: required when `status: cancelled`
-
-### Raw vs Effective Status
-- Raw status is the `status:` field stored in the task file
-- Effective status is what `TODO.md` shows
-- If raw status is `done` or `cancelled`, effective status matches it
-- Otherwise, an open draft PR for `task/{id}-{slug}` makes the task effectively `active`
-- Otherwise, an open ready-for-review PR for `task/{id}-{slug}` makes the task effectively `review`
-- Otherwise, effective status is `todo`
-
-### Before Starting Work
-1. Read `TODO.md` or scan `.track/tasks/*.md`
-2. Check `files:` overlap against tasks already shown as `active` / `review`
-3. Pick work that has no unresolved `depends_on` blockers
-4. Use a dedicated worktree or branch per task
-
-### Working a Task (Provisional PR lifecycle)
-1. Create branch `task/{id}-{slug}` from `main`
-2. First commit updates the task file only:
-   - set raw `status: active`
-   - update `updated:`
-3. Push and open a **draft PR** immediately
-   - PR title must include the task ID in brackets or parentheses: `[4.1] Title` or `feat(scope): (4.1) Title`
-   - CI will lint the branch name and PR title against the task file
-4. Do the implementation work with as many commits as needed
-5. When ready for review:
-   - set raw `status: review`
-   - update `updated:`
-   - mark the PR ready for review
-6. When the PR merges, the post-merge workflow writes `status: done`, `pr:`, and `updated:` on `main`
-
-### Creating a Task
-- Every task belongs to a project and uses `project_id`
-- Open work must use dotted IDs like `1.1`
-- Put scope and success definition in the project brief, not the task
-
-### Decomposing a Goal
-- Analyze module boundaries first
-- Create one task per independent unit with non-overlapping `files:` scopes
-- Use `depends_on` to sequence foundation work before integration work
-- Prefer small reviewable PRs over multi-goal tasks
-
-### Regenerating `TODO.md`
-After creating, updating, cancelling, or completing tasks, regenerate the shared view:
-
-```shell
-bash scripts/track-todo.sh
-```
-
-Useful modes:
-
-```shell
-bash scripts/track-todo.sh --local
-bash scripts/track-todo.sh --offline
-```
-
-### Validation
-Run Track validation after changing task files, project briefs, or task lifecycle scripts:
-
-```shell
-bash scripts/track-validate.sh
-```
+This repo uses Track to manage its own work. Projects and tasks live in `.track/`. See `/track:work` for the full protocol.
