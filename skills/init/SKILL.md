@@ -66,19 +66,25 @@ the canonical copies of everything that gets installed into the adopting repo.
    - `track-pr-lint.yml`
    - `track-complete.yml`
 
-### Phase 5: Update .gitignore
+### Phase 5: Install Conductor config
+
+1. Read `${CLAUDE_SKILL_DIR}/scaffold/conductor.json`
+2. If `conductor.json` does not already exist at the repo root, write it there
+3. If it already exists, ask the user whether to replace it
+
+### Phase 6: Update .gitignore
 
 1. Read `.gitignore` (or create if absent)
 2. If `TODO.md` is not already listed, append it
 
-### Phase 6: Update CLAUDE.md
+### Phase 7: Update CLAUDE.md
 
 1. Read `CLAUDE.md` (or create if absent)
 2. Check if it already contains a `## Track` section
 3. If not, read `${CLAUDE_SKILL_DIR}/scaffold/CLAUDE_TRACK_SECTION.md` and append it to `CLAUDE.md`
 4. If yes, ask user whether to replace the existing Track section
 
-### Phase 7: Create first project
+### Phase 8: Create first project
 
 1. Ask the user: "What is your first project called? (e.g., 'API migration', 'Auth rewrite')"
 2. Generate a project slug from the name (lowercase, hyphens)
@@ -94,7 +100,7 @@ the canonical copies of everything that gets installed into the adopting repo.
    - `## Candidate Task Seeds`
 4. Fill in what you can from the user's description; leave placeholder text for sections that need human input
 
-### Phase 8: Verify
+### Phase 9: Verify
 
 1. Run `bash scripts/track-validate.sh`
 2. Run `bash scripts/track-todo.sh --local --offline`
