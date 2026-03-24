@@ -4,34 +4,41 @@ on:
   pull_request:
     types: [opened, edited, synchronize, reopened]
 
+permissions:
+  pull-requests: read
+
 jobs:
   lint-pr-title:
     name: Lint PR title
     runs-on: ubuntu-latest
     steps:
-      - name: Check PR title follows conventional commits
+      - uses: amannn/action-semantic-pull-request@v5
         env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
-        run: |
-          # Conventional commit pattern: type(optional-scope): description
-          # Also allow release-please titles like "chore(main): release 1.2.0"
-          pattern='^(feat|fix|docs|chore|ci|test|refactor|perf|style|build|revert)(\([a-zA-Z0-9_./-]+\))?(!)?: .+'
-
-          if [[ "$PR_TITLE" =~ $pattern ]]; then
-            echo "PR title is valid: $PR_TITLE"
-          else
-            echo "::error::PR title does not follow conventional commits format."
-            echo ""
-            echo "Expected: type(scope): description"
-            echo "Got:      $PR_TITLE"
-            echo ""
-            echo "Valid types: feat, fix, docs, chore, ci, test, refactor, perf, style, build, revert"
-            echo "Valid scopes: skills, scripts, or other relevant module"
-            echo ""
-            echo "Examples:"
-            echo "  feat(skills): add new decompose skill"
-            echo "  fix(scripts): handle missing .track/ directory"
-            echo "  docs: update CLAUDE.md conventions"
-            echo "  ci: add conventional commit lint"
-            exit 1
-          fi
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            chore
+            ci
+            test
+            refactor
+            perf
+            style
+            build
+            revert
+          scopes: |
+            skills
+            scripts
+            init
+            work
+            create
+            decompose
+            validate
+            todo
+            release
+            config
+          requireScope: false
+          subjectPattern: ^.+$
+          subjectPatternError: "PR title must have a description after the type/scope prefix"
