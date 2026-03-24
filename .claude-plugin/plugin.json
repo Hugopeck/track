@@ -1,6 +1,6 @@
 {
   "name": "track",
-  "description": "Git-native task coordination. Scaffolds .track/ directories, teaches Claude the Track workflow, and provides task creation, validation, and TODO generation.",
+  "description": "Invisible task coordination for Claude Code. Turns your git repo into a self-managing project system — markdown tasks, PR-driven status, zero dependencies.",
   "version": "1.0.0",
   "homepage": "https://github.com/Hugopeck/track",
   "author": {
