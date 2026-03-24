@@ -66,6 +66,7 @@ Changes to scripts must be mirrored in both locations. The scaffold copies are t
 ## Conventions
 
 - Use conventional commits: `feat(skills):`, `fix(scripts):`, `docs:`, `ci:`, `chore:`
+- Release-please parses these to generate changelogs and bump the version in `.claude-plugin/plugin.json` — incorrect prefixes produce bad releases
 - Adopting repos are self-contained — they never depend on this plugin at runtime
 - The plugin teaches Claude the Track protocol; the scripts enforce it
 - bash 3.2+ compatibility required (macOS default)
