@@ -1,6 +1,6 @@
 # Track
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/Hugopeck/track/releases) <!-- x-release-please-version -->
+[![Version](https://img.shields.io/badge/version-1.1.0)](https://github.com/Hugopeck/track/releases) <!-- x-release-please-version -->
 
 Task coordination for AI coding agents. Track uses markdown files in your git repo so multiple agents can work on the same project without stepping on each other.
 
