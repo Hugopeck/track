@@ -98,12 +98,20 @@ You don't manually set `status: active` to show progress — opening a draft PR 
 ## Before Starting Work
 
 1. Read `TODO.md` or scan `.track/tasks/*.md` for available work
-2. Check `files:` globs against tasks already shown as `active` / `review` — avoid overlap
-3. Pick work that has no unresolved `depends_on` blockers
-4. Read the task's `## Context` and `## Notes` — previous sessions may have left important context
-5. If the task's mode is `investigate`, focus on understanding and documenting findings rather than writing code
-6. If the acceptance criteria seem incomplete or unclear, update them before starting implementation
-7. Use a dedicated worktree or branch per task
+2. Check for active plans — scan `.track/plans/*.md` for plan files. If a plan exists
+   with `Status: approved` and its linked tasks are not all `done`:
+   - Read the plan file
+   - Tell the user: "Found an active plan: {title}. The next task is {task_id}: {title}."
+   - Suggest working that task
+3. Check `files:` globs against tasks already shown as `active` / `review` — avoid overlap
+4. Pick work that has no unresolved `depends_on` blockers
+5. Read the task's `## Context` and `## Notes` — previous sessions may have left important context
+6. If the task's mode is `investigate`, focus on understanding and documenting findings rather than writing code
+7. If the acceptance criteria seem incomplete or unclear, update them before starting implementation
+8. Use a dedicated worktree or branch per task
+9. If no open tasks exist (all tasks are `done` or `cancelled`, or `.track/tasks/` is
+   empty), tell the user: "No open tasks. Use `/track:create` to add a task, or
+   `/track:decompose` to break a goal into tasks."
 
 ## Working a Task (Provisional PR Lifecycle)
 
