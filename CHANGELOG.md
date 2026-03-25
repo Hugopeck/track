@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/Hugopeck/track/compare/v1.1.0...v1.1.1) (2026-03-25)
+
+
+### Documentation
+
+* fix version badge and enhance README for new init flow ([#11](https://github.com/Hugopeck/track/issues/11)) ([ae47769](https://github.com/Hugopeck/track/commit/ae47769c86f1392b0762e8deba283f6e281e8867))
+
 ## [1.1.0](https://github.com/Hugopeck/track/compare/v1.0.0...v1.1.0) (2026-03-25)
 
 
