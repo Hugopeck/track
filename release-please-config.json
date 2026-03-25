@@ -8,8 +8,7 @@
           "type": "json",
           "path": ".claude-plugin/plugin.json",
           "jsonpath": "$.version"
-        },
-        "README.md"
+        }
       ],
       "changelog-sections": [
         { "type": "feat", "section": "Features" },
