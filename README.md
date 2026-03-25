@@ -1,102 +1,72 @@
 # Track
 
+**Project management tools are dead. A folder is all you need.**
+
 [![Version](https://img.shields.io/github/v/release/Hugopeck/track)](https://github.com/Hugopeck/track/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Markdown](https://img.shields.io/badge/built_with-markdown-blue)](https://daringfireball.net/projects/markdown/)
+[![Claude Code](https://img.shields.io/badge/Claude_Code-plugin-blueviolet)](#install)
+[![Cursor](https://img.shields.io/badge/Cursor-plugin-blue)](#install)
 [![Bash](https://img.shields.io/badge/shell-bash_3.2%2B-orange)](https://www.gnu.org/software/bash/)
 
-Task coordination for AI coding agents. Track uses markdown files in your git repo so multiple agents can work on the same project without stepping on each other.
+Track is a git-native coordination protocol for AI agents. A `.track/` folder in your repo replaces your PM tool — markdown task files, bash enforcement scripts, PR-driven status. No server, no accounts, no vendor lock-in.
 
-## What does Track actually do?
+<!-- TODO: Add demo GIF here -->
 
-When you use AI coding agents (like Claude Code), each session starts fresh — the agent has no idea what was planned, what's already in progress, or what depends on what. If you run multiple agents at once, they'll edit the same files, duplicate work, and create merge conflicts.
+## Why Track exists
 
-Track solves this by storing task state directly in your repo:
+[Linear just announced](https://linear.app/next) that issue tracking was built for handoffs, not execution. They're right. But their answer is "use our AI inside our tool." That's still a $16/seat/month SaaS prison.
 
-- A `.track/` folder holds task files (just markdown with some metadata)
-- Each task lists which files it touches, so agents don't collide
-- GitHub PRs drive the lifecycle automatically — draft PR means "in progress", merged means "done"
-- A shared `TODO.md` shows what's happening across all agents
+Track's answer: **the tool was never needed.**
 
-No server, no database, no accounts. It's just files in your repo.
+When AI agents work on your codebase, they don't need a Kanban board. They need to know what's taken, what files to avoid, and where to report progress. Git already does all of this. Track just makes it explicit.
 
-## Quick demo
+| | Linear | Track |
+|---|---|---|
+| Cost | $8-16/seat/month | Free forever |
+| Infrastructure | Cloud SaaS, vendor lock-in | Git. That's it. |
+| Agent support | Linear Agent only | Claude Code, Cursor, Codex, Gemini CLI |
+| Data ownership | Their servers | Your repo |
+| Non-code projects | No | Yes — any folder, any project |
 
-**1. Set up Track in your repo:**
-```
-> /track:init
-```
-This creates the `.track/` folder, adds bash scripts, and updates your `CLAUDE.md` so every agent knows the protocol. Init also scans your existing markdown files for TODOs and roadmaps — if it finds anything, you can cherry-pick which items to import as Track tasks. If you're starting fresh, it creates an onboarding project that walks you through your first task.
+## Quick start
 
-**2. Break a big goal into tasks:**
-```
-> /track:decompose Migrate the API layer to v2
-```
-Track reads your codebase, finds natural boundaries, and proposes tasks — each with its own set of files so agents won't conflict. You review, then it creates the task files.
-
-**3. Start working:**
-```
-> /track:work
-```
-The agent reads `TODO.md`, picks a task that isn't blocked, opens a draft PR, and starts coding. Another agent can do the same on a different task — no conflicts.
-
-**4. See what's happening:**
-```
-> /track:todo
-```
-Regenerates `TODO.md` with live status from GitHub. Shows who's working on what, what's blocked, and what's done.
-
-## Best with Conductor
-
-Track is designed to work with [Conductor](https://conductor.lol) — a Mac app that lets you run many Claude Code agents in parallel, each in its own git worktree.
-
-**Why this matters:** Track assigns non-overlapping files to each task. Conductor gives each agent an isolated copy of the repo (via git worktrees) so they can work simultaneously without merge conflicts. Track provides the coordination layer; Conductor provides the execution environment.
-
-Track works without Conductor too — you can run agents one at a time in regular Claude Code and still get the benefits of persistent task state and TODO tracking.
-
-## Install
-
-You need [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installed first.
-
-### Option 1: Copy-paste into Claude Code (recommended)
-
-Paste this into your terminal:
+**Install:**
 
 ```bash
 git clone https://github.com/Hugopeck/track.git ~/.claude/skills/track && ~/.claude/skills/track/setup
 ```
 
-### Option 2: Plugin install
+Or: `claude plugin install hugopeck/track`
 
-```bash
-claude plugin install hugopeck/track
+**Set up Track in your repo:**
+```
+> /track:init
 ```
 
-Then open Claude Code in any repo and type `/track:init` to get started.
+This creates `.track/`, adds bash scripts, and updates your `CLAUDE.md` so every agent knows the protocol. If it finds existing markdown TODOs or roadmaps, you can import them as Track tasks.
 
-## Requirements
+**Break a big goal into tasks:**
+```
+> /track:decompose Migrate the API layer to v2
+```
 
-These must be installed on your machine before using Track:
+Track reads your codebase, finds natural boundaries, and proposes tasks with non-overlapping file scopes so agents won't conflict.
 
-| Dependency | Required? | What it's for |
-|-----------|-----------|---------------|
-| **bash** 3.2+ | Yes | Runs the Track scripts. Already installed on macOS and Linux. |
-| **git** | Yes | Track stores everything in your git repo. |
-| **Claude Code** | Yes | Track is a Claude Code plugin — it teaches Claude the coordination protocol. |
-| **gh** (GitHub CLI) | Optional | Pulls live PR status into TODO.md. Without it, use `--offline` flags. |
+**Start working:**
+```
+> /track:work
+```
 
-## Commands
+The agent reads `TODO.md`, picks a task that isn't blocked, opens a draft PR, and starts coding. Another agent can do the same on a different task — no conflicts.
 
-| Command | What it does |
-|---------|-------------|
-| `/track:init` | Set up Track in your repo — scaffolds `.track/`, imports existing TODOs, and onboards you |
-| `/track:work` | Pick a task and start working (auto-loaded when `.track/` exists) |
-| `/track:create` | Create tasks and projects from a plain-English description |
-| `/track:decompose` | Break a big goal into smaller tasks with dependencies |
-| `/track:validate` | Check your `.track/` files for errors and get fix suggestions |
-| `/track:todo` | Regenerate the shared `TODO.md` view |
+**See what's happening:**
+```
+> /track:todo
+```
 
-## How it works under the hood
+Regenerates `TODO.md` with live status from GitHub. Shows who's working on what, what's blocked, and what's done.
+
+## How agents coordinate
 
 Track stores everything in a `.track/` folder at the root of your repo:
 
@@ -107,7 +77,7 @@ Track stores everything in a `.track/` folder at the root of your repo:
   plans/           # plan files produced during investigation tasks
 ```
 
-Each task file is markdown with YAML metadata at the top:
+Each task file is markdown with YAML metadata:
 
 ```yaml
 ---
@@ -128,15 +98,58 @@ Why this task exists...
 - Sessions expire after 24 hours
 ```
 
-The `files` field is key — it tells Track (and other agents) which files this task will touch, preventing conflicts.
+The `files` field is what makes multi-agent work possible — it tells every agent which files are claimed, preventing conflicts.
 
-**Status lifecycle:**
+**Status lifecycle — driven by Git, not manual updates:**
 
 ```
 todo  ──→  active (draft PR)  ──→  review (ready PR)  ──→  done (merged)
 ```
 
-You don't update status manually. Track reads it from the PR state on GitHub.
+## Best with Conductor
+
+Track is designed to work with [Conductor](https://conductor.lol) — a Mac app that lets you run many Claude Code agents in parallel, each in its own git worktree.
+
+Track assigns non-overlapping files to each task. Conductor gives each agent an isolated copy of the repo. Together: parallel agents, zero conflicts.
+
+Track works without Conductor too — you can run agents one at a time and still get persistent task state and TODO tracking.
+
+## Works everywhere
+
+Track is just markdown + bash + git. Any AI agent that can read files can use it.
+
+| Platform | Status |
+|---|---|
+| Claude Code | Full plugin support |
+| Cursor | Plugin available |
+| Codex CLI | Works via AGENTS.md |
+| Gemini CLI | Works via markdown skills |
+
+## The bigger vision
+
+If a folder can manage a codebase, why not anything?
+
+Track's protocol is simple enough for any project: book writing, research, home renovation, event planning. A GitHub account and a folder is your project manager. AI agents are the bookkeepers you never had.
+
+## All commands
+
+| Command | What it does |
+|---------|-------------|
+| `/track:init` | Set up or re-run Track in your repo — refreshes installed files, imports existing TODOs, and onboards you |
+| `/track:work` | Pick a task and start working (auto-loaded when `.track/` exists) |
+| `/track:create` | Create tasks and projects from a plain-English description |
+| `/track:decompose` | Break a big goal into smaller tasks with dependencies |
+| `/track:validate` | Check your `.track/` files for errors and get fix suggestions |
+| `/track:todo` | Regenerate the shared `TODO.md` view |
+
+## Requirements
+
+| Dependency | Required? | What it's for |
+|-----------|-----------|---------------|
+| **bash** 3.2+ | Yes | Runs the Track scripts. Already on macOS and Linux. |
+| **git** | Yes | Track stores everything in your git repo. |
+| **Claude Code** | For plugin features | Track is a Claude Code plugin. The bash scripts work standalone. |
+| **gh** (GitHub CLI) | Optional | Pulls live PR status into TODO.md. Without it, use `--offline` flags. |
 
 ## Troubleshooting
 
@@ -147,6 +160,14 @@ You don't update status manually. Track reads it from the PR state on GitHub.
 **"gh not found" warnings?** That's fine — `gh` is optional. You lose live PR status in TODO.md but everything else works.
 
 **Commands not showing up?** Reinstall the plugin or try `claude --plugin-dir ./path/to/track` to test locally.
+
+## Roadmap
+
+**Free forever:** Single-repo coordination, all agent platforms, bash scripts, the full protocol.
+
+**Coming (Track Pro):** Cross-repo dashboards, team analytics, Slack notifications, audit trails.
+
+**Coming (Track for Teams):** Approval workflows, permissions, compliance reporting.
 
 ## License
 
