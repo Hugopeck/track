@@ -15,8 +15,38 @@ allowed-tools:
 
 ## Purpose
 
-Create new Track tasks or projects from a description. Handles ID assignment,
-frontmatter generation, and validation automatically.
+`/track:create` owns the full creation lifecycle for Track tasks and projects —
+from parsing user input through file creation, validation, and reporting.
+
+## What This Skill Owns
+
+1. Parse user input to determine what to create
+2. Lock the operating mode
+3. Assign IDs and generate slugs
+4. Write task and/or project files
+5. Validate the result
+6. Regenerate TODO.md
+7. Report what was created
+
+This skill does NOT own decomposition (that's `/track:decompose`) or working a
+task (that's `/track:work`).
+
+## Operating Modes
+
+Track one of these modes for the entire run:
+
+- `create-project` — user wants a new project brief only
+- `create-task` — user wants one or more tasks under an existing project
+- `create-both` — user describes a new project with tasks in a single request
+
+## Definition of Done
+
+- All files are written
+- `bash scripts/track-validate.sh` passes
+- `bash scripts/track-todo.sh --local --offline` regenerates TODO.md
+- The user sees what was created (IDs, titles, file paths)
+
+Do not report success before validation passes.
 
 ## Creating a Project
 
@@ -24,7 +54,9 @@ When the user wants to create a new project:
 
 1. Scan `.track/projects/` to find the next available project ID (highest number + 1)
 2. Generate a slug from the project name (lowercase, hyphens, no special characters)
-3. Create `.track/projects/{id}-{slug}.md` with all required sections:
+3. Check for collisions — if a file with the same slug already exists, pick the
+   next available ID
+4. Create `.track/projects/{id}-{slug}.md` with all required sections:
 
 ```markdown
 # {Project Name}
@@ -64,7 +96,9 @@ When the user wants to create a task:
    - Take the highest sequence number and add 1
    - If no existing tasks, start at 1
 3. Generate a slug from the task title (lowercase, hyphens, max 50 chars)
-4. Create `.track/tasks/{project_id}.{sequence}-{slug}.md`:
+4. Check for collisions — if a file with the same ID or slug already exists,
+   pick the next available sequence number
+5. Create `.track/tasks/{project_id}.{sequence}-{slug}.md`:
 
 ```yaml
 ---
@@ -91,32 +125,80 @@ pr: ""
 Created from: {brief summary of the user's request}
 ```
 
-5. Infer `mode` from the description:
+6. Infer `mode` from the description:
    - "investigate", "research", "explore", "decide" → `investigate`
    - "plan", "design", "architect" → `plan`
    - Everything else → `implement`
-6. Infer `priority` from the description:
+7. Infer `priority` from the description:
    - "urgent", "critical", "blocking" → `urgent`
    - "important", "high priority" → `high`
    - "nice to have", "low priority" → `low`
    - Default → `medium`
-7. Infer `files` from the description if specific paths or patterns are mentioned
-8. Infer `depends_on` if the user mentions tasks that must complete first
+8. Infer `files` from the description if specific paths or patterns are mentioned
+9. Infer `depends_on` if the user mentions tasks that must complete first
 
 ## After Creating
 
 1. Run `bash scripts/track-validate.sh` — fix any errors
 2. Run `bash scripts/track-todo.sh --local --offline` — regenerate TODO.md
-3. Show the user what was created
+3. Show the closing message
+
+## Closing Message Matrix
+
+When creation completes, show exactly one closing message:
+
+If mode is `create-project`:
+
+```
+Created project {id}: {name}
+  → .track/projects/{id}-{slug}.md
+
+Use /track:create to add tasks, or /track:decompose to break the goal into tasks.
+```
+
+If mode is `create-task` (single task):
+
+```
+Created task {id}: {title}
+  → .track/tasks/{id}-{slug}.md
+```
+
+If mode is `create-task` (multiple tasks):
+
+```
+Created {N} tasks under project {project_id}:
+  {id}: {title} → .track/tasks/{id}-{slug}.md
+  {id}: {title} → .track/tasks/{id}-{slug}.md
+```
+
+If mode is `create-both`:
+
+```
+Created project {id}: {name}
+  → .track/projects/{id}-{slug}.md
+
+Created {N} tasks:
+  {id}: {title} → .track/tasks/{id}-{slug}.md
+  {id}: {title} → .track/tasks/{id}-{slug}.md
+```
 
 ## Using $ARGUMENTS
 
 `$ARGUMENTS` is the user's description of what they want to create. Parse it to
 extract the task/project title, context, priority, and any other details.
 
-If the description is vague (e.g., "fix the thing"), ask a clarifying question rather than guessing. A well-specified task saves more time than a fast-created one.
+If the description is vague (e.g., "fix the thing"), ask a clarifying question
+rather than guessing. A well-specified task saves more time than a fast-created one.
 
 Examples:
 - `/track:create Add rate limiting to the API` → creates a task
 - `/track:create project: Auth Rewrite — migrate from session tokens to JWTs` → creates a project
 - `/track:create high priority: Fix the broken deploy script, depends on 1.2` → creates a high-priority task with dependency
+
+## Do Not
+
+- Do not report success before `track-validate.sh` passes
+- Do not guess when the description is vague — ask a clarifying question
+- Do not overwrite existing task or project files without asking
+- Do not create tasks without a matching project brief
+- Do not skip collision checks on IDs and slugs
