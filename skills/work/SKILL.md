@@ -13,6 +13,43 @@ allowed-tools:
   - Write
 ---
 
+## Purpose
+
+`/track:work` owns the full work-a-task lifecycle — from reading state through
+implementation to handing off to merge. It is loaded automatically in any repo
+that contains `.track/`.
+
+## What This Skill Owns
+
+1. Read current Track state (tasks, projects, plans)
+2. Determine the operating mode
+3. Pick or resume a task
+4. Open a draft PR and implement
+5. Mark the PR ready for review
+6. Hand off to the post-merge workflow
+
+If the user invoked `/track:work` or asked to work a task, your job is to
+complete this lifecycle for one task.
+
+## Operating Modes
+
+Track one of these modes for the entire run:
+
+- `pick` — no task was specified, find the next available task
+- `resume` — a task was specified by the user or an active plan was found,
+  continue existing work
+- `empty` — no open tasks exist (all `done`, `cancelled`, or `.track/tasks/`
+  is empty)
+
+## Definition of Done
+
+- `pick` is done when a draft PR is opened and implementation is underway
+- `resume` is done when the session's work is committed and pushed
+- `empty` is done when the user is informed and given next steps
+
+Do not report a task as "started" before a draft PR exists. Do not report
+success before the mode reaches its definition of done.
+
 ## Glossary
 
 - **Raw Status** — the `status:` field stored in a Track task file
@@ -110,8 +147,7 @@ You don't manually set `status: active` to show progress — opening a draft PR 
 7. If the acceptance criteria seem incomplete or unclear, update them before starting implementation
 8. Use a dedicated worktree or branch per task
 9. If no open tasks exist (all tasks are `done` or `cancelled`, or `.track/tasks/` is
-   empty), tell the user: "No open tasks. Use `/track:create` to add a task, or
-   `/track:decompose` to break a goal into tasks."
+   empty), set mode to `empty`
 
 ## Working a Task (Provisional PR Lifecycle)
 
@@ -180,9 +216,42 @@ with overlapping `files:` globs should not both be `active` at the same time —
 causes merge conflicts. Before starting a task, check that its `files:` don't overlap
 with any currently `active` or `review` task.
 
-## What Not To Do
+## Closing Message Matrix
+
+When a work session concludes, show exactly one closing message:
+
+If mode is `pick` and a draft PR was opened:
+
+```
+Started task {id}: {title}
+Draft PR: {url}
+
+Implementation is underway. Continue working or mark ready for review when done.
+```
+
+If mode is `resume` and work was pushed:
+
+```
+Resumed task {id}: {title}
+Pushed {N} commits to {branch}.
+
+Continue working or mark ready for review when done.
+```
+
+If mode is `empty`:
+
+```
+No open tasks. Use /track:create to add a task, or /track:decompose to break
+a goal into tasks.
+```
+
+## Do Not
 
 - Do not edit `TODO.md` by hand — it is generated and will be overwritten
 - Do not set `status: done` manually — the post-merge workflow handles this
 - Do not create tasks without a matching project brief
 - Do not use the same `files:` glob as an already-active task
+- Do not skip reading `## Notes` and `## Context` before starting work
+- Do not report a task as started without opening a draft PR
+- Do not work a task whose `depends_on` has unresolved blockers
+- Do not report success before the active mode reaches its definition of done

@@ -16,15 +16,52 @@ allowed-tools:
 
 ## Purpose
 
-Take a high-level goal and produce a set of Track tasks that can be worked in
-parallel where possible, with explicit dependencies where not.
+`/track:decompose` owns the full decomposition lifecycle — from understanding a
+goal through codebase exploration, proposing a task breakdown, and creating files
+after user confirmation.
+
+## What This Skill Owns
+
+1. Parse the goal from user input
+2. Determine the operating mode
+3. Explore the codebase for natural seams
+4. Propose a task breakdown with non-overlapping file scopes
+5. Wait for user confirmation
+6. Create task (and optionally project) files
+7. Validate and regenerate TODO.md
+8. Report what was created
+
+This skill does NOT own creating individual tasks outside a decomposition
+(that's `/track:create`).
+
+## Operating Modes
+
+Track one of these modes for the entire run:
+
+- `new-project` — the goal implies a new project; create a project brief and
+  tasks together
+- `extend-project` — the goal extends an existing project; add tasks only
+
+## Definition of Done
+
+- User confirmed the breakdown
+- All files are written
+- `bash scripts/track-validate.sh` passes
+- `bash scripts/track-todo.sh --local --offline` regenerates TODO.md
+- The user sees what was created
+
+Do not report success before validation passes.
 
 ## Steps
 
 ### Phase 1: Understand the goal
 
 1. Parse `$ARGUMENTS` to understand what the user wants to accomplish
-2. Identify which project this belongs to (scan `.track/projects/`, ask if ambiguous)
+2. Determine the operating mode:
+   - If the goal maps to an existing project in `.track/projects/`, set mode to
+     `extend-project`
+   - If the goal requires a new project, set mode to `new-project`
+   - If ambiguous, ask the user
 
 ### Phase 2: Explore the codebase
 
@@ -32,7 +69,21 @@ parallel where possible, with explicit dependencies where not.
 2. Identify which files and directories will need to change
 3. Look for natural seams where work can be split
 
+Do not skip this phase. Decomposition without codebase exploration produces
+tasks with wrong file scopes and missed dependencies.
+
 ### Phase 3: Propose task breakdown
+
+#### Collision avoidance
+
+Before proposing tasks:
+
+1. Scan `.track/tasks/` for existing task IDs under the target project
+2. Check `files:` globs of existing `active` or `review` tasks — proposed globs
+   must not overlap with them
+3. Use the next available sequence numbers for proposed task IDs
+
+#### Proposal format
 
 Present a table to the user:
 
@@ -44,7 +95,8 @@ Present a table to the user:
 | {project}.3 | Tests: ... | implement | medium | {project}.2 | tests/** |
 ```
 
-Guidelines:
+#### Guidelines
+
 - One task per independent unit of work
 - Non-overlapping `files:` scopes between tasks that could run in parallel
 - Use `depends_on` to sequence foundation work before integration work
@@ -56,18 +108,48 @@ Guidelines:
 
 ### Phase 4: Confirm and create
 
-1. Ask the user to confirm, modify, or reject the proposal
-2. Once confirmed, create all task files using the `/track:create` conventions:
-   - Correct dotted IDs with next available sequence numbers
-   - Proper frontmatter with all required fields
-   - `## Context`, `## Acceptance Criteria`, `## Notes` sections
-3. Run `bash scripts/track-validate.sh`
+1. Wait for the user to confirm, modify, or reject the proposal
+2. Once confirmed, create all files:
+   - If mode is `new-project`, create the project brief first
+   - Create all task files using `/track:create` conventions:
+     - Correct dotted IDs with next available sequence numbers
+     - Proper frontmatter with all required fields
+     - `## Context`, `## Acceptance Criteria`, `## Notes` sections
+3. Run `bash scripts/track-validate.sh` — fix any errors
 4. Run `bash scripts/track-todo.sh --local --offline`
-5. Show the updated TODO.md summary
+5. Show the closing message
 
-## Rules
+## Closing Message Matrix
 
-- Never create tasks without user confirmation of the breakdown
+When decomposition completes, show exactly one closing message:
+
+If mode is `new-project`:
+
+```
+Created project {id}: {name}
+  → .track/projects/{id}-{slug}.md
+
+Created {N} tasks:
+| ID | Title | File |
+|----|-------|------|
+| {id} | {title} | .track/tasks/{id}-{slug}.md |
+```
+
+If mode is `extend-project`:
+
+```
+Added {N} tasks to project {id}: {name}
+| ID | Title | File |
+|----|-------|------|
+| {id} | {title} | .track/tasks/{id}-{slug}.md |
+```
+
+## Do Not
+
+- Do not create files before the user confirms the breakdown
+- Do not skip codebase exploration (Phase 2)
+- Do not report success before `track-validate.sh` passes
+- Do not propose `files:` globs that overlap with existing active or review tasks
+- Do not propose more than 10 tasks without asking — prefer fewer, focused tasks
 - Every task must have at least one acceptance criterion
-- `files:` globs must not overlap between tasks that don't have a dependency chain
-- Total task count should be 2-10 for most goals; ask if it seems like more are needed
+- Total task count should be 2–10 for most goals; ask if it seems like more are needed

@@ -12,7 +12,21 @@ allowed-tools:
 
 ## Purpose
 
-Regenerate `TODO.md` by running `track-todo.sh` with the appropriate mode.
+`/track:todo` owns TODO.md regeneration — detecting the environment, choosing
+the right mode, running `track-todo.sh`, and reporting the result.
+
+## What This Skill Owns
+
+1. Detect the available environment
+2. Choose the generation mode
+3. Run `bash scripts/track-todo.sh` with appropriate flags
+4. Report the result
+
+This skill does NOT own interpreting TODO.md content or acting on it.
+
+## Definition of Done
+
+- `TODO.md` is regenerated and the mode used is reported to the user
 
 ## Steps
 
@@ -25,6 +39,18 @@ Regenerate `TODO.md` by running `track-todo.sh` with the appropriate mode.
    - If remote reachable but no `gh` or token → `--offline`
    - If remote not reachable → `--local --offline`
 3. Run `bash scripts/track-todo.sh {flags}`
-4. Report what was generated and which mode was used
+4. Show the closing message
 
-If the user passes arguments (e.g., `/track:todo --local`), forward those flags directly instead of auto-detecting.
+If the user passes arguments (e.g., `/track:todo --local`), forward those flags
+directly instead of auto-detecting.
+
+## Closing Message
+
+```
+TODO.md regenerated (mode: {full|offline|local}).
+```
+
+## Do Not
+
+- Do not edit TODO.md by hand — it is generated
+- Do not override user-supplied flags with auto-detection
