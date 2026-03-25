@@ -1,6 +1,9 @@
 # Track
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/Hugopeck/track/releases) <!-- x-release-please-version -->
+[![Version](https://img.shields.io/github/v/release/Hugopeck/track)](https://github.com/Hugopeck/track/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Markdown](https://img.shields.io/badge/built_with-markdown-blue)](https://daringfireball.net/projects/markdown/)
+[![Bash](https://img.shields.io/badge/shell-bash_3.2%2B-orange)](https://www.gnu.org/software/bash/)
 
 Task coordination for AI coding agents. Track uses markdown files in your git repo so multiple agents can work on the same project without stepping on each other.
 
@@ -23,7 +26,7 @@ No server, no database, no accounts. It's just files in your repo.
 ```
 > /track:init
 ```
-This creates the `.track/` folder, adds bash scripts, and updates your `CLAUDE.md` so every agent knows the protocol.
+This creates the `.track/` folder, adds bash scripts, and updates your `CLAUDE.md` so every agent knows the protocol. Init also scans your existing markdown files for TODOs and roadmaps — if it finds anything, you can cherry-pick which items to import as Track tasks. If you're starting fresh, it creates an onboarding project that walks you through your first task.
 
 **2. Break a big goal into tasks:**
 ```
@@ -86,7 +89,7 @@ These must be installed on your machine before using Track:
 
 | Command | What it does |
 |---------|-------------|
-| `/track:init` | Set up Track in your repo — creates `.track/`, scripts, and updates `CLAUDE.md` |
+| `/track:init` | Set up Track in your repo — scaffolds `.track/`, imports existing TODOs, and onboards you |
 | `/track:work` | Pick a task and start working (auto-loaded when `.track/` exists) |
 | `/track:create` | Create tasks and projects from a plain-English description |
 | `/track:decompose` | Break a big goal into smaller tasks with dependencies |
@@ -101,6 +104,7 @@ Track stores everything in a `.track/` folder at the root of your repo:
 .track/
   projects/       # one file per project (groups related tasks)
   tasks/           # one file per task (the actual units of work)
+  plans/           # plan files produced during investigation tasks
 ```
 
 Each task file is markdown with YAML metadata at the top:
