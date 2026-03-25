@@ -1,11 +1,12 @@
 ---
 name: init
 description: |
-  Set up Track from scratch. Scaffold everything an adopting repo needs —
-  directories, scripts, CI workflows, and the CLAUDE.md protocol section — then
-  scan existing markdown for importable tasks and projects. If nothing is found,
-  create an onboarding project that teaches the user Track's workflow by having
-  them execute their first task. Handle upgrades gracefully.
+  Set up Track from scratch or re-run it on an existing Track repo. Scaffold
+  everything an adopting repo needs — directories, scripts, CI workflows, and
+  the CLAUDE.md protocol section — then scan existing markdown for importable
+  tasks and projects. If nothing is found, create an onboarding project that
+  teaches the user Track's workflow by having them execute their first task.
+  Upgrades must continue through the full init tail unless the user aborts.
 disable-model-invocation: true
 allowed-tools:
   - Bash
@@ -18,34 +19,101 @@ allowed-tools:
 
 ## Purpose
 
-`/track:init` sets up Track in the current repository. Track is a git-native task
-coordination system that uses `.track/` markdown files, bash scripts, and GitHub PR
-state for task management.
+`/track:init` owns the full Track initialization lifecycle for the current
+repository. That includes first-time setup, safe re-runs on existing Track
+repos, importing existing markdown work, onboarding fallback, final validation,
+and the closing handoff.
+
+## What This Skill Owns
+
+This skill does not stop at copying files. It owns the entire init flow:
+
+1. Detect the current repo state
+2. Install or refresh Track's files
+3. Scan for importable markdown tasks and projects
+4. Fall back to onboarding if nothing is imported
+5. Verify the final state and hand the user off cleanly
+
+If the user invoked `/track:init`, your job is to complete that lifecycle unless
+they explicitly abort.
 
 ## Scaffold Location
 
 All scaffold files live in `${CLAUDE_SKILL_DIR}/scaffold/`. This directory contains
 the canonical copies of everything that gets installed into the adopting repo.
+Always read scaffold files from there. Do not hardcode scaffold contents.
+
+## Operating Modes
+
+Track one of these modes for the entire run:
+
+- `fresh-init` — `.track/` did not exist when the command started
+- `upgrade-continue` — `.track/` already existed, the user chose to continue,
+  and you must refresh installed assets before continuing through import,
+  onboarding fallback, verify, and handoff
+
+There is no "upgrade-only" mode in this skill. If `.track/` already exists, the
+only valid choices are:
+
+- continue the full init flow
+- abort
+
+## Definition of Done
+
+`/track:init` is done only when the active mode reaches the end of the full flow:
+
+- `fresh-init` is done only after Phases 2–10 complete
+- `upgrade-continue` is done only after the upgrade work completes and then
+  Phases 8–10 complete
+
+Do not report success before the active mode reaches Phase 10.
 
 ## Initialization Steps
 
-### Phase 1: Check existing state
+### Phase 1: Check existing state and lock the mode
 
-1. Check if `.track/` already exists
-   - If yes, ask the user: "Track is already set up. Upgrade scripts and workflows only, or abort?"
-   - If upgrading, skip to Phase 3 (only update scripts and workflows)
-   - If aborting, stop
-2. Check if `scripts/track-common.sh` exists — warn if other track scripts exist without `.track/`
+1. Check whether `.track/` already exists.
+2. If `.track/` does not exist:
+   - Set mode to `fresh-init`
+   - Continue immediately to Phase 2
+3. If `.track/` already exists:
+   - Ask the user: "Track is already set up. Refresh the installed Track files
+     and continue the full init flow?"
+   - Present only these choices:
+     - **Continue upgrade**
+     - **Abort**
+   - If the user chooses **Continue upgrade**:
+     - Set mode to `upgrade-continue`
+     - Continue immediately to Phase 3, then automatically continue through the
+       rest of the flow
+   - If the user chooses **Abort**, stop
+4. Check if `scripts/track-common.sh` exists — warn if other Track scripts exist
+   without `.track/`
 
-### Phase 2: Create .track/ directory
+### Phase 2: Create or repair `.track/` directory structure
 
-1. Read `${CLAUDE_SKILL_DIR}/scaffold/track/README.md` and write it to `.track/README.md`
-2. Read `${CLAUDE_SKILL_DIR}/scaffold/track/projects/README.md` and write it to `.track/projects/README.md`
-3. Create `.track/tasks/` directory (create a `.gitkeep` if empty)
+This phase always ensures the required directory structure exists. The difference
+is whether you are creating it for the first time or repairing missing pieces.
+
+- In `fresh-init`, create the full structure
+- In `upgrade-continue`, only create missing pieces; do not duplicate or replace
+  existing user content unless the rules below require it
+
+Steps:
+
+1. Ensure `.track/` exists
+2. If `.track/README.md` does not exist, read `${CLAUDE_SKILL_DIR}/scaffold/track/README.md`
+   and write it to `.track/README.md`
+3. Ensure `.track/projects/` exists
+4. If `.track/projects/README.md` does not exist, read
+   `${CLAUDE_SKILL_DIR}/scaffold/track/projects/README.md` and write it to
+   `.track/projects/README.md`
+5. Ensure `.track/tasks/` exists
+6. If `.track/tasks/` is empty, create `.track/tasks/.gitkeep`
 
 ### Phase 3: Install scripts
 
-1. Create `scripts/` directory if it doesn't exist
+1. Ensure `scripts/` exists
 2. For each script in `${CLAUDE_SKILL_DIR}/scaffold/scripts/`:
    - Read the scaffold version
    - Write to `scripts/{filename}`
@@ -59,7 +127,7 @@ the canonical copies of everything that gets installed into the adopting repo.
 
 ### Phase 4: Install GitHub workflows
 
-1. Create `.github/workflows/` directory if it doesn't exist
+1. Ensure `.github/workflows/` exists
 2. For each workflow in `${CLAUDE_SKILL_DIR}/scaffold/github-workflows/`:
    - Read the scaffold version
    - Write to `.github/workflows/{filename}`
@@ -74,55 +142,72 @@ the canonical copies of everything that gets installed into the adopting repo.
 2. If `conductor.json` does not already exist at the repo root, write it there
 3. If it already exists, ask the user whether to replace it
 
-### Phase 6: Update .gitignore
+### Phase 6: Update `.gitignore`
 
-1. Read `.gitignore` (or create if absent)
+1. Read `.gitignore` (or create it if absent)
 2. If `TODO.md` is not already listed, append it
 
-### Phase 7: Update CLAUDE.md
+### Phase 7: Update `CLAUDE.md`
 
-1. Read `CLAUDE.md` (or create if absent)
+1. Read `CLAUDE.md` (or create it if absent)
 2. Check if it already contains a `## Track` section
-3. If not, read `${CLAUDE_SKILL_DIR}/scaffold/CLAUDE_TRACK_SECTION.md` and append it to `CLAUDE.md`
-4. If yes, ask user whether to replace the existing Track section
+3. If not, read `${CLAUDE_SKILL_DIR}/scaffold/CLAUDE_TRACK_SECTION.md` and append
+   it to `CLAUDE.md`
+4. If yes, ask the user whether to replace the existing Track section
+
+### Transition after Phase 7
+
+- If mode is `fresh-init`, continue to Phase 8
+- If mode is `upgrade-continue`, continue to Phase 8
+- Never conclude the skill after Phase 3, 4, 5, 6, or 7
+- Upgrading installed files is not completion; it is only the setup for the
+  import/onboarding tail
 
 ### Phase 8: Import from existing markdown
 
-Scan the repo for markdown files that contain tasks, TODOs, roadmaps, or project notes.
-If anything is found, let the user pick which items to import into Track.
+Phase 8 applies to both fresh installs and upgraded repos. Use it for:
+
+- new repos that already have markdown planning artifacts
+- existing Track repos that adopted Track before import/onboarding existed
+- existing Track repos where import was missed previously
+
+Scan the repo for markdown files that contain tasks, TODOs, roadmaps, or project
+notes. If anything is found, let the user pick which items to import into Track.
 
 #### Phase 8a: Scan
 
-1. Use `Glob` to find `**/*.md`, then filter out files under `.track/`, `node_modules/`,
-   `.git/`, `vendor/`, and skip `CHANGELOG.md`
-2. **Size guard**: if more than 200 markdown files are found, limit scanning to known
-   high-signal filenames (`TODO.md`, `ROADMAP.md`, `BACKLOG.md`, `TASKS.md`, `PLAN.md`)
-   plus files in the repo root and `docs/` directory. Tell the user: "Found N markdown
-   files; scanning high-signal files only."
+1. Use `Glob` to find `**/*.md`, then filter out files under `.track/`,
+   `node_modules/`, `.git/`, and `vendor/`, and skip `CHANGELOG.md`
+2. **Size guard**: if more than 200 markdown files are found, limit scanning to
+   known high-signal filenames (`TODO.md`, `ROADMAP.md`, `BACKLOG.md`,
+   `TASKS.md`, `PLAN.md`) plus files in the repo root and `docs/` directory.
+   Tell the user: "Found N markdown files; scanning high-signal files only."
 3. Use `Grep` across matched files to find task-like content:
    - Checkbox patterns: `- [ ]`, `- [x]`
-   - Headings (case-insensitive) matching: TODO, Tasks, Action Items, Backlog, Roadmap,
-     Milestones, Goals, Next Steps, Planned, Upcoming
+   - Headings (case-insensitive) matching: TODO, Tasks, Action Items, Backlog,
+     Roadmap, Milestones, Goals, Next Steps, Planned, Upcoming
 4. `Read` files that matched (max 500 lines per file; note if truncated)
 5. If no markdown files are found, or none contain task-like content, print:
    "No importable tasks or projects found in existing markdown. Skipping import."
-   Then skip to Phase 9.
+   Then continue to Phase 9
 
 #### Phase 8b: Extract candidates
 
 Read the matched content and extract discrete work items:
 
-- **Projects**: a heading or file section that represents a broad initiative with multiple
-  sub-items (e.g., a `## Auth Rewrite` heading with several bullets underneath)
-- **Tasks**: individual checkbox items (`- [ ] ...`), individual bullets under a planning
-  heading, or standalone items from TODO/BACKLOG files
+- **Projects**: a heading or file section that represents a broad initiative
+  with multiple sub-items (for example, a `## Auth Rewrite` heading with several
+  bullets underneath)
+- **Tasks**: individual checkbox items (`- [ ] ...`), individual bullets under a
+  planning heading, or standalone items from TODO/BACKLOG files
 - **Orphan grouping**: tasks that don't belong to a clear project go under an
-  auto-generated project called "Imported Backlog" (`1-imported-backlog.md`)
-- **Deduplication**: if the same item text appears in multiple files (after stripping
-  markdown formatting, leading dashes, and checkboxes), keep only the first occurrence
-- **Cap at 30 items**: if more than 30 candidates are found, keep the top 30 (prioritizing
-  known-filename sources like `TODO.md`, `ROADMAP.md`) and note: "Found N total items;
-  showing top 30. Use `/track:create` to add more later."
+  auto-generated project called "Imported Backlog"
+- **Deduplication**: if the same item text appears in multiple files (after
+  stripping markdown formatting, leading dashes, and checkboxes), keep only the
+  first occurrence
+- **Cap at 30 items**: if more than 30 candidates are found, keep the top 30
+  (prioritizing known-filename sources like `TODO.md`, `ROADMAP.md`) and note:
+  "Found N total items; showing top 30. Use `/track:create` to add more later."
 
 Infer fields for each candidate (mirrors `/track:create` conventions):
 
@@ -136,21 +221,32 @@ Infer fields for each candidate (mirrors `/track:create` conventions):
 
 #### Phase 8c: Write candidate files
 
-1. For each candidate project, write a project brief to `.track/projects/{id}-{slug}.md`
-   with all required sections. Fill `## Goal` from extracted content; use placeholder
-   text for other sections.
-2. For each candidate task, write a task file to `.track/tasks/{project_id}.{seq}-{slug}.md`
-   with full YAML frontmatter and required body sections (`## Context`, `## Acceptance
-   Criteria`, `## Notes`).
-3. In `## Context`, reference the source: "Imported from `{source_file}`, line {N}."
-4. In `## Notes`, write: "Auto-imported during `/track:init`."
+Before writing anything, inspect existing `.track/projects/` and `.track/tasks/`
+content so you can avoid collisions.
+
+1. Never overwrite existing task or project files without asking
+2. If a candidate project or task ID would collide with an existing file, choose
+   the next available project ID or task sequence number
+3. If a slug would collide, keep the existing file untouched and choose the next
+   available ID for the imported item
+4. For each candidate project, write a project brief to
+   `.track/projects/{id}-{slug}.md` with all required sections. Fill `## Goal`
+   from extracted content; use placeholder text for other sections.
+5. For each candidate task, write a task file to
+   `.track/tasks/{project_id}.{seq}-{slug}.md` with full YAML frontmatter and
+   required body sections (`## Context`, `## Acceptance Criteria`, `## Notes`).
+6. In `## Context`, reference the source: "Imported from `{source_file}`, line
+   {N}."
+7. In `## Notes`, write: "Auto-imported during `/track:init`."
+8. Preserve all existing user-authored Track content
 
 #### Phase 8d: Generate preview and present selection
 
 1. Run `bash scripts/track-todo.sh --local --offline`
 2. Read the generated `TODO.md` and display it to the user
-3. Below the TODO.md preview, present a numbered selection list. Number each discovered
-   item sequentially (projects first, then tasks grouped under their project):
+3. Below the TODO.md preview, present a numbered selection list. Number each
+   discovered item sequentially (projects first, then tasks grouped under their
+   project):
 
 ```
 Found 8 items from 3 files:
@@ -176,28 +272,46 @@ Which items do you want to import into Track?
 
 - `all` → keep everything, proceed
 - `none` → delete all candidate files from `.track/tasks/` and `.track/projects/`
-  (except the README files created in Phase 2)
-- Otherwise → delete only the unselected task files; delete a project brief only if
-  all its tasks were also unselected
-- If any files remain after cleanup:
-  1. Re-run `bash scripts/track-validate.sh` — fix any errors
+  that were created during this init run. Preserve pre-existing files and the
+  README files
+- Otherwise → delete only the unselected candidate task files created during this
+  init run; delete a candidate project brief created during this run only if all
+  of its tasks were also unselected
+- If any imported candidate files remain after cleanup:
+  1. Re-run `bash scripts/track-validate.sh` and fix any errors
   2. Re-run `bash scripts/track-todo.sh --local --offline`
-  3. Report: "Imported N tasks across M projects."
-- If nothing remains, report: "Skipped import."
+  3. Record the result as: "Imported N tasks across M projects."
+  4. Continue to Phase 10 after skipping Phase 9 onboarding creation
+- If no imported candidate files remain, report: "Skipped import." and continue
+  to Phase 9
 
-### Phase 9: Onboarding
+### Phase 9: Onboarding fallback
 
-**If projects were imported in Phase 8**, skip to Step 2 (validation) and then show a
-closing message adapted for imported tasks (replace task 1.1 references with a note
-that their imported tasks are ready to work).
+If imports were kept from Phase 8, skip onboarding creation and continue to
+Phase 10.
 
-**If no projects were imported** (nothing found or user chose "none"), run all steps:
+If no projects or tasks were imported (nothing found or user chose `none`),
+onboarding is the fallback for both fresh installs and upgraded repos.
 
-#### Step 1 — Auto-create the onboarding project and tasks
+#### Step 1 — Ensure onboarding project and tasks exist
 
-Create `.track/plans/` directory (for plan files produced during onboarding).
+Ensure `.track/plans/` exists for plan files produced during onboarding.
 
-Create `.track/projects/1-onboarding.md`:
+Before creating onboarding files, check whether these already exist:
+
+- `.track/projects/1-onboarding.md`
+- `.track/tasks/1.1-discover-and-plan.md`
+- `.track/tasks/1.2-execute-migration.md`
+
+Rules:
+
+- If all three already exist, do not recreate them. Report that onboarding is
+  already present and continue to Phase 10.
+- If some exist and some are missing, preserve the existing files and create only
+  the missing files.
+- If none exist, create all of them.
+
+Create `.track/projects/1-onboarding.md` if missing:
 
 ```markdown
 # Onboarding
@@ -235,7 +349,7 @@ Active tasks and projects from the user's current system are represented in .tra
 - Execute the migration
 ```
 
-Create `.track/tasks/1.1-discover-and-plan.md`:
+Create `.track/tasks/1.1-discover-and-plan.md` if missing:
 
 ```yaml
 ---
@@ -302,7 +416,7 @@ When working this task, follow these steps:
 Auto-created during /track:init onboarding.
 ```
 
-Create `.track/tasks/1.2-execute-migration.md`:
+Create `.track/tasks/1.2-execute-migration.md` if missing:
 
 ```yaml
 ---
@@ -347,18 +461,32 @@ project and tasks using /track:create or /track:decompose.
 Auto-created during /track:init onboarding.
 ```
 
-#### Step 2 — Validate and generate TODO.md
+### Phase 10: Verify and hand off
 
-```bash
-bash scripts/track-validate.sh
-bash scripts/track-todo.sh --local --offline
+1. Run `bash scripts/track-validate.sh`
+2. Run `bash scripts/track-todo.sh --local --offline`
+3. Report what was created, what was reused, and any warnings
+4. Show exactly one closing message from the matrix below. Do not invent a
+   custom summary when one of these cases applies.
+
+#### Closing message matrix
+
+If mode is `fresh-init` and imports were kept from Phase 8, display:
+
+```
+Track is ready! You imported N tasks across M projects.
+
+To start working a task:
+  1. Open a new workspace in Conductor
+  2. Type: do task @{first available task ID}
+  3. Hit Enter
+
+Use /track:create to add more tasks, or /track:decompose to break a goal
+into tasks. Your TODO.md has the full picture. Happy tracking!
 ```
 
-Fix any validation errors before proceeding.
-
-#### Step 3 — Show the closing message
-
-If onboarding tasks were created (no imports), display:
+If mode is `fresh-init` and no imports were kept and onboarding files were
+created during this run, display:
 
 ```
 Track is ready! Here's how to start your first task:
@@ -377,10 +505,21 @@ After task 1.1 merges, task 1.2 will import your data.
 Your TODO.md has the full picture. Happy tracking!
 ```
 
-If imports were kept from Phase 8, display:
+If mode is `fresh-init` and no imports were kept and onboarding already existed,
+display:
 
 ```
-Track is ready! You imported N tasks across M projects.
+Track is ready! No importable markdown was kept, and onboarding was already
+present.
+
+To continue, open a new workspace in Conductor and start with task @1.1.
+Your TODO.md has the full picture. Happy tracking!
+```
+
+If mode is `upgrade-continue` and imports were kept from Phase 8, display:
+
+```
+Track is upgraded and ready! You imported N tasks across M projects.
 
 To start working a task:
   1. Open a new workspace in Conductor
@@ -391,15 +530,45 @@ Use /track:create to add more tasks, or /track:decompose to break a goal
 into tasks. Your TODO.md has the full picture. Happy tracking!
 ```
 
-### Phase 10: Verify
+If mode is `upgrade-continue` and no imports were kept and onboarding files were
+created during this run, display:
 
-1. Run `bash scripts/track-validate.sh`
-2. Run `bash scripts/track-todo.sh --local --offline`
-3. Report what was created and any warnings
+```
+Track is upgraded and ready! No importable markdown was kept, so onboarding was
+created.
+
+To continue, open a new workspace in Conductor and start with task @1.1.
+Your TODO.md has the full picture. Happy tracking!
+```
+
+If mode is `upgrade-continue` and no imports were kept and onboarding already
+existed, display:
+
+```
+Track is upgraded and ready! No importable markdown was kept, and onboarding was
+already present.
+
+To continue, open a new workspace in Conductor and start with task @1.1.
+Your TODO.md has the full picture. Happy tracking!
+```
 
 ## Rules
 
-- Never overwrite existing files without asking
-- Always read scaffold files from `${CLAUDE_SKILL_DIR}/scaffold/` — do not hardcode content
+- Never overwrite existing files without asking unless this skill explicitly says
+  to refresh scaffolded installed files in `scripts/` or `.github/workflows/`
+- Always read scaffold files from `${CLAUDE_SKILL_DIR}/scaffold/` — do not
+  hardcode scaffold contents
 - Make all scripts executable after copying
-- The `.track/` directory must exist before running validation
+- Ensure `.track/` exists before running validation
+- Preserve existing user-authored Track content
+- Prefer repairing missing Track structure over duplicating it on reruns
+
+## Do Not Prematurely Conclude
+
+- Do not report success after upgrading scripts, workflows, or config alone
+- Do not say "no further action needed" before the active mode reaches Phase 10
+- Do not stop at the first local maximum because validation happens to pass after
+  Phase 7
+- Existing `.track/` state is not a reason to skip import or onboarding; it is
+  only a reason to avoid duplicating first-time scaffolding
+- If the user invoked `/track:init` and did not abort, complete the init flow
