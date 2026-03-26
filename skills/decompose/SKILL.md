@@ -115,9 +115,11 @@ Present a table to the user:
      - Correct dotted IDs with next available sequence numbers
      - Proper frontmatter with all required fields
      - `## Context`, `## Acceptance Criteria`, `## Notes` sections
-3. Run `bash .track/scripts/track-validate.sh` — fix any errors
-4. Run `bash .track/scripts/track-todo.sh --local --offline`
-5. Show the closing message
+3. Save the decomposition as a plan to `.track/plans/{project_id}-decomposition.md`
+   with frontmatter (`title`, `created`, `project_id`) and the breakdown as the body
+4. Run `bash .track/scripts/track-validate.sh` — fix any errors
+5. Run `bash .track/scripts/track-todo.sh --local --offline`
+6. Show the closing message
 
 ## Closing Message Matrix
 

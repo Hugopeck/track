@@ -14,6 +14,15 @@ Track is a git-native task coordination system. It has zero dependencies beyond 
     4.1-rewrite-existing-skills-for-pure-skill-pack.md
     4.2-create-coordination-skills.md
     ...
+  plans/           # short-lived plan documents (auto-expire after 7 days)
+    1.1-migration-plan.md
+    ...
+  scripts/         # bash enforcement scripts (managed by Track)
+    track-common.sh
+    track-validate.sh
+    track-todo.sh
+    track-pr-lint.sh
+    track-complete.sh
 ```
 
 Every task belongs to a project. The connection is a `project_id` field in the task's YAML frontmatter that matches the number prefix of a project brief filename.
@@ -86,6 +95,15 @@ Project briefs live in `projects/` and define scope for a group of tasks. See [`
 - No YAML frontmatter — just markdown with required sections
 - `0-archive.md` is reserved for legacy/archived work
 
+## Plans
+
+Plans are short-lived reference documents that capture decisions, approaches, and context from investigation or planning work. See [`plans/README.md`](plans/README.md) for the full contract. Key points:
+
+- Filename: `{slug}.md` or `{task_id}-{slug}.md` when linked to a task
+- Minimal YAML frontmatter (`title`, `created`, optional `task_id`/`project_id`) + freeform body
+- Auto-expire **7 days** after `created` date — validation deletes expired plans
+- The body is intentionally unstructured — paste whatever plan content you have
+
 ## Branching Convention
 
 Every task gets its own branch:
@@ -100,7 +118,7 @@ This naming convention is what connects a PR to a task. The scripts parse the br
 
 ## Scripts
 
-Four bash scripts in `scripts/` operate on Track state:
+Bash scripts in `scripts/` enforce Track conventions. See [`scripts/README.md`](scripts/README.md) for a quick reference. These are managed by Track — do not edit them directly.
 
 ### `track-common.sh` — Shared Library
 

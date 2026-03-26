@@ -110,6 +110,10 @@ Steps:
    `.track/projects/README.md`
 5. Ensure `.track/tasks/` exists
 6. If `.track/tasks/` is empty, create `.track/tasks/.gitkeep`
+7. Ensure `.track/plans/` exists
+8. If `.track/plans/README.md` does not exist, read
+   `${CLAUDE_SKILL_DIR}/scaffold/track/plans/README.md` and write it to
+   `.track/plans/README.md`
 
 ### Phase 3: Install scripts
 
@@ -294,8 +298,6 @@ If no projects or tasks were imported (nothing found or user chose `none`),
 onboarding is the fallback for both fresh installs and upgraded repos.
 
 #### Step 1 — Ensure onboarding project and tasks exist
-
-Ensure `.track/plans/` exists for plan files produced during onboarding.
 
 Before creating onboarding files, check whether these already exist:
 
