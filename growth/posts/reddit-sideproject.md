@@ -7,7 +7,7 @@
 
 ## Title
 
-I built an open-source alternative to project management tools, designed for AI agents
+I replaced my PM tool with a folder. AI agents get shit done, they don't need a Kanban board.
 
 ## Body
 
@@ -27,5 +27,7 @@ I built an open-source alternative to project management tools, designed for AI 
 - What would make you try it?
 
 GitHub: https://github.com/Hugopeck/track
+
+Stop managing. Start tracking. Get shit done.
 
 Building in public — happy to share everything about the journey.

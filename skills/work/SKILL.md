@@ -33,13 +33,16 @@ complete this lifecycle for one task.
 
 ## Operating Modes
 
-Track one of these modes for the entire run:
+Lock one of these modes at the start and do not switch mid-run:
 
 - `pick` — no task was specified, find the next available task
 - `resume` — a task was specified by the user or an active plan was found,
   continue existing work
 - `empty` — no open tasks exist (all `done`, `cancelled`, or `.track/tasks/`
   is empty)
+
+If `pick` discovers an in-progress task (existing branch or draft PR), that is a
+`resume` — acknowledge the switch explicitly in output before continuing.
 
 ## Definition of Done
 
@@ -134,7 +137,9 @@ You don't manually set `status: active` to show progress — opening a draft PR 
 
 ## Before Starting Work
 
-1. Read `TODO.md` or scan `.track/tasks/*.md` for available work
+1. Read `TODO.md` or scan `.track/tasks/*.md` for available work.
+   If `.track/tasks/` does not exist or is empty, set mode to `empty` and skip to
+   the closing message.
 2. Check for plans — scan `.track/plans/*.md` (excluding README.md). If any plan
    files exist:
    - Read them for context
@@ -146,8 +151,7 @@ You don't manually set `status: active` to show progress — opening a draft PR 
 6. If the task's mode is `investigate`, focus on understanding and documenting findings rather than writing code
 7. If the acceptance criteria seem incomplete or unclear, update them before starting implementation
 8. Use a dedicated worktree or branch per task
-9. If no open tasks exist (all tasks are `done` or `cancelled`, or `.track/tasks/` is
-   empty), set mode to `empty`
+9. If no open tasks exist (all tasks are `done` or `cancelled`), set mode to `empty`
 
 ## Working a Task (Provisional PR Lifecycle)
 
@@ -158,8 +162,13 @@ You don't manually set `status: active` to show progress — opening a draft PR 
 3. Push and open a **draft PR** immediately
    - PR title must include the task ID: `[{id}] Title` or `({id}) Title`
    - CI will lint the branch name and PR title
+   - If `gh pr create` fails (auth, network, permissions), STOP. Tell the user:
+     "Could not open draft PR: {error}. Fix the issue and retry — Track requires
+     a PR to track progress."
 4. Do the implementation work with as many commits as needed
 5. When ready for review:
+   - Verify each acceptance criterion is met — cite the file and line that
+     satisfies it, or flag as unverified. Do not claim "criteria met" without evidence.
    - set raw `status: review`
    - update `updated:`
    - mark the PR ready for review
@@ -187,6 +196,10 @@ Split a task when any of these are true:
 - The acceptance criteria have grown beyond the original scope
 - Two logically independent changes are bundled together
 
+Calibration — this is the split threshold: a task that touches `src/api/auth.ts`
+and `src/ui/dashboard.tsx` for the same feature is fine (cohesive). A task that
+fixes a deploy bug AND refactors the test harness should split (independent changes).
+
 To split: create new task(s) with proper `depends_on`, update the original task's acceptance criteria to reflect the reduced scope, and add a note explaining the split.
 
 ## Regenerating TODO.md
@@ -208,6 +221,10 @@ bash .track/scripts/track-validate.sh
 ```
 
 Always validate after creating or modifying tasks. Fix any errors before committing.
+
+If `track-validate.sh` is not found, STOP: "Validation script missing. Run
+`/track:init` to install it."
+If it exits non-zero, fix every error before continuing. Do not commit invalid state.
 
 ## Persisting Plans
 
@@ -270,3 +287,5 @@ a goal into tasks.
 - Do not report a task as started without opening a draft PR
 - Do not work a task whose `depends_on` has unresolved blockers
 - Do not report success before the active mode reaches its definition of done
+- Do not claim "acceptance criteria met" without citing the file and line for each criterion — verify or flag as unverified
+- Do not silently switch modes — if `pick` discovers a `resume` situation, state the switch explicitly

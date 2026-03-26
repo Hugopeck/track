@@ -33,7 +33,7 @@ task (that's `/track:work`).
 
 ## Operating Modes
 
-Track one of these modes for the entire run:
+Lock one of these modes at the start and do not switch mid-run:
 
 - `create-project` — user wants a new project brief only
 - `create-task` — user wants one or more tasks under an existing project
@@ -90,7 +90,9 @@ When the user wants to create a new project:
 
 When the user wants to create a task:
 
-1. Determine which project it belongs to (ask if ambiguous, or scan existing projects)
+1. Determine which project it belongs to (ask if ambiguous, or scan existing projects).
+   If no projects exist in `.track/projects/`, STOP: "No projects found. Create a
+   project first with `/track:create project: {name}` or use `/track:decompose`."
 2. Scan `.track/tasks/` to find the next sequence number for that project:
    - List all files matching `{project_id}.*-*.md`
    - Take the highest sequence number and add 1
@@ -98,7 +100,14 @@ When the user wants to create a task:
 3. Generate a slug from the task title (lowercase, hyphens, max 50 chars)
 4. Check for collisions — if a file with the same ID or slug already exists,
    pick the next available sequence number
-5. Create `.track/tasks/{project_id}.{sequence}-{slug}.md`:
+5. Before writing, show the extracted structure and confirm:
+   ```
+   Creating task {id}: {title}
+     mode: {mode} | priority: {priority} | project: {project_id}
+     depends_on: {deps} | files: {files}
+   Correct? (y/n)
+   ```
+6. Create `.track/tasks/{project_id}.{sequence}-{slug}.md`:
 
 ```yaml
 ---
@@ -125,21 +134,25 @@ pr: ""
 Created from: {brief summary of the user's request}
 ```
 
-6. Infer `mode` from the description:
+7. Infer `mode` from the description:
    - "investigate", "research", "explore", "decide" → `investigate`
    - "plan", "design", "architect" → `plan`
    - Everything else → `implement`
-7. Infer `priority` from the description:
+8. Infer `priority` from the description:
    - "urgent", "critical", "blocking" → `urgent`
    - "important", "high priority" → `high`
    - "nice to have", "low priority" → `low`
    - Default → `medium`
-8. Infer `files` from the description if specific paths or patterns are mentioned
-9. Infer `depends_on` if the user mentions tasks that must complete first
+9. Infer `files` from the description if specific paths or patterns are mentioned
+10. Infer `depends_on` if the user mentions tasks that must complete first
 
 ## After Creating
 
-1. Run `bash .track/scripts/track-validate.sh` — fix any errors
+1. Run `bash .track/scripts/track-validate.sh` — fix any errors.
+   If it exits non-zero, fix every error before continuing. Do not show the
+   closing message until validation passes.
+   If `track-validate.sh` is not found, STOP: "Validation script missing. Run
+   `/track:init` to install it."
 2. Run `bash .track/scripts/track-todo.sh --local --offline` — regenerate TODO.md
 3. Show the closing message
 
@@ -187,13 +200,15 @@ Created {N} tasks:
 `$ARGUMENTS` is the user's description of what they want to create. Parse it to
 extract the task/project title, context, priority, and any other details.
 
-If the description is vague (e.g., "fix the thing"), ask a clarifying question
-rather than guessing. A well-specified task saves more time than a fast-created one.
+Calibration — this is the vague/specific boundary:
+- BAD: `/track:create fix stuff` — too vague, ask what specifically needs fixing
+- BAD: `/track:create do the auth work` — what auth work? Ask.
+- GOOD: `/track:create Add rate limiting to the API` — specific enough to infer
+- GOOD: `/track:create project: Auth Rewrite — migrate from session tokens to JWTs`
+- GOOD: `/track:create high priority: Fix the broken deploy script, depends on 1.2`
 
-Examples:
-- `/track:create Add rate limiting to the API` → creates a task
-- `/track:create project: Auth Rewrite — migrate from session tokens to JWTs` → creates a project
-- `/track:create high priority: Fix the broken deploy script, depends on 1.2` → creates a high-priority task with dependency
+If the description is vague, ask a clarifying question rather than guessing. A
+well-specified task saves more time than a fast-created one.
 
 ## Do Not
 
@@ -202,3 +217,4 @@ Examples:
 - Do not overwrite existing task or project files without asking
 - Do not create tasks without a matching project brief
 - Do not skip collision checks on IDs and slugs
+- Do not write files without confirming the extracted structure first

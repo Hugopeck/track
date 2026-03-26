@@ -36,7 +36,7 @@ This skill does NOT own creating individual tasks outside a decomposition
 
 ## Operating Modes
 
-Track one of these modes for the entire run:
+Lock one of these modes at the start and do not switch mid-run:
 
 - `new-project` — the goal implies a new project; create a project brief and
   tasks together
@@ -72,6 +72,11 @@ Do not report success before validation passes.
 Do not skip this phase. Decomposition without codebase exploration produces
 tasks with wrong file scopes and missed dependencies.
 
+If exploration reveals the goal is too vague to decompose (no clear module
+boundaries, no obvious seams), STOP and ask the user to narrow the goal.
+If the goal maps to a single file or function, suggest `/track:create` instead —
+decomposition is for multi-task work.
+
 ### Phase 3: Propose task breakdown
 
 #### Collision avoidance
@@ -106,9 +111,37 @@ Present a table to the user:
 - Default to `medium` priority unless the user indicates otherwise
 - Ask clarifying questions if the goal is ambiguous enough that two reasonable engineers would decompose it differently
 
+#### Calibration — good vs. bad decomposition
+
+GOOD decomposition of "add user authentication":
+```
+| 1.1 | Add user model and migration     | implement | high | —   | src/models/** db/migrate/** |
+| 1.2 | Add login/signup API endpoints    | implement | high | 1.1 | src/api/auth/**             |
+| 1.3 | Add session middleware            | implement | high | 1.1 | src/middleware/**            |
+```
+Each task is independently mergeable, files don't overlap, dependencies are minimal.
+
+BAD decomposition of the same goal:
+```
+| 1.1 | Set up auth backend  | implement | high | — | src/** |
+| 1.2 | Set up auth frontend | implement | high | — | src/** |
+| 1.3 | Test auth            | implement | low  | 1.1, 1.2 | tests/** |
+```
+Overlapping `files:` scopes, vague titles, tests deferred to a separate task
+instead of shipped with each feature.
+
+#### Verification before presenting
+
+Before presenting the proposal, verify: every file in the codebase relevant to
+the goal maps to exactly one task's `files:` scope. If a file is orphaned (relevant
+but not covered), either add it to a task or explain why it's excluded.
+
 ### Phase 4: Confirm and create
 
-1. Wait for the user to confirm, modify, or reject the proposal
+1. Wait for the user to confirm, modify, or reject the proposal.
+   If the user rejects entirely, ask what they'd change. Do not silently
+   create files. If they want a fundamentally different approach, return to
+   Phase 2 with the new direction.
 2. Once confirmed, create all files:
    - If mode is `new-project`, create the project brief first
    - Create all task files using `/track:create` conventions:
@@ -117,7 +150,10 @@ Present a table to the user:
      - `## Context`, `## Acceptance Criteria`, `## Notes` sections
 3. Save the decomposition as a plan to `.track/plans/{project_id}-decomposition.md`
    with frontmatter (`title`, `created`, `project_id`) and the breakdown as the body
-4. Run `bash .track/scripts/track-validate.sh` — fix any errors
+4. Run `bash .track/scripts/track-validate.sh` — fix any errors.
+   If it exits non-zero, fix every error before continuing.
+   If `track-validate.sh` is not found, STOP: "Validation script missing. Run
+   `/track:init` to install it."
 5. Run `bash .track/scripts/track-todo.sh --local --offline`
 6. Show the closing message
 

@@ -7,7 +7,7 @@
 ---
 
 ## Title
-I built an open-source protocol that replaces project management tools with a folder
+I built an open-source protocol that replaces PM tools with a folder — get shit done with markdown + git
 
 ## Body
 

@@ -7,11 +7,9 @@
 
 ## Tweet 1 (Hook)
 
-Linear just launched AI agents and admitted issue tracking is dead.
+Project management tools don't help you get shit done. They help you talk about getting shit done.
 
-But they're still selling you a $16/seat tool.
-
-Here's the uncomfortable truth they can't say: project management tools ARE the problem.
+Linear just admitted issue tracking is dead — then launched another $16/seat tool.
 
 I built the replacement. It's a folder. 🧵
 
@@ -42,7 +40,7 @@ They need:
 
 ## Tweet 4
 
-So I built Track.
+So I built Track. A folder that helps you get shit done.
 
 It's not an app. It's a protocol.
 
@@ -101,7 +99,7 @@ Track is free, open source, and always will be (core).
 ⭐ Star it: https://github.com/Hugopeck/track
 💻 Install: `git clone https://github.com/Hugopeck/track.git ~/.claude/skills/track && ~/.claude/skills/track/setup`
 
-I'm building this in public. Follow along.
+Stop managing. Start tracking. Get shit done.
 
 What would you manage with just a folder?
 
