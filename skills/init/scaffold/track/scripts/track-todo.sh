@@ -158,11 +158,6 @@ load_open_prs() {
     return 0
   fi
 
-  if [[ -z "${GH_TOKEN:-${GITHUB_TOKEN:-}}" ]]; then
-    warn 'GH_TOKEN not set; falling back to offline mode'
-    return 0
-  fi
-
   if ! lines="$(gh pr list --state open --base "$DEFAULT_BRANCH" --json url,isDraft,headRefName,baseRefName,state --template '{{range .}}{{printf "%s\t%t\t%s\t%s\t%s\n" .url .isDraft .headRefName .baseRefName .state}}{{end}}' 2>/dev/null)"; then
     warn 'gh PR lookup failed; falling back to offline mode'
     return 0

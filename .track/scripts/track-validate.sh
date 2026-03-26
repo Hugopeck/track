@@ -221,11 +221,6 @@ validate_open_prs() {
     return
   fi
 
-  if [[ -z "${GH_TOKEN:-${GITHUB_TOKEN:-}}" ]]; then
-    print_warning 'GH_TOKEN not set; skipping live PR checks'
-    return
-  fi
-
   if ! git rev-parse --verify "origin/$DEFAULT_BRANCH" >/dev/null 2>&1; then
     print_warning "origin/$DEFAULT_BRANCH not available; skipping default-branch PR checks"
     return
@@ -291,7 +286,7 @@ validate_pull_request_context() {
     print_error "$task_file: task on implementation branch may not be '$TRACK_status' while PR is open. Set status to 'active' (draft PR) or 'review' (ready PR)"
   fi
 
-  if command -v gh >/dev/null 2>&1 && [[ -n "${GH_TOKEN:-${GITHUB_TOKEN:-}}" ]]; then
+  if command -v gh >/dev/null 2>&1; then
     pr_draft_state="$(gh pr list --head "$head_ref" --state open --json isDraft --template '{{range .}}{{printf "%t\n" .isDraft}}{{end}}' 2>/dev/null || true)"
     if [[ -n "$pr_draft_state" ]]; then
       if [[ "$pr_draft_state" == 'true' && "$TRACK_status" != 'active' ]]; then

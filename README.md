@@ -119,6 +119,8 @@ The `files` field is what makes multi-agent work possible — it tells every age
 todo  ──→  active (draft PR)  ──→  review (ready PR)  ──→  done (merged)
 ```
 
+`active` and `review` are derived from GitHub PR state, not local branches.
+
 ## Best with Conductor
 
 Track is designed to work with [Conductor](https://conductor.lol) — a Mac app that lets you run many Claude Code agents in parallel, each in its own git worktree.
@@ -162,7 +164,7 @@ Track's protocol is simple enough for any project: book writing, research, home 
 | **bash** 3.2+ | Yes | Runs the Track scripts. Already on macOS and Linux. |
 | **git** | Yes | Track stores everything in your git repo. |
 | **Claude Code** | For plugin features | Track is a Claude Code plugin. The bash scripts work standalone. |
-| **gh** (GitHub CLI) | Optional | Pulls live PR status into TODO.md. Without it, use `--offline` flags. |
+| **gh** (GitHub CLI) | Required | PR-based status detection. Install and run `gh auth login`. |
 
 ## Troubleshooting
 
@@ -170,7 +172,7 @@ Track's protocol is simple enough for any project: book writing, research, home 
 
 **TODO.md is stale?** Run `/track:todo` to regenerate. If you're offline: `bash .track/scripts/track-todo.sh --local --offline`
 
-**"gh not found" warnings?** That's fine — `gh` is optional. You lose live PR status in TODO.md but everything else works.
+**"gh not found" or PR status missing?** Install `gh` and run `gh auth login`, then retry.
 
 **Commands not showing up?** Reinstall the plugin or try `claude --plugin-dir ./path/to/track` to test locally.
 

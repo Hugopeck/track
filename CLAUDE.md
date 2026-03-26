@@ -201,4 +201,18 @@ The agent interpolates from the example better than from abstract criteria.
 
 ## Track — Task Coordination
 
-This repo uses Track to manage its own work. Projects and tasks live in `.track/`. See `/track:work` for the full protocol.
+This repo uses Track to manage its own work. Projects and tasks live in `.track/`.
+
+### Agent protocol (primary)
+
+1. Read `TODO.md` for current state. Pick a `todo` task or resume an `active` one.
+2. Check file scopes — do not touch files owned by another in-progress task.
+3. Open a **draft PR** to start work. No PR = not started.
+4. Implement. When ready, mark the PR ready for review.
+5. If `gh` auth fails or PR creation fails, **stop and surface the error.**
+
+`TODO.md` is generated — edit task files in `.track/tasks/`, not TODO.md directly.
+
+### Fallback
+
+`/track:work` contains the full protocol with edge cases. Use it when this section is insufficient.

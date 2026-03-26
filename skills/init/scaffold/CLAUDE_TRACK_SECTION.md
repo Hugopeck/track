@@ -56,14 +56,24 @@ Append-only log.
 - Otherwise, an open ready-for-review PR for `task/{id}-{slug}` makes the task effectively `review`
 - Otherwise, effective status is `todo`
 
-### Before Starting Work
-1. Read `TODO.md` or scan `.track/tasks/*.md`
-2. Check `files:` overlap against tasks already shown as `active` / `review`
-3. Pick work that has no unresolved `depends_on` blockers
-4. Read the task's `## Context` and `## Notes` — previous sessions may have left important context
-5. If the task's mode is `investigate` or `plan`, focus on understanding and documenting findings before writing implementation code
-6. If acceptance criteria seem incomplete, update them before starting
-7. Use a dedicated worktree or branch per task
+### Agent Protocol (primary)
+
+1. Read `TODO.md` for current state. Pick a `todo` task or resume an `active` one.
+2. Check `files:` overlap against tasks already shown as `active` / `review` — do not touch files owned by another in-progress task.
+3. Open a **draft PR** to start work. No PR = not started.
+4. Implement. When ready, mark the PR ready for review.
+5. If `gh` auth fails or PR creation fails, **stop and surface the error.**
+
+`TODO.md` is generated — edit task files in `.track/tasks/`, not TODO.md directly.
+
+`/track:work` contains the full protocol with edge cases. Use it when this section is insufficient.
+
+### Starting Work (details)
+1. Read the task's `## Context` and `## Notes` — previous sessions may have left important context
+2. Pick work that has no unresolved `depends_on` blockers
+3. If the task's mode is `investigate` or `plan`, focus on understanding and documenting findings before writing implementation code
+4. If acceptance criteria seem incomplete, update them before starting
+5. Use a dedicated worktree or branch per task
 
 ### Working a Task (Provisional PR lifecycle)
 1. Create branch `task/{id}-{slug}` from `main`

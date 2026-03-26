@@ -18,4 +18,4 @@ a script, change the canonical copy in the Track plugin and re-run init.
 
 - **bash** 3.2+ (macOS default)
 - **git**
-- **gh** (GitHub CLI, optional) �� for PR-aware features; falls back gracefully
+- **gh** (GitHub CLI) — required for PR-based status detection. Run `gh auth login` to authenticate.
