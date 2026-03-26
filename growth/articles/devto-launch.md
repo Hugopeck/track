@@ -1,4 +1,4 @@
-# I Replaced Linear with a Folder (and 600 Lines of Bash)
+# I Replaced Linear with a Folder (and 600 Lines of Bash) — Get Shit Done
 
 **Platform:** DEV.to (cross-post to personal blog)
 **Tags:** #opensource #ai #productivity #tutorial
@@ -123,6 +123,8 @@ git clone https://github.com/Hugopeck/track.git ~/.claude/skills/track && ~/.cla
 Then in any repo: `/track:init`
 
 GitHub: https://github.com/Hugopeck/track
+
+Stop managing. Start tracking. Get shit done.
 
 I'm building this in public and would love your feedback. What coordination problems do you hit with AI agents? What would you manage with just a folder?
 

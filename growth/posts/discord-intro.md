@@ -20,7 +20,7 @@ Works with Claude Code, Cursor, Codex, and Gemini CLI.
 
 GitHub: https://github.com/Hugopeck/track
 
-Would love feedback from anyone running multi-agent workflows. What coordination problems do you hit most?
+Less managing, more getting shit done. Would love feedback from anyone running multi-agent workflows — what coordination problems do you hit most?
 
 ---
 

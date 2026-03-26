@@ -34,12 +34,22 @@ diagnoses and prescribes; the user or another skill applies.
 
 ## Steps
 
-1. Run `bash .track/scripts/track-validate.sh`
+1. Run `bash .track/scripts/track-validate.sh`.
+   If the script is not found, STOP: "Validation script missing at
+   `.track/scripts/track-validate.sh`. Run `/track:init` to install it."
 2. If validation passes, show the closing message
 3. If validation fails, for each error:
    - Read the offending task or project file
-   - Explain what's wrong in plain language
-   - Suggest the specific fix (which field to change, what value to use)
+   - Explain what's wrong using this format:
+     ```
+     [ERROR] .track/tasks/1.3-foo.md: depends_on references "1.1" which has
+     status: cancelled. Fix: remove "1.1" from depends_on, or reopen task 1.1.
+     ```
+   - BAD error explanation: "There are some issues with the task file." —
+     too vague, name the exact field and the exact fix.
+   - GOOD error explanation: "task 1.3: `project_id` is `"2"` but no project
+     brief exists at `.track/projects/2-*.md`. Fix: create the project first
+     with `/track:create project: {name}`, or change `project_id` to `"1"`."
 4. After the user applies fixes, offer to re-run validation
 
 ## Interpreting Results
@@ -74,3 +84,5 @@ Re-run /track:validate after applying fixes.
 
 - Do not report success if validation failed
 - Do not skip reading the offending file before suggesting a fix
+- Do not give vague explanations — name the exact field, the exact problem, and the exact fix
+- Do not suggest a fix without reading the file first — the error message alone may not tell the full story

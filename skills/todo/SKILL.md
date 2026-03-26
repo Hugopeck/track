@@ -38,8 +38,14 @@ This skill does NOT own interpreting TODO.md content or acting on it.
    - If `gh` available and token set and remote reachable → full mode (no flags)
    - If remote reachable but no `gh` or token → `--offline`
    - If remote not reachable → `--local --offline`
-3. Run `bash .track/scripts/track-todo.sh {flags}`
-4. Show the closing message
+3. Run `bash .track/scripts/track-todo.sh {flags}`.
+   If the script is not found, STOP: "TODO script missing at
+   `.track/scripts/track-todo.sh`. Run `/track:init` to install it."
+   If it exits non-zero, show the error output and suggest: "Run `/track:validate`
+   to check for task file errors that may be blocking TODO generation."
+4. After running, verify `TODO.md` exists. If it is empty or missing, warn:
+   "TODO.md is empty — this usually means no tasks exist yet."
+5. Show the closing message
 
 If the user passes arguments (e.g., `/track:todo --local`), forward those flags
 directly instead of auto-detecting.

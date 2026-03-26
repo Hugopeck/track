@@ -28,22 +28,35 @@ When AI agents work on your codebase, they don't need a Kanban board. They need 
 | Data ownership | Their servers | Your repo |
 | Non-code projects | No | Yes — any folder, any project |
 
-## Quick start
+## Install — 30 seconds
 
-**Install:**
+Requirements: [Claude Code](https://claude.ai/code), Git, bash 3.2+
 
-```bash
-git clone https://github.com/Hugopeck/track.git ~/.claude/skills/track && ~/.claude/skills/track/setup
-```
+**Step 1: Install on your machine**
 
-Or: `claude plugin install hugopeck/track`
+Open a workspace in [Conductor](https://conductor.lol) and paste this prompt. Claude does the rest.
 
-**Set up Track in your repo:**
+> Install Track: run `git clone https://github.com/Hugopeck/track.git ~/.claude/skills/track && ~/.claude/skills/track/setup`, then run `/track:init` to set up Track in this repo.
+
+This is a **prompt**, not a bash command — paste it into a Conductor workspace, not your terminal.
+
+**Alternatives:**
+- Claude Code plugin registry: `claude plugin install hugopeck/track`
+- Manual: clone the repo to `~/.claude/skills/track` and run `./setup`
+
+**Step 2: Set up Track in your repo**
+
+If the install prompt above didn't already run init:
+
 ```
 > /track:init
 ```
 
 This creates `.track/`, adds bash scripts, and updates your `CLAUDE.md` so every agent knows the protocol. If it finds existing markdown TODOs or roadmaps, you can import them as Track tasks.
+
+That's it — you're tracking.
+
+## Quick start
 
 **Break a big goal into tasks:**
 ```
@@ -155,7 +168,7 @@ Track's protocol is simple enough for any project: book writing, research, home 
 
 **Validation fails?** Run `/track:validate` — it tells you exactly what's wrong and how to fix it.
 
-**TODO.md is stale?** Run `/track:todo` to regenerate. If you're offline: `bash scripts/track-todo.sh --local --offline`
+**TODO.md is stale?** Run `/track:todo` to regenerate. If you're offline: `bash .track/scripts/track-todo.sh --local --offline`
 
 **"gh not found" warnings?** That's fine — `gh` is optional. You lose live PR status in TODO.md but everything else works.
 
@@ -172,3 +185,7 @@ Track's protocol is simple enough for any project: book writing, research, home 
 ## License
 
 MIT
+
+---
+
+*A folder is all you need. Happy tracking.*
