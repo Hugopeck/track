@@ -46,8 +46,8 @@ Track one of these modes for the entire run:
 
 - User confirmed the breakdown
 - All files are written
-- `bash scripts/track-validate.sh` passes
-- `bash scripts/track-todo.sh --local --offline` regenerates TODO.md
+- `bash .track/scripts/track-validate.sh` passes
+- `bash .track/scripts/track-todo.sh --local --offline` regenerates TODO.md
 - The user sees what was created
 
 Do not report success before validation passes.
@@ -115,8 +115,8 @@ Present a table to the user:
      - Correct dotted IDs with next available sequence numbers
      - Proper frontmatter with all required fields
      - `## Context`, `## Acceptance Criteria`, `## Notes` sections
-3. Run `bash scripts/track-validate.sh` — fix any errors
-4. Run `bash scripts/track-todo.sh --local --offline`
+3. Run `bash .track/scripts/track-validate.sh` — fix any errors
+4. Run `bash .track/scripts/track-todo.sh --local --offline`
 5. Show the closing message
 
 ## Closing Message Matrix

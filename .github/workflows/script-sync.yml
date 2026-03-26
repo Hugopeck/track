@@ -7,17 +7,17 @@ on:
 
 jobs:
   check-script-sync:
-    name: Verify scripts/ matches scaffold/scripts/
+    name: Verify .track/scripts/ matches scaffold/track/scripts/
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Diff scripts/ against scaffold/scripts/
+      - name: Diff .track/scripts/ against scaffold/track/scripts/
         run: |
           drift=0
-          for script in scripts/track-*.sh scripts/track-common.sh; do
+          for script in .track/scripts/track-*.sh .track/scripts/track-common.sh; do
             name="$(basename "$script")"
-            scaffold="skills/init/scaffold/scripts/$name"
+            scaffold="skills/init/scaffold/track/scripts/$name"
             if [[ ! -f "$scaffold" ]]; then
               printf '::error::Missing scaffold copy: %s\n' "$scaffold"
               drift=1
@@ -29,10 +29,10 @@ jobs:
               drift=1
             fi
           done
-          # Check reverse: scaffold scripts missing from scripts/
-          for scaffold in skills/init/scaffold/scripts/track-*.sh skills/init/scaffold/scripts/track-common.sh; do
+          # Check reverse: scaffold scripts missing from .track/scripts/
+          for scaffold in skills/init/scaffold/track/scripts/track-*.sh skills/init/scaffold/track/scripts/track-common.sh; do
             name="$(basename "$scaffold")"
-            script="scripts/$name"
+            script=".track/scripts/$name"
             if [[ ! -f "$script" ]]; then
               printf '::error::Missing local copy: %s\n' "$script"
               drift=1
@@ -40,8 +40,8 @@ jobs:
           done
           if [[ $drift -eq 1 ]]; then
             printf '\nScripts have drifted. Changes must be mirrored in both:\n'
-            printf '  scripts/\n'
-            printf '  skills/init/scaffold/scripts/\n'
+            printf '  .track/scripts/\n'
+            printf '  skills/init/scaffold/track/scripts/\n'
             exit 1
           fi
           printf 'All scripts in sync.\n'

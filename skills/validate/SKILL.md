@@ -19,7 +19,7 @@ interpreting errors, guiding the user to fixes, and re-running until clean.
 
 ## What This Skill Owns
 
-1. Run `bash scripts/track-validate.sh`
+1. Run `bash .track/scripts/track-validate.sh`
 2. Interpret every error in plain language
 3. Suggest the exact fix for each error
 4. Offer to re-run after fixes are applied
@@ -34,7 +34,7 @@ diagnoses and prescribes; the user or another skill applies.
 
 ## Steps
 
-1. Run `bash scripts/track-validate.sh`
+1. Run `bash .track/scripts/track-validate.sh`
 2. If validation passes, show the closing message
 3. If validation fails, for each error:
    - Read the offending task or project file

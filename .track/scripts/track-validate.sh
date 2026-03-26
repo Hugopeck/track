@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 # shellcheck source=./track-common.sh
-source "$ROOT_DIR/scripts/track-common.sh"
+source "$ROOT_DIR/.track/scripts/track-common.sh"
 
 TASK_DIR="$ROOT_DIR/.track/tasks"
 PROJECT_DIR="$ROOT_DIR/.track/projects"

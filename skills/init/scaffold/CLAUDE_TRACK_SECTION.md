@@ -93,21 +93,21 @@ Append-only log.
 After creating, updating, cancelling, or completing tasks, regenerate the shared view:
 
 ```shell
-bash scripts/track-todo.sh
+bash .track/scripts/track-todo.sh
 ```
 
 Useful modes:
 
 ```shell
-bash scripts/track-todo.sh --local
-bash scripts/track-todo.sh --offline
+bash .track/scripts/track-todo.sh --local
+bash .track/scripts/track-todo.sh --offline
 ```
 
 ### Validation
 Run Track validation after changing task files, project briefs, or task lifecycle scripts:
 
 ```shell
-bash scripts/track-validate.sh
+bash .track/scripts/track-validate.sh
 ```
 
 ### Working Principles
@@ -117,4 +117,4 @@ bash scripts/track-validate.sh
 - **Check for conflicts before starting.** Scan active and review tasks for overlapping `files:` globs. Starting work on contested files creates merge conflicts.
 - **Scope aggressively.** If a task grows beyond its acceptance criteria, split the new work into a separate task rather than expanding the current one.
 - **Let the system track status.** Don't manually update status fields to show progress. Open a draft PR — Track knows you're active. Mark it ready for review — Track knows you're in review. The PR lifecycle is the status lifecycle.
-- **Validate early and often.** Run `bash scripts/track-validate.sh` after every task file change. Errors caught locally are cheap; errors caught in CI block the team.
+- **Validate early and often.** Run `bash .track/scripts/track-validate.sh` after every task file change. Errors caught locally are cheap; errors caught in CI block the team.

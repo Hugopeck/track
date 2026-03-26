@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 FIXTURE_DIR="$SCRIPT_DIR/fixtures"
-SCAFFOLD_SCRIPTS="$SCRIPT_DIR/../skills/init/scaffold/scripts"
+SCAFFOLD_SCRIPTS="$SCRIPT_DIR/../skills/init/scaffold/track/scripts"
 PASS=0
 FAIL=0
 
@@ -29,9 +29,9 @@ setup_valid_repo() {
   local tmp
   tmp="$(mktemp -d)"
   cp -r "$FIXTURE_DIR/.track" "$tmp/.track"
-  mkdir -p "$tmp/scripts"
-  cp "$SCAFFOLD_SCRIPTS"/track-common.sh "$tmp/scripts/"
-  cp "$SCAFFOLD_SCRIPTS"/track-validate.sh "$tmp/scripts/"
+  mkdir -p "$tmp/.track/scripts"
+  cp "$SCAFFOLD_SCRIPTS"/track-common.sh "$tmp/.track/scripts/"
+  cp "$SCAFFOLD_SCRIPTS"/track-validate.sh "$tmp/.track/scripts/"
   printf '%s' "$tmp"
 }
 
@@ -70,12 +70,12 @@ printf 'Running track-validate tests...\n'
 
 # Test 1: Valid fixtures pass validation
 repo="$(setup_valid_repo)"
-run_test "valid fixtures pass" 0 bash "$repo/scripts/track-validate.sh"
+run_test "valid fixtures pass" 0 bash "$repo/.track/scripts/track-validate.sh"
 rm -rf "$repo"
 
 # Test 2: Invalid status fails validation
 repo="$(setup_invalid_repo)"
-run_test "invalid status fails" 1 bash "$repo/scripts/track-validate.sh"
+run_test "invalid status fails" 1 bash "$repo/.track/scripts/track-validate.sh"
 rm -rf "$repo"
 
 printf '\nResults: %d passed, %d failed\n' "$PASS" "$FAIL"

@@ -42,8 +42,8 @@ Track one of these modes for the entire run:
 ## Definition of Done
 
 - All files are written
-- `bash scripts/track-validate.sh` passes
-- `bash scripts/track-todo.sh --local --offline` regenerates TODO.md
+- `bash .track/scripts/track-validate.sh` passes
+- `bash .track/scripts/track-todo.sh --local --offline` regenerates TODO.md
 - The user sees what was created (IDs, titles, file paths)
 
 Do not report success before validation passes.
@@ -139,8 +139,8 @@ Created from: {brief summary of the user's request}
 
 ## After Creating
 
-1. Run `bash scripts/track-validate.sh` — fix any errors
-2. Run `bash scripts/track-todo.sh --local --offline` — regenerate TODO.md
+1. Run `bash .track/scripts/track-validate.sh` — fix any errors
+2. Run `bash .track/scripts/track-todo.sh --local --offline` — regenerate TODO.md
 3. Show the closing message
 
 ## Closing Message Matrix

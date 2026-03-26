@@ -194,9 +194,9 @@ To split: create new task(s) with proper `depends_on`, update the original task'
 After creating, updating, cancelling, or completing tasks:
 
 ```shell
-bash scripts/track-todo.sh            # default: origin/main + live PR data
-bash scripts/track-todo.sh --local    # local working tree
-bash scripts/track-todo.sh --offline  # skip GitHub PR lookup
+bash .track/scripts/track-todo.sh            # default: origin/main + live PR data
+bash .track/scripts/track-todo.sh --local    # local working tree
+bash .track/scripts/track-todo.sh --offline  # skip GitHub PR lookup
 ```
 
 ## Validation
@@ -204,7 +204,7 @@ bash scripts/track-todo.sh --offline  # skip GitHub PR lookup
 After changing task files, project briefs, or scripts:
 
 ```shell
-bash scripts/track-validate.sh
+bash .track/scripts/track-validate.sh
 ```
 
 Always validate after creating or modifying tasks. Fix any errors before committing.

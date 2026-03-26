@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 # shellcheck source=./track-common.sh
-source "$ROOT_DIR/scripts/track-common.sh"
+source "$ROOT_DIR/.track/scripts/track-common.sh"
 
 DEFAULT_BRANCH="${TRACK_DEFAULT_BRANCH:-main}"
 MODE='shared'
@@ -37,7 +37,7 @@ OPEN_PR_STATUSES=()
 
 usage() {
   cat <<'USAGE'
-Usage: bash scripts/track-todo.sh [--local] [--offline] [--output PATH]
+Usage: bash .track/scripts/track-todo.sh [--local] [--offline] [--output PATH]
 
 Default mode reads `.track/` from `origin/main` and overlays live open PR metadata via `gh`.
 USAGE

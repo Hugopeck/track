@@ -10,7 +10,7 @@ set -euo pipefail
 #   3. The slug in the branch must match the task file slug
 #   4. The PR title must start with the task ID in parentheses or brackets
 
-ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 TASK_DIR="$ROOT_DIR/.track/tasks"
 EXIT_CODE=0
 

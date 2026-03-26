@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 FIXTURE_DIR="$SCRIPT_DIR/fixtures"
-SCAFFOLD_SCRIPTS="$SCRIPT_DIR/../skills/init/scaffold/scripts"
+SCAFFOLD_SCRIPTS="$SCRIPT_DIR/../skills/init/scaffold/track/scripts"
 PASS=0
 FAIL=0
 
@@ -42,9 +42,9 @@ setup_repo() {
   local tmp
   tmp="$(mktemp -d)"
   cp -r "$FIXTURE_DIR/.track" "$tmp/.track"
-  mkdir -p "$tmp/scripts"
-  cp "$SCAFFOLD_SCRIPTS"/track-common.sh "$tmp/scripts/"
-  cp "$SCAFFOLD_SCRIPTS"/track-validate.sh "$tmp/scripts/"
+  mkdir -p "$tmp/.track/scripts"
+  cp "$SCAFFOLD_SCRIPTS"/track-common.sh "$tmp/.track/scripts/"
+  cp "$SCAFFOLD_SCRIPTS"/track-validate.sh "$tmp/.track/scripts/"
   printf '%s' "$tmp"
 }
 
@@ -89,8 +89,8 @@ pr: \"\"
 ---
 ${TASK_TEMPLATE_BODY}"
 stderr_file="$(mktemp)"
-bash "$repo/scripts/track-validate.sh" 2>"$stderr_file" || true
-run_test "active task with non-done dep fails" 1 bash "$repo/scripts/track-validate.sh"
+bash "$repo/.track/scripts/track-validate.sh" 2>"$stderr_file" || true
+run_test "active task with non-done dep fails" 1 bash "$repo/.track/scripts/track-validate.sh"
 check_stderr_contains "error mentions active/review depends on todo" "active/review task depends on" "$stderr_file"
 rm -f "$stderr_file"
 rm -rf "$repo"
@@ -112,7 +112,7 @@ files: []
 pr: \"\"
 ---
 ${TASK_TEMPLATE_BODY}"
-run_test "review task with non-done dep fails" 1 bash "$repo/scripts/track-validate.sh"
+run_test "review task with non-done dep fails" 1 bash "$repo/.track/scripts/track-validate.sh"
 rm -rf "$repo"
 
 # Active task depending on done dependency → pass
@@ -132,7 +132,7 @@ files: []
 pr: \"\"
 ---
 ${TASK_TEMPLATE_BODY}"
-run_test "active task with done dep passes" 0 bash "$repo/scripts/track-validate.sh"
+run_test "active task with done dep passes" 0 bash "$repo/.track/scripts/track-validate.sh"
 rm -rf "$repo"
 
 # Dependency on missing task → fail
@@ -153,8 +153,8 @@ pr: \"\"
 ---
 ${TASK_TEMPLATE_BODY}"
 stderr_file="$(mktemp)"
-bash "$repo/scripts/track-validate.sh" 2>"$stderr_file" || true
-run_test "dependency on missing task fails" 1 bash "$repo/scripts/track-validate.sh"
+bash "$repo/.track/scripts/track-validate.sh" 2>"$stderr_file" || true
+run_test "dependency on missing task fails" 1 bash "$repo/.track/scripts/track-validate.sh"
 check_stderr_contains "error mentions missing task" "missing task" "$stderr_file"
 rm -f "$stderr_file"
 rm -rf "$repo"
@@ -177,8 +177,8 @@ pr: \"\"
 ---
 ${TASK_TEMPLATE_BODY}"
 stderr_file="$(mktemp)"
-bash "$repo/scripts/track-validate.sh" 2>"$stderr_file" || true
-run_test "self-dependency fails" 1 bash "$repo/scripts/track-validate.sh"
+bash "$repo/.track/scripts/track-validate.sh" 2>"$stderr_file" || true
+run_test "self-dependency fails" 1 bash "$repo/.track/scripts/track-validate.sh"
 check_stderr_contains "error mentions self-reference" "may not reference task itself" "$stderr_file"
 rm -f "$stderr_file"
 rm -rf "$repo"
@@ -200,7 +200,7 @@ files: []
 pr: \"\"
 ---
 ${TASK_TEMPLATE_BODY}"
-run_test "todo task with non-done dep passes" 0 bash "$repo/scripts/track-validate.sh"
+run_test "todo task with non-done dep passes" 0 bash "$repo/.track/scripts/track-validate.sh"
 rm -rf "$repo"
 
 # ─── Duplicate IDs ───────────────────────────────────────────────────
@@ -223,8 +223,8 @@ pr: \"\"
 ---
 ${TASK_TEMPLATE_BODY}"
 stderr_file="$(mktemp)"
-bash "$repo/scripts/track-validate.sh" 2>"$stderr_file" || true
-run_test "duplicate task ID fails" 1 bash "$repo/scripts/track-validate.sh"
+bash "$repo/.track/scripts/track-validate.sh" 2>"$stderr_file" || true
+run_test "duplicate task ID fails" 1 bash "$repo/.track/scripts/track-validate.sh"
 check_stderr_contains "error mentions duplicate" "duplicate task id" "$stderr_file"
 rm -f "$stderr_file"
 rm -rf "$repo"
@@ -256,7 +256,7 @@ files: []
 pr: \"\"
 ---
 ${TASK_TEMPLATE_BODY}"
-run_test "valid legacy ID (done, project 0) passes" 0 bash "$repo/scripts/track-validate.sh"
+run_test "valid legacy ID (done, project 0) passes" 0 bash "$repo/.track/scripts/track-validate.sh"
 rm -rf "$repo"
 
 # Legacy ID that's not done → fail
@@ -282,8 +282,8 @@ pr: \"\"
 ---
 ${TASK_TEMPLATE_BODY}"
 stderr_file="$(mktemp)"
-bash "$repo/scripts/track-validate.sh" 2>"$stderr_file" || true
-run_test "legacy ID with non-terminal status fails" 1 bash "$repo/scripts/track-validate.sh"
+bash "$repo/.track/scripts/track-validate.sh" 2>"$stderr_file" || true
+run_test "legacy ID with non-terminal status fails" 1 bash "$repo/.track/scripts/track-validate.sh"
 check_stderr_contains "error mentions legacy" "legacy numeric task ids" "$stderr_file"
 rm -f "$stderr_file"
 rm -rf "$repo"
@@ -305,8 +305,8 @@ pr: \"\"
 ---
 ${TASK_TEMPLATE_BODY}"
 stderr_file="$(mktemp)"
-bash "$repo/scripts/track-validate.sh" 2>"$stderr_file" || true
-run_test "legacy ID with non-zero project fails" 1 bash "$repo/scripts/track-validate.sh"
+bash "$repo/.track/scripts/track-validate.sh" 2>"$stderr_file" || true
+run_test "legacy ID with non-zero project fails" 1 bash "$repo/.track/scripts/track-validate.sh"
 check_stderr_contains "error mentions project_id 0" "must use project_id" "$stderr_file"
 rm -f "$stderr_file"
 rm -rf "$repo"
@@ -332,8 +332,8 @@ pr: \"\"
 ---
 ${TASK_TEMPLATE_BODY}"
 stderr_file="$(mktemp)"
-bash "$repo/scripts/track-validate.sh" 2>"$stderr_file" || true
-run_test "cancelled without reason fails" 1 bash "$repo/scripts/track-validate.sh"
+bash "$repo/.track/scripts/track-validate.sh" 2>"$stderr_file" || true
+run_test "cancelled without reason fails" 1 bash "$repo/.track/scripts/track-validate.sh"
 check_stderr_contains "error mentions cancelled_reason" "cancelled_reason" "$stderr_file"
 rm -f "$stderr_file"
 rm -rf "$repo"
@@ -355,7 +355,7 @@ pr: \"\"
 cancelled_reason: \"No longer needed\"
 ---
 ${TASK_TEMPLATE_BODY}"
-run_test "cancelled with reason passes" 0 bash "$repo/scripts/track-validate.sh"
+run_test "cancelled with reason passes" 0 bash "$repo/.track/scripts/track-validate.sh"
 rm -rf "$repo"
 
 # ─── Dotted ID / project_id mismatch ────────────────────────────────
@@ -378,8 +378,8 @@ pr: \"\"
 ---
 ${TASK_TEMPLATE_BODY}"
 stderr_file="$(mktemp)"
-bash "$repo/scripts/track-validate.sh" 2>"$stderr_file" || true
-run_test "dotted ID mismatching project_id fails" 1 bash "$repo/scripts/track-validate.sh"
+bash "$repo/.track/scripts/track-validate.sh" 2>"$stderr_file" || true
+run_test "dotted ID mismatching project_id fails" 1 bash "$repo/.track/scripts/track-validate.sh"
 check_stderr_contains "error mentions dotted id mismatch" "dotted id" "$stderr_file"
 rm -f "$stderr_file"
 rm -rf "$repo"
@@ -405,8 +405,8 @@ pr: \"\"
 
 Some content without proper sections."
 stderr_file="$(mktemp)"
-bash "$repo/scripts/track-validate.sh" 2>"$stderr_file" || true
-run_test "missing required sections fails" 1 bash "$repo/scripts/track-validate.sh"
+bash "$repo/.track/scripts/track-validate.sh" 2>"$stderr_file" || true
+run_test "missing required sections fails" 1 bash "$repo/.track/scripts/track-validate.sh"
 check_stderr_contains "error mentions missing section" "missing required section" "$stderr_file"
 rm -f "$stderr_file"
 rm -rf "$repo"
@@ -431,8 +431,8 @@ pr: \"\"
 ---
 ${TASK_TEMPLATE_BODY}"
 stderr_file="$(mktemp)"
-bash "$repo/scripts/track-validate.sh" 2>"$stderr_file" || true
-run_test "unknown project_id fails" 1 bash "$repo/scripts/track-validate.sh"
+bash "$repo/.track/scripts/track-validate.sh" 2>"$stderr_file" || true
+run_test "unknown project_id fails" 1 bash "$repo/.track/scripts/track-validate.sh"
 check_stderr_contains "error mentions unknown project" "unknown project_id" "$stderr_file"
 rm -f "$stderr_file"
 rm -rf "$repo"
@@ -457,7 +457,7 @@ files: []
 pr: \"\"
 ---
 ${TASK_TEMPLATE_BODY}"
-run_test "invalid mode fails" 1 bash "$repo/scripts/track-validate.sh"
+run_test "invalid mode fails" 1 bash "$repo/.track/scripts/track-validate.sh"
 rm -rf "$repo"
 
 # Invalid priority
@@ -476,7 +476,7 @@ files: []
 pr: \"\"
 ---
 ${TASK_TEMPLATE_BODY}"
-run_test "invalid priority fails" 1 bash "$repo/scripts/track-validate.sh"
+run_test "invalid priority fails" 1 bash "$repo/.track/scripts/track-validate.sh"
 rm -rf "$repo"
 
 printf '\n── Results ──\n'
