@@ -135,11 +135,11 @@ You don't manually set `status: active` to show progress — opening a draft PR 
 ## Before Starting Work
 
 1. Read `TODO.md` or scan `.track/tasks/*.md` for available work
-2. Check for active plans — scan `.track/plans/*.md` for plan files. If a plan exists
-   with `Status: approved` and its linked tasks are not all `done`:
-   - Read the plan file
-   - Tell the user: "Found an active plan: {title}. The next task is {task_id}: {title}."
-   - Suggest working that task
+2. Check for plans — scan `.track/plans/*.md` (excluding README.md). If any plan
+   files exist:
+   - Read them for context
+   - If a plan has a `task_id` in its frontmatter, suggest working that task
+   - Tell the user: "Found plan: {title}. Linked to task {task_id}."
 3. Check `files:` globs against tasks already shown as `active` / `review` — avoid overlap
 4. Pick work that has no unresolved `depends_on` blockers
 5. Read the task's `## Context` and `## Notes` — previous sessions may have left important context
@@ -194,9 +194,9 @@ To split: create new task(s) with proper `depends_on`, update the original task'
 After creating, updating, cancelling, or completing tasks:
 
 ```shell
-bash scripts/track-todo.sh            # default: origin/main + live PR data
-bash scripts/track-todo.sh --local    # local working tree
-bash scripts/track-todo.sh --offline  # skip GitHub PR lookup
+bash .track/scripts/track-todo.sh            # default: origin/main + live PR data
+bash .track/scripts/track-todo.sh --local    # local working tree
+bash .track/scripts/track-todo.sh --offline  # skip GitHub PR lookup
 ```
 
 ## Validation
@@ -204,10 +204,25 @@ bash scripts/track-todo.sh --offline  # skip GitHub PR lookup
 After changing task files, project briefs, or scripts:
 
 ```shell
-bash scripts/track-validate.sh
+bash .track/scripts/track-validate.sh
 ```
 
 Always validate after creating or modifying tasks. Fix any errors before committing.
+
+## Persisting Plans
+
+When any planning, investigation, or design work produces a plan during a task,
+**automatically save it** to `.track/plans/` before the session ends. Do not wait
+for the user to ask — persistence is the default.
+
+1. Choose a filename: `{task_id}-{slug}.md` if working a task, or `{slug}.md` otherwise
+2. Add YAML frontmatter with `title`, `created` (today's date), and `task_id`/`project_id`
+   if applicable
+3. Paste the plan content as the body — no reformatting needed
+4. Commit the plan file alongside other work
+
+Plans auto-expire after 7 days. If a plan should live longer, the user can update
+its `created` date.
 
 ## Overlap Detection
 

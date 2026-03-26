@@ -14,4 +14,4 @@ jobs:
         env:
           GITHUB_HEAD_REF: ${{ github.head_ref }}
           PR_TITLE: ${{ github.event.pull_request.title }}
-        run: bash scripts/track-pr-lint.sh
+        run: bash .track/scripts/track-pr-lint.sh

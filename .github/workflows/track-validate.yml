@@ -17,4 +17,4 @@ jobs:
           fetch-depth: 0
 
       - name: Validate Track state
-        run: bash scripts/track-validate.sh
+        run: bash .track/scripts/track-validate.sh

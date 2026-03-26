@@ -14,6 +14,15 @@ Track is a git-native task coordination system. It has zero dependencies beyond 
     4.1-rewrite-existing-skills-for-pure-skill-pack.md
     4.2-create-coordination-skills.md
     ...
+  plans/           # short-lived plan documents (auto-expire after 7 days)
+    1.1-migration-plan.md
+    ...
+  scripts/         # bash enforcement scripts (managed by Track)
+    track-common.sh
+    track-validate.sh
+    track-todo.sh
+    track-pr-lint.sh
+    track-complete.sh
 ```
 
 Every task belongs to a project. The connection is a `project_id` field in the task's YAML frontmatter that matches the number prefix of a project brief filename.
@@ -86,6 +95,15 @@ Project briefs live in `projects/` and define scope for a group of tasks. See [`
 - No YAML frontmatter — just markdown with required sections
 - `0-archive.md` is reserved for legacy/archived work
 
+## Plans
+
+Plans are short-lived reference documents that capture decisions, approaches, and context from investigation or planning work. See [`plans/README.md`](plans/README.md) for the full contract. Key points:
+
+- Filename: `{slug}.md` or `{task_id}-{slug}.md` when linked to a task
+- Minimal YAML frontmatter (`title`, `created`, optional `task_id`/`project_id`) + freeform body
+- Auto-expire **7 days** after `created` date — validation deletes expired plans
+- The body is intentionally unstructured — paste whatever plan content you have
+
 ## Branching Convention
 
 Every task gets its own branch:
@@ -100,7 +118,7 @@ This naming convention is what connects a PR to a task. The scripts parse the br
 
 ## Scripts
 
-Four bash scripts in `scripts/` operate on Track state:
+Bash scripts in `scripts/` enforce Track conventions. See [`scripts/README.md`](scripts/README.md) for a quick reference. These are managed by Track — do not edit them directly.
 
 ### `track-common.sh` — Shared Library
 
@@ -116,10 +134,10 @@ Not meant to be run directly. Contains helper functions used by the other three 
 Reads all projects and tasks, queries GitHub for open PRs, and writes a sorted markdown summary to `TODO.md`.
 
 ```bash
-bash scripts/track-todo.sh            # default: reads from origin/main + live PR data
-bash scripts/track-todo.sh --local    # reads from your local working tree instead
-bash scripts/track-todo.sh --offline  # skips GitHub PR lookup
-bash scripts/track-todo.sh --output path/to/file.md
+bash .track/scripts/track-todo.sh            # default: reads from origin/main + live PR data
+bash .track/scripts/track-todo.sh --local    # reads from your local working tree instead
+bash .track/scripts/track-todo.sh --offline  # skips GitHub PR lookup
+bash .track/scripts/track-todo.sh --output path/to/file.md
 ```
 
 `TODO.md` is gitignored — it's a convenience view, not canonical state.
@@ -139,7 +157,7 @@ Checks every task file for structural correctness:
 - In CI pull request context: validates branch name matches task, draft state matches raw status
 
 ```bash
-bash scripts/track-validate.sh
+bash .track/scripts/track-validate.sh
 ```
 
 Runs in CI on every push and PR.
@@ -158,7 +176,7 @@ Non-task branches are ignored — the check passes automatically.
 
 ```bash
 # Usually run by CI, but you can test locally:
-GITHUB_HEAD_REF="task/4.1-rewrite-skills" PR_TITLE="[4.1] Rewrite skills" bash scripts/track-pr-lint.sh
+GITHUB_HEAD_REF="task/4.1-rewrite-skills" PR_TITLE="[4.1] Rewrite skills" bash .track/scripts/track-pr-lint.sh
 ```
 
 ### `track-complete.sh` — Post-Merge Completion
@@ -170,7 +188,7 @@ Called by the GitHub Actions workflow after a task branch merges into `main`. It
 3. Sets `status: done`, updates `updated:`, and writes the `pr:` URL
 
 ```bash
-bash scripts/track-complete.sh "task/4.1-rewrite-skills" "https://github.com/org/repo/pull/42"
+bash .track/scripts/track-complete.sh "task/4.1-rewrite-skills" "https://github.com/org/repo/pull/42"
 ```
 
 You never run this manually — the `.github/workflows/track-complete.yml` workflow calls it.

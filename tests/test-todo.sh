@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 FIXTURE_DIR="$SCRIPT_DIR/fixtures"
-SCAFFOLD_SCRIPTS="$SCRIPT_DIR/../skills/init/scaffold/scripts"
+SCAFFOLD_SCRIPTS="$SCRIPT_DIR/../skills/init/scaffold/track/scripts"
 PASS=0
 FAIL=0
 
@@ -42,9 +42,9 @@ setup_repo() {
   local tmp
   tmp="$(mktemp -d)"
   cp -r "$FIXTURE_DIR/.track" "$tmp/.track"
-  mkdir -p "$tmp/scripts"
-  cp "$SCAFFOLD_SCRIPTS"/track-common.sh "$tmp/scripts/"
-  cp "$SCAFFOLD_SCRIPTS"/track-todo.sh "$tmp/scripts/"
+  mkdir -p "$tmp/.track/scripts"
+  cp "$SCAFFOLD_SCRIPTS"/track-common.sh "$tmp/.track/scripts/"
+  cp "$SCAFFOLD_SCRIPTS"/track-todo.sh "$tmp/.track/scripts/"
   # Initialize a git repo so track-todo.sh doesn't fail on git commands
   (cd "$tmp" && git init -q && git add -A && git commit -q -m "init" 2>/dev/null) || true
   printf '%s' "$tmp"
@@ -54,7 +54,7 @@ printf 'Running track-todo tests...\n'
 
 # Test 1: TODO generation succeeds in local+offline mode
 repo="$(setup_repo)"
-run_test "local+offline generates TODO.md" 0 bash "$repo/scripts/track-todo.sh" --local --offline --output "$repo/TODO.md"
+run_test "local+offline generates TODO.md" 0 bash "$repo/.track/scripts/track-todo.sh" --local --offline --output "$repo/TODO.md"
 
 # Test 2: Output contains expected content
 if [[ -f "$repo/TODO.md" ]]; then

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 # shellcheck source=./track-common.sh
-source "$ROOT_DIR/scripts/track-common.sh"
+source "$ROOT_DIR/.track/scripts/track-common.sh"
 
 TASK_DIR="$ROOT_DIR/.track/tasks"
 PROJECT_DIR="$ROOT_DIR/.track/projects"
@@ -304,11 +304,49 @@ validate_pull_request_context() {
   fi
 }
 
+cleanup_expired_plans() {
+  local plans_dir="$ROOT_DIR/.track/plans"
+  [[ -d "$plans_dir" ]] || return 0
+  local today_epoch plan_file created_str created_epoch age_days
+  today_epoch="$(date -u +%s)"
+  while IFS= read -r plan_file; do
+    [[ -z "$plan_file" ]] && continue
+    created_str="$(awk '/^created:/ { sub(/^created:[[:space:]]*/, ""); gsub(/["'"'"']/, ""); print; exit }' "$plan_file")"
+    if [[ -z "$created_str" ]]; then
+      print_warning "$(basename "$plan_file"): plan missing 'created' field — cannot auto-expire"
+      continue
+    fi
+    created_epoch="$(date -u -j -f "%Y-%m-%d" "$created_str" +%s 2>/dev/null || date -u -d "$created_str" +%s 2>/dev/null)" || continue
+    age_days=$(( (today_epoch - created_epoch) / 86400 ))
+    if [[ $age_days -ge 7 ]]; then
+      printf 'Expired plan removed: %s (created %s, %d days ago)\n' "$(basename "$plan_file")" "$created_str" "$age_days"
+      rm -f "$plan_file"
+    fi
+  done < <(find "$plans_dir" -maxdepth 1 -type f -name '*.md' ! -name 'README.md' 2>/dev/null)
+}
+
+validate_plans() {
+  local plans_dir="$ROOT_DIR/.track/plans"
+  [[ -d "$plans_dir" ]] || return 0
+  local plan_file task_id
+  while IFS= read -r plan_file; do
+    [[ -z "$plan_file" ]] && continue
+    task_id="$(awk '/^task_id:/ { sub(/^task_id:[[:space:]]*/, ""); gsub(/["'"'"']/, ""); print; exit }' "$plan_file")"
+    if [[ -n "$task_id" && "$task_id" != '""' ]]; then
+      if ! find_task_index_by_id "$task_id" >/dev/null 2>&1; then
+        print_warning "$(basename "$plan_file"): references task_id '$task_id' which does not exist"
+      fi
+    fi
+  done < <(find "$plans_dir" -maxdepth 1 -type f -name '*.md' ! -name 'README.md' 2>/dev/null)
+}
+
 main() {
   if [[ ! -d "$TASK_DIR" ]]; then
     print_error '.track/tasks directory not found. Run /track:init to scaffold Track, or create .track/tasks/ manually'
     exit "$EXIT_CODE"
   fi
+
+  cleanup_expired_plans
 
   collect_project_ids
 
@@ -319,6 +357,7 @@ main() {
 
   validate_duplicate_ids
   validate_dependencies
+  validate_plans
   validate_open_prs
 
   if [[ "${GITHUB_EVENT_NAME:-}" == 'pull_request' ]]; then

@@ -7,6 +7,8 @@ Projects and tasks live in `.track/`. `TODO.md` is the generated shared view of 
 ### Layout
 - `.track/projects/{project_id}-{slug}.md` — project briefs
 - `.track/tasks/{task_id}-{slug}.md` — flat task files
+- `.track/plans/{slug}.md` — short-lived plan documents (auto-expire after 7 days)
+- `.track/scripts/` — bash enforcement scripts (managed by Track)
 - `TODO.md` — generated view; gitignored and never canonical
 
 ### Task Format
@@ -89,25 +91,32 @@ Append-only log.
 - Use `depends_on` to sequence foundation work before integration work
 - Prefer small reviewable PRs over multi-goal tasks
 
+### Saving Plans
+When any planning, investigation, or design work produces a plan, **automatically save it** to `.track/plans/`. Do not wait for the user to ask — persistence is the default.
+- Filename: `{task_id}-{slug}.md` when linked to a task, or `{slug}.md` otherwise
+- Add YAML frontmatter with `title`, `created` (today's date), and optionally `task_id`/`project_id`
+- The body is freeform — paste the plan content as-is, no reformatting needed
+- Plans auto-expire 7 days after `created`; update the date to keep one longer
+
 ### Regenerating `TODO.md`
 After creating, updating, cancelling, or completing tasks, regenerate the shared view:
 
 ```shell
-bash scripts/track-todo.sh
+bash .track/scripts/track-todo.sh
 ```
 
 Useful modes:
 
 ```shell
-bash scripts/track-todo.sh --local
-bash scripts/track-todo.sh --offline
+bash .track/scripts/track-todo.sh --local
+bash .track/scripts/track-todo.sh --offline
 ```
 
 ### Validation
 Run Track validation after changing task files, project briefs, or task lifecycle scripts:
 
 ```shell
-bash scripts/track-validate.sh
+bash .track/scripts/track-validate.sh
 ```
 
 ### Working Principles
@@ -117,4 +126,4 @@ bash scripts/track-validate.sh
 - **Check for conflicts before starting.** Scan active and review tasks for overlapping `files:` globs. Starting work on contested files creates merge conflicts.
 - **Scope aggressively.** If a task grows beyond its acceptance criteria, split the new work into a separate task rather than expanding the current one.
 - **Let the system track status.** Don't manually update status fields to show progress. Open a draft PR — Track knows you're active. Mark it ready for review — Track knows you're in review. The PR lifecycle is the status lifecycle.
-- **Validate early and often.** Run `bash scripts/track-validate.sh` after every task file change. Errors caught locally are cheap; errors caught in CI block the team.
+- **Validate early and often.** Run `bash .track/scripts/track-validate.sh` after every task file change. Errors caught locally are cheap; errors caught in CI block the team.

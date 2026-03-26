@@ -87,7 +87,7 @@ Do not report success before the active mode reaches Phase 10.
      - Continue immediately to Phase 3, then automatically continue through the
        rest of the flow
    - If the user chooses **Abort**, stop
-4. Check if `scripts/track-common.sh` exists — warn if other Track scripts exist
+4. Check if `.track/scripts/track-common.sh` exists — warn if other Track scripts exist
    without `.track/`
 
 ### Phase 2: Create or repair `.track/` directory structure
@@ -110,13 +110,17 @@ Steps:
    `.track/projects/README.md`
 5. Ensure `.track/tasks/` exists
 6. If `.track/tasks/` is empty, create `.track/tasks/.gitkeep`
+7. Ensure `.track/plans/` exists
+8. If `.track/plans/README.md` does not exist, read
+   `${CLAUDE_SKILL_DIR}/scaffold/track/plans/README.md` and write it to
+   `.track/plans/README.md`
 
 ### Phase 3: Install scripts
 
-1. Ensure `scripts/` exists
-2. For each script in `${CLAUDE_SKILL_DIR}/scaffold/scripts/`:
+1. Ensure `.track/scripts/` exists
+2. For each script in `${CLAUDE_SKILL_DIR}/scaffold/track/scripts/`:
    - Read the scaffold version
-   - Write to `scripts/{filename}`
+   - Write to `.track/scripts/{filename}`
    - Make executable with `chmod +x`
 3. Scripts to install:
    - `track-common.sh`
@@ -242,7 +246,7 @@ content so you can avoid collisions.
 
 #### Phase 8d: Generate preview and present selection
 
-1. Run `bash scripts/track-todo.sh --local --offline`
+1. Run `bash .track/scripts/track-todo.sh --local --offline`
 2. Read the generated `TODO.md` and display it to the user
 3. Below the TODO.md preview, present a numbered selection list. Number each
    discovered item sequentially (projects first, then tasks grouped under their
@@ -278,8 +282,8 @@ Which items do you want to import into Track?
   init run; delete a candidate project brief created during this run only if all
   of its tasks were also unselected
 - If any imported candidate files remain after cleanup:
-  1. Re-run `bash scripts/track-validate.sh` and fix any errors
-  2. Re-run `bash scripts/track-todo.sh --local --offline`
+  1. Re-run `bash .track/scripts/track-validate.sh` and fix any errors
+  2. Re-run `bash .track/scripts/track-todo.sh --local --offline`
   3. Record the result as: "Imported N tasks across M projects."
   4. Continue to Phase 10 after skipping Phase 9 onboarding creation
 - If no imported candidate files remain, report: "Skipped import." and continue
@@ -294,8 +298,6 @@ If no projects or tasks were imported (nothing found or user chose `none`),
 onboarding is the fallback for both fresh installs and upgraded repos.
 
 #### Step 1 — Ensure onboarding project and tasks exist
-
-Ensure `.track/plans/` exists for plan files produced during onboarding.
 
 Before creating onboarding files, check whether these already exist:
 
@@ -463,8 +465,8 @@ Auto-created during /track:init onboarding.
 
 ### Phase 10: Verify and hand off
 
-1. Run `bash scripts/track-validate.sh`
-2. Run `bash scripts/track-todo.sh --local --offline`
+1. Run `bash .track/scripts/track-validate.sh`
+2. Run `bash .track/scripts/track-todo.sh --local --offline`
 3. Report what was created, what was reused, and any warnings
 4. Show exactly one closing message from the matrix below. Do not invent a
    custom summary when one of these cases applies.
@@ -555,7 +557,7 @@ Your TODO.md has the full picture. Happy tracking!
 ## Rules
 
 - Never overwrite existing files without asking unless this skill explicitly says
-  to refresh scaffolded installed files in `scripts/` or `.github/workflows/`
+  to refresh scaffolded installed files in `.track/scripts/` or `.github/workflows/`
 - Always read scaffold files from `${CLAUDE_SKILL_DIR}/scaffold/` — do not
   hardcode scaffold contents
 - Make all scripts executable after copying

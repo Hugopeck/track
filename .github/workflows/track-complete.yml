@@ -20,7 +20,7 @@ jobs:
           ref: ${{ github.event.pull_request.base.ref }}
 
       - name: Complete merged Track task
-        run: bash scripts/track-complete.sh "$TASK_BRANCH" "$PR_URL"
+        run: bash .track/scripts/track-complete.sh "$TASK_BRANCH" "$PR_URL"
 
       - name: Commit writeback
         run: |

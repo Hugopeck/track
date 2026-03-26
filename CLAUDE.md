@@ -16,12 +16,12 @@ bash tests/test-validate.sh && bash tests/test-todo.sh && bash tests/test-pr-lin
 bash tests/test-validate.sh
 
 # Validate .track/ state
-bash scripts/track-validate.sh
+bash .track/scripts/track-validate.sh
 
 # Regenerate TODO.md
-bash scripts/track-todo.sh              # default: origin/main + live PR data
-bash scripts/track-todo.sh --local      # local working tree
-bash scripts/track-todo.sh --offline    # skip GitHub PR lookup
+bash .track/scripts/track-todo.sh              # default: origin/main + live PR data
+bash .track/scripts/track-todo.sh --local      # local working tree
+bash .track/scripts/track-todo.sh --offline    # skip GitHub PR lookup
 
 # Test plugin locally
 claude --plugin-dir .
@@ -34,13 +34,13 @@ After editing skills, run `/reload-plugins` to pick up changes.
 The plugin has two layers:
 
 1. **Skills** (`skills/`) — markdown protocols that teach Claude the Track workflow. Each skill has a `SKILL.md` with YAML frontmatter (name, description, allowed-tools) and instructional content.
-2. **Scripts** (`scripts/`) — bash enforcement scripts that validate task files, generate TODO.md, lint PRs, and handle post-merge completion.
+2. **Scripts** (`.track/scripts/`) — bash enforcement scripts that validate task files, generate TODO.md, lint PRs, and handle post-merge completion. Scripts live inside `.track/` by design.
 
 ### Dual-Copy Scripts
 
 Scripts exist in two identical locations:
-- `scripts/` — used by this repo's own `.track/` (Track dogfoods itself)
-- `skills/init/scaffold/scripts/` — copied into adopting repos by `/track:init`
+- `.track/scripts/` — used by this repo's own `.track/` (Track dogfoods itself)
+- `skills/init/scaffold/track/scripts/` — copied into adopting repos by `/track:init`
 
 Changes to scripts must be mirrored in both locations. The scaffold copies are the canonical source that gets distributed.
 
@@ -50,7 +50,7 @@ Changes to scripts must be mirrored in both locations. The scaffold copies are t
 - `skills/init/scaffold/` — everything copied into adopting repos by `/track:init`
 - `skills/init/scaffold/CLAUDE_TRACK_SECTION.md` — the CLAUDE.md section appended to adopting repos
 - `skills/work/SKILL.md` — the core workflow protocol (auto-loaded when `.track/` exists)
-- `scripts/track-common.sh` — shared YAML frontmatter parser and utility functions used by all scripts
+- `.track/scripts/track-common.sh` — shared YAML frontmatter parser and utility functions used by all scripts
 
 ### Skill Inventory
 
