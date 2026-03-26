@@ -205,8 +205,7 @@ You never run this manually — the `.github/workflows/track-complete.yml` workf
 
 - **bash** (version 3.2+, ships with macOS)
 - **git** (for reading state from `origin/main`)
-- **gh** (GitHub CLI, optional) — needed for PR-aware status in `track-todo.sh` and PR validation in `track-validate.sh`. Falls back gracefully if missing.
-- **GH_TOKEN** or **GITHUB_TOKEN** environment variable — needed for `gh` to authenticate. Scripts fall back to offline mode if unset.
+- **gh** (GitHub CLI) — required for PR-based status detection. Run `gh auth login` to authenticate.
 
 ## Limitations
 

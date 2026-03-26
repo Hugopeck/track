@@ -19,6 +19,10 @@ allowed-tools:
 implementation to handing off to merge. It is loaded automatically in any repo
 that contains `.track/`.
 
+## Role
+
+This skill is the fallback protocol. In repos with a complete Track section in CLAUDE.md, that section is primary. This skill activates when the CLAUDE.md section is missing or incomplete, or when invoked directly.
+
 ## What This Skill Owns
 
 1. Read current Track state (tasks, projects, plans)
