@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.1.0](https://github.com/Hugopeck/track/compare/v2.0.0...v2.1.0) (2026-03-26)
+
+
+### Features
+
+* **skills:** add writing style guide, audit fixes, init personality, and growth tagline ([#17](https://github.com/Hugopeck/track/issues/17)) ([a4558c2](https://github.com/Hugopeck/track/commit/a4558c23f606cfe117b607e44c5be4c4d0f0ef8b))
+
+
+### Bug Fixes
+
+* **scripts:** remove GH_TOKEN gate and align docs to single-mode design ([#19](https://github.com/Hugopeck/track/issues/19)) ([e64be67](https://github.com/Hugopeck/track/commit/e64be671216e7381ff78d3b584eb36f9e639fd41))
+
 ## [2.0.0](https://github.com/Hugopeck/track/compare/v1.1.1...v2.0.0) (2026-03-26)
 
 
