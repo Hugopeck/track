@@ -1,5 +1,26 @@
 # Changelog
 
+## [2.0.0](https://github.com/Hugopeck/track/compare/v1.1.1...v2.0.0) (2026-03-26)
+
+
+### ⚠ BREAKING CHANGES
+
+* **scripts:** move scripts inside .track/ directory ([#16](https://github.com/Hugopeck/track/issues/16))
+
+### refactor
+
+* **scripts:** move scripts inside .track/ directory ([#16](https://github.com/Hugopeck/track/issues/16)) ([198873a](https://github.com/Hugopeck/track/commit/198873a28a35f05c69a097f7014459abba8c8a64))
+
+
+### Features
+
+* **skills:** add ownership, modes, and guards to all skill protocols ([#15](https://github.com/Hugopeck/track/issues/15)) ([b8ed283](https://github.com/Hugopeck/track/commit/b8ed2834acb32efc89d0d70e153666010d619c5a))
+
+
+### Documentation
+
+* launch prep — README rewrite, growth content, and 30 task decomposition ([#13](https://github.com/Hugopeck/track/issues/13)) ([f921402](https://github.com/Hugopeck/track/commit/f92140271d780b62facc87481514b814a5b24633))
+
 ## [1.1.1](https://github.com/Hugopeck/track/compare/v1.1.0...v1.1.1) (2026-03-25)
 
 
