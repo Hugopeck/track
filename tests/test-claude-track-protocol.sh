@@ -4,6 +4,16 @@ set -euo pipefail
 PASS=0
 FAIL=0
 
+contains_literal() {
+  local pattern="$1"
+  local file="$2"
+  if command -v rg >/dev/null 2>&1; then
+    rg -Fq -- "$pattern" "$file"
+  else
+    grep -Fq -- "$pattern" "$file"
+  fi
+}
+
 pass() {
   printf '  PASS: %s\n' "$1"
   PASS=$((PASS + 1))
@@ -18,7 +28,7 @@ assert_contains() {
   local name="$1"
   local file="$2"
   local pattern="$3"
-  if rg -Fq -- "$pattern" "$file"; then
+  if contains_literal "$pattern" "$file"; then
     pass "$name"
   else
     fail "$name"
