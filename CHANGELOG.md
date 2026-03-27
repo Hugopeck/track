@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.2.0](https://github.com/Hugopeck/track/compare/v2.1.0...v2.2.0) (2026-03-27)
+
+
+### Features
+
+* **scripts:** add project 7 — automated test coverage ([#22](https://github.com/Hugopeck/track/issues/22)) ([cbc6a2f](https://github.com/Hugopeck/track/commit/cbc6a2f586276a74ff5bc5a2d004811cf1aaa280))
+* **scripts:** add unified test runner [7.1] ([#23](https://github.com/Hugopeck/track/issues/23)) ([1b66da2](https://github.com/Hugopeck/track/commit/1b66da21a517840e349fb00cf1ea704cc6d74cce))
+* **skills:** add /track:test orchestrator ([#25](https://github.com/Hugopeck/track/issues/25)) ([d207008](https://github.com/Hugopeck/track/commit/d2070085863835b34dd5f407028cd3a85723e46c))
+
+
+### Bug Fixes
+
+* **init:** upgrade legacy Track repos safely ([#20](https://github.com/Hugopeck/track/issues/20)) ([0054397](https://github.com/Hugopeck/track/commit/005439745dd3793c235d69830ef1996efa6dfa79))
+
 ## [2.1.0](https://github.com/Hugopeck/track/compare/v2.0.0...v2.1.0) (2026-03-26)
 
 
