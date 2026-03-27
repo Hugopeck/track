@@ -52,6 +52,17 @@ cleanup_capture() {
   rm -f "$STDOUT_FILE" "$STDERR_FILE"
 }
 
+run_validate_clean() {
+  env \
+    -u GITHUB_EVENT_NAME \
+    -u GITHUB_HEAD_REF \
+    -u PR_TITLE \
+    -u PR_BODY \
+    -u PR_LABELS \
+    -u GH_TOKEN \
+    "$@"
+}
+
 setup_repo() {
   local tmp bare
   tmp="$(mktemp -d)"
@@ -225,7 +236,7 @@ write_task "$repo" '1.3-dependent-task.md' "$active_task_1_3"
 commit_and_push_main "$repo"
 mock_bin="$(mktemp -d)"
 write_gh_mock "$mock_bin" same-pr
-run_capture env PATH="$mock_bin:$PATH" bash "$repo/.track/scripts/track-validate.sh"
+run_capture run_validate_clean env PATH="$mock_bin:$PATH" bash "$repo/.track/scripts/track-validate.sh"
 assert_code 'two active tasks in same PR with dependency chain pass' 0
 cleanup_capture
 rm -rf "$repo" "$bare_dir" "$mock_bin"
@@ -236,7 +247,7 @@ write_task "$repo" '1.3-dependent-task.md' "$active_task_1_3"
 commit_and_push_main "$repo"
 mock_bin="$(mktemp -d)"
 write_gh_mock "$mock_bin" different-prs
-run_capture env PATH="$mock_bin:$PATH" bash "$repo/.track/scripts/track-validate.sh"
+run_capture run_validate_clean env PATH="$mock_bin:$PATH" bash "$repo/.track/scripts/track-validate.sh"
 assert_code 'active task depending on active task in different PR fails' 1
 assert_stderr_contains 'cross-pr dependency error surfaced' 'include it in the same PR'
 cleanup_capture
