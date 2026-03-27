@@ -52,7 +52,7 @@ If the install prompt above didn't already run init:
 > /track:init
 ```
 
-This creates `.track/`, adds bash scripts, and updates your `CLAUDE.md` so every agent knows the protocol. If it finds existing markdown TODOs or roadmaps, you can import them as Track tasks.
+This creates `.track/`, adds bash scripts, and updates your `CLAUDE.md` so every agent knows the protocol. If it finds existing markdown TODOs or roadmaps, you can import them as Track tasks. If you initialized before v2.0.0, re-run `/track:init` to migrate legacy root `scripts/` into `.track/scripts/` and add `.track/plans/`.
 
 That's it — you're tracking.
 

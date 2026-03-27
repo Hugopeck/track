@@ -120,11 +120,12 @@ already set up here, and then I'll walk you through the rest."
      - **Abort**
    - If the user chooses **Continue upgrade**:
      - Set mode to `upgrade-continue`
-     - Continue immediately to Phase 3, then automatically continue through the
+     - Continue immediately to Phase 2, then automatically continue through the
        rest of the flow
    - If the user chooses **Abort**, stop
-4. Check if `.track/scripts/track-common.sh` exists — warn if other Track scripts exist
-   without `.track/`
+4. Check whether `scripts/` at the repo root contains legacy Track files from a
+   pre-2.0.0 install. If it does, tell the user you'll clean that up safely in
+   Phase 2.5.
 
 ### Phase 2: Create or repair `.track/` directory structure
 
@@ -154,6 +155,37 @@ Steps:
 8. If `.track/plans/README.md` does not exist, read
    `${CLAUDE_SKILL_DIR}/scaffold/track/plans/README.md` and write it to
    `.track/plans/README.md`
+9. Try to read `${CLAUDE_SKILL_DIR}/../../.claude-plugin/plugin.json`
+10. If that manifest exists and has a `version`, write that version plus a
+    trailing newline to `.track/.track-version`
+11. If the manifest is missing or unreadable, tell the user you skipped the
+    version marker and continue — do not fail init over this
+
+### Phase 2.5: Clean up legacy root scripts during upgrade
+
+**Tell the user:** "Quick cleanup pass — older Track installs kept their
+scripts in a top-level `scripts/` folder. I'll remove only the old Track-owned
+copies now that they live in `.track/scripts/`, and I'll leave any unrelated
+files alone."
+
+This phase runs only in `upgrade-continue`. In `fresh-init`, skip it.
+
+Steps:
+
+1. Check whether `scripts/track-common.sh` exists at the repo root
+2. If it does not exist, skip this phase
+3. If it does exist, narrate: "Found old Track scripts at the repo root from a
+   previous version. Moving these to `.track/scripts/` where they belong now."
+4. Remove these files if present:
+   - `scripts/track-common.sh`
+   - `scripts/track-validate.sh`
+   - `scripts/track-todo.sh`
+   - `scripts/track-pr-lint.sh`
+   - `scripts/track-complete.sh`
+   - `scripts/README.md`
+5. If `scripts/` is empty after removing those files, remove the directory too
+6. If `scripts/` still contains non-Track files, leave the directory in place
+   and tell the user you preserved those unrelated files
 
 ### Phase 3: Install scripts
 
@@ -227,6 +259,7 @@ Everything you need to start tracking is in place:
   Workflows: {list}
   Config: conductor.json {created|skipped|replaced}
   .gitignore: TODO.md {added|already present}
+  Version marker: .track/.track-version {written|updated|skipped}
   CLAUDE.md: Track section {appended|already present|replaced}
 
 Now let me see if you have any existing tasks or plans I can bring into Track...

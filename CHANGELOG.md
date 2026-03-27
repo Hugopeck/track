@@ -19,6 +19,8 @@
 
 * **scripts:** move scripts inside .track/ directory ([#16](https://github.com/Hugopeck/track/issues/16))
 
+> Migration note: repos initialized before v2.0.0 should re-run `/track:init` to move legacy root `scripts/` into `.track/scripts/` and create `.track/plans/`.
+
 ### refactor
 
 * **scripts:** move scripts inside .track/ directory ([#16](https://github.com/Hugopeck/track/issues/16)) ([198873a](https://github.com/Hugopeck/track/commit/198873a28a35f05c69a097f7014459abba8c8a64))
