@@ -164,8 +164,11 @@ You don't manually set `status: active` to show progress — opening a draft PR 
    - set raw `status: active`
    - update `updated:` to today
 3. Push and open a **draft PR** immediately
-   - PR title must include the task ID: `[{id}] Title` or `({id}) Title`
-   - CI will lint the branch name and PR title
+   - Prefer branch `task/{id}-{slug}` plus PR title `[{id}] Title` or `({id}) Title`
+   - Verify the current branch before opening the PR
+   - If branch naming is off and changing it is inconvenient, keep Track linked with PR body `Track-Task: {id}`; optional label fallback: `track:{id}`
+   - CI resolves single-task PRs from PR body, labels, title, then branch name
+   - Explicit multi-task PRs must declare one `Track-Task: {id}` line per task in the PR body; title and branch are only cross-checks in batch mode
    - If `gh pr create` fails (auth, network, permissions), STOP. Tell the user:
      "Could not open draft PR: {error}. Fix the issue and retry — Track requires
      a PR to track progress."
@@ -177,6 +180,47 @@ You don't manually set `status: active` to show progress — opening a draft PR 
    - update `updated:`
    - mark the PR ready for review
 6. When the PR merges, the post-merge workflow writes `status: done`, `pr:`, and `updated:` on the default branch
+
+Fallback example when branch naming is missed:
+
+```text
+Preferred:
+- Branch: task/7.2-create-test-skill
+- Title: feat(skills): [7.2] create /track:test skill
+
+Fallback if branch naming is missed:
+- Branch: feature/test-skill
+- Title: feat(skills): [7.2] create /track:test skill
+- Body: Track-Task: 7.2
+```
+
+## Explicit Batch PRs
+
+Use batch mode only when all of these are true:
+
+- max 3 tasks
+- same project only
+- mode is `implement` for every task
+- every unresolved dependency is either already `done` or included in the same PR
+- the tasks are tightly related by dependency chain or code area
+
+Batch workflow:
+
+1. Prefer a normal `task/{id}-{slug}` branch if one task naturally leads the work
+2. Open one draft PR
+3. In the PR body, repeat `Track-Task: {id}` once per task
+4. Set every selected task file to raw `status: active`
+5. When ready for review, set every selected task file to raw `status: review`
+
+Batch example:
+
+```text
+Branch: task/7.1-test-runner
+Title: feat(tests): [7.1] [7.2] land related test work
+Body:
+Track-Task: 7.1
+Track-Task: 7.2
+```
 
 ## Creating a Task
 

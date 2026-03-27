@@ -126,27 +126,40 @@ load_projects() {
   done < <(find "$SOURCE_ROOT/.track/projects" -maxdepth 1 -type f -name '[0-9]*-*.md' | sort)
 }
 
+task_exists_in_source_tree() {
+  find "$SOURCE_ROOT/.track/tasks" -maxdepth 1 -type f -name "${1}-*.md" | grep -q .
+}
+
+fetch_pr_body() {
+  gh pr view "$1" --json body --template '{{.body}}' 2>/dev/null
+}
+
+fetch_pr_labels() {
+  gh pr view "$1" --json labels --template '{{range $index, $label := .labels}}{{if $index}},{{end}}{{.name}}{{end}}' 2>/dev/null
+}
+
 find_open_pr_index_by_task_id() {
   local id="$1"
-  local i match_count=0
+  local i match_count=0 match_url=''
   OPEN_PR_MATCH_INDEX=''
   for ((i = 0; i < ${#OPEN_PR_TASK_IDS[@]}; i++)); do
     if [[ "${OPEN_PR_TASK_IDS[$i]}" == "$id" ]]; then
-      match_count=$((match_count + 1))
-      OPEN_PR_MATCH_INDEX="$i"
+      if [[ -z "$match_url" || "${OPEN_PR_URLS[$i]}" == "$match_url" ]]; then
+        match_count=$((match_count + 1))
+        match_url="${OPEN_PR_URLS[$i]}"
+        OPEN_PR_MATCH_INDEX="$i"
+      else
+        warn "multiple open PRs map to task '$id'"
+        return 1
+      fi
     fi
   done
-
-  if [[ $match_count -gt 1 ]]; then
-    warn "multiple open PRs map to task '$id'"
-    return 1
-  fi
 
   [[ $match_count -eq 1 ]]
 }
 
 load_open_prs() {
-  local lines url is_draft head_ref base_ref state task_id
+  local lines number url is_draft head_ref title pr_body pr_labels resolver_code task_id
 
   if [[ $OFFLINE -eq 1 ]]; then
     warn 'offline mode enabled; skipping GitHub PR lookup'
@@ -158,15 +171,46 @@ load_open_prs() {
     return 0
   fi
 
-  if ! lines="$(gh pr list --state open --base "$DEFAULT_BRANCH" --json url,isDraft,headRefName,baseRefName,state --template '{{range .}}{{printf "%s\t%t\t%s\t%s\t%s\n" .url .isDraft .headRefName .baseRefName .state}}{{end}}' 2>/dev/null)"; then
+  if ! lines="$(gh pr list --state open --base "$DEFAULT_BRANCH" --json number,url,isDraft,headRefName,title --template '{{range .}}{{printf "%v\t%s\t%t\t%s\t%s\n" .number .url .isDraft .headRefName .title}}{{end}}' 2>/dev/null)"; then
     warn 'gh PR lookup failed; falling back to offline mode'
     return 0
   fi
 
-  while IFS=$'\t' read -r url is_draft head_ref base_ref state; do
-    [[ -z "$head_ref" ]] && continue
-    if [[ "$head_ref" =~ ^task/([0-9]+\.[0-9]+)-[a-z0-9-]+$ ]]; then
-      task_id="${BASH_REMATCH[1]}"
+  while IFS=$'\t' read -r number url is_draft head_ref title; do
+    [[ -z "$url" ]] && continue
+
+    pr_body=''
+    pr_labels=''
+    if ! pr_body="$(fetch_pr_body "$number")"; then
+      warn "open PR '$url': could not fetch PR body; falling back to labels/title/branch only"
+      pr_body=''
+    fi
+    if ! pr_labels="$(fetch_pr_labels "$number")"; then
+      warn "open PR '$url': could not fetch PR labels; falling back to body/title/branch only"
+      pr_labels=''
+    fi
+
+    if track_resolve_task_ids "$pr_body" "$pr_labels" "$title" "$head_ref"; then
+      resolver_code=0
+    else
+      resolver_code=$?
+    fi
+    if [[ $resolver_code -ne 0 ]]; then
+      case "$resolver_code" in
+        1) warn "open PR '$url' could not be linked to a task: $TRACK_RESOLVER_ERROR" ;;
+        2|3) warn "open PR '$url' could not be linked to a task: $TRACK_RESOLVER_ERROR" ;;
+        *) warn "open PR '$url' could not be linked to a task: unexpected resolver failure" ;;
+      esac
+      continue
+    fi
+
+    while IFS= read -r task_id || [[ -n "$task_id" ]]; do
+      [[ -z "$task_id" ]] && continue
+      if ! task_exists_in_source_tree "$task_id"; then
+        warn "open PR '$url' resolved to task '$task_id' from $TRACK_RESOLVED_SOURCE, but no matching task file exists in .track/tasks/"
+        continue
+      fi
+
       OPEN_PR_TASK_IDS+=("$task_id")
       OPEN_PR_URLS+=("$url")
       if [[ "$is_draft" == 'true' ]]; then
@@ -174,7 +218,7 @@ load_open_prs() {
       else
         OPEN_PR_STATUSES+=("review")
       fi
-    fi
+    done <<< "$TRACK_RESOLVED_TASK_IDS"
   done <<< "$lines"
 }
 
@@ -437,6 +481,8 @@ generate_todo() {
 }
 
 main() {
+  cd "$ROOT_DIR"
+
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --local)
