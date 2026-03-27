@@ -156,6 +156,7 @@ Track's protocol is simple enough for any project: book writing, research, home 
 | `/track:decompose` | Break a big goal into smaller tasks with dependencies |
 | `/track:validate` | Check your `.track/` files for errors and get fix suggestions |
 | `/track:todo` | Regenerate the shared `TODO.md` view |
+| `/track:test` | Run Track's internal test orchestration for scripts, skills, or both |
 
 ## Requirements
 

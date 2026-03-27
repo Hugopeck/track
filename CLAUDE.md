@@ -10,7 +10,7 @@ This is the Track plugin repo. Track is a git-native task coordination system di
 
 ```bash
 # Run all tests
-bash tests/test-validate.sh && bash tests/test-validate-extended.sh && bash tests/test-todo.sh && bash tests/test-todo-extended.sh && bash tests/test-pr-lint.sh && bash tests/test-complete.sh
+bash tests/run-all.sh
 
 # Run a single test
 bash tests/test-validate.sh
