@@ -62,6 +62,7 @@ Changes to scripts must be mirrored in both locations. The scaffold copies are t
 | `decompose` | Break a goal into tasks with dependencies |
 | `validate` | Run validation and interpret errors |
 | `todo` | Regenerate TODO.md |
+| `test` | Orchestrate Track's internal script and skill smoke tests |
 
 ## Conventional Commits
 
