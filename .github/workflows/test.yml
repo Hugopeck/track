@@ -30,5 +30,8 @@ jobs:
       - name: Test extended validation
         run: bash tests/test-validate-extended.sh
 
+      - name: Test extended TODO generation
+        run: bash tests/test-todo-extended.sh
+
       - name: Test Conductor config
         run: bash tests/test-conductor-config.sh

@@ -193,7 +193,7 @@ open_pr_metadata() {
 main_task_file_for_id() {
   local task_id="$1"
   local escaped_id="${task_id//./\\.}"
-  git ls-tree -r --name-only "origin/$DEFAULT_BRANCH" .track/tasks 2>/dev/null | grep -E "(^|/)${escaped_id}-[a-z0-9-]+\.md$" | head -n 1
+  git ls-tree -r --name-only "origin/$DEFAULT_BRANCH" .track/tasks 2>/dev/null | grep -E "(^|/)${escaped_id}-[a-z0-9-]+\.md$" | head -n 1 || true
 }
 
 main_task_status_for_path() {
