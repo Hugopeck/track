@@ -2,4 +2,6 @@ TODO.md
 .DS_Store
 
 # Strategic plans — competitive/pricing info, not public
-.track/plans/
+.track/plans/*
+!.track/plans/
+!.track/plans/README.md
