@@ -6,6 +6,9 @@ Set up the `growth/` directory as the operational hub for all marketing and cont
 ## Why Now
 Without structure, content creation becomes ad-hoc and drops off after week 1. The infrastructure ensures consistent output for 12 weeks.
 
+## Status
+Done as of 2026-03-28. Project status is satisfied by completed task `6.1`; task `6.2` was cancelled after its deliverable was already represented inside the `growth/` workspace and no longer needed separate tracking.
+
 ## In Scope
 - `growth/` directory structure at repo root
 - Post templates and drafts (X threads, Reddit, Discord)
