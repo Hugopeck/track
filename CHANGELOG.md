@@ -1,5 +1,28 @@
 # Changelog
 
+## [2.4.0](https://github.com/Hugopeck/track/compare/v2.3.1...v2.4.0) (2026-03-28)
+
+
+### Features
+
+* **init:** [3.3] add Codex CLI AGENTS support ([#39](https://github.com/Hugopeck/track/issues/39)) ([a85ba76](https://github.com/Hugopeck/track/commit/a85ba76bca3902648019079e96f1ca00f1d62455))
+* **scripts:** split Track views into board/todo/projects ([#36](https://github.com/Hugopeck/track/issues/36)) ([a3de0da](https://github.com/Hugopeck/track/commit/a3de0da910d97379cdf1b803a669137cce3d2818))
+
+
+### Bug Fixes
+
+* **config:** [3.0] refocus project 3 and repair CI linkage ([#32](https://github.com/Hugopeck/track/issues/32)) ([709b010](https://github.com/Hugopeck/track/commit/709b0102decffd27ae555046cc1e57c09e2cb2e4))
+* **track:** complete merged task ([b0be945](https://github.com/Hugopeck/track/commit/b0be9451a83dc4184b793a719b9c862d7432fe28))
+* **track:** complete merged task ([152c340](https://github.com/Hugopeck/track/commit/152c34071c46b93556be45294aea7fa4fe86b59d))
+* **track:** complete merged task ([24283d9](https://github.com/Hugopeck/track/commit/24283d94c2e830b9842f5cd72018d22bb729dc7c))
+* **track:** complete merged task ([5fabfe0](https://github.com/Hugopeck/track/commit/5fabfe0472baf2441dd30e725150ccb207eb9f97))
+
+
+### Documentation
+
+* [3.6] add OpenCode and standalone docs ([#35](https://github.com/Hugopeck/track/issues/35)) ([b824f64](https://github.com/Hugopeck/track/commit/b824f64e901ead5665479e6038a543458a2c6cb5))
+* **cursor:** [3.1] document rules port plan ([#37](https://github.com/Hugopeck/track/issues/37)) ([1fd50ab](https://github.com/Hugopeck/track/commit/1fd50ab1009f698e51955fdf3bc2d761a78686b5))
+
 ## [2.3.1](https://github.com/Hugopeck/track/compare/v2.3.0...v2.3.1) (2026-03-28)
 
 
