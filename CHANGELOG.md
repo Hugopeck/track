@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.3.0](https://github.com/Hugopeck/track/compare/v2.2.0...v2.3.0) (2026-03-28)
+
+
+### Features
+
+* **scripts:** [7.4] support explicit multi-task PR batching ([#27](https://github.com/Hugopeck/track/issues/27)) ([bfd447a](https://github.com/Hugopeck/track/commit/bfd447a1297db3ba6e675bc4bbeae8a9954e93d0))
+
+
+### Documentation
+
+* **skills:** add skills README and enhance project README ([#28](https://github.com/Hugopeck/track/issues/28)) ([5098f13](https://github.com/Hugopeck/track/commit/5098f13ad15e0edbef95e14129ad53264ae931bf))
+
 ## [2.2.0](https://github.com/Hugopeck/track/compare/v2.1.0...v2.2.0) (2026-03-27)
 
 

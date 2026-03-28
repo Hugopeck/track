@@ -1,7 +1,7 @@
 {
   "name": "track",
   "description": "Invisible task coordination for Claude Code. Turns your git repo into a self-managing project system — markdown tasks, PR-driven status, zero dependencies.",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "homepage": "https://github.com/Hugopeck/track",
   "author": {
     "name": "Hugo Peck"
