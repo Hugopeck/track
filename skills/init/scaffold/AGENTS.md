@@ -59,7 +59,7 @@ Append-only log.
 
 ### Agent Protocol (primary)
 
-1. Read `TODO.md` for current state. Pick a `todo` task or resume an `active` one.
+1. Read `TODO.md` for the execution queue and `BOARD.md` for project context. Pick a `todo` task or resume an `active` one.
 2. Check `files:` overlap against tasks already shown as `active` / `review` — do not touch files owned by another in-progress task.
 3. Create a branch or use the current one.
 4. Open a **draft PR** to start work. No PR = not started.
@@ -69,7 +69,7 @@ Append-only log.
 8. If `gh` auth fails or PR creation fails, **stop and surface the error.**
 9. Implement. When ready, mark the PR ready for review.
 
-`TODO.md` is generated — edit task files in `.track/tasks/`, not TODO.md directly.
+`BOARD.md`, `TODO.md`, and `PROJECTS.md` are generated — edit task files in `.track/tasks/`, not the generated views directly.
 
 `/track:work` contains the full protocol with edge cases. Use it when this section is insufficient.
 

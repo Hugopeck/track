@@ -18,7 +18,7 @@ bash tests/test-validate.sh
 # Validate .track/ state
 bash .track/scripts/track-validate.sh
 
-# Regenerate TODO.md
+# Regenerate Track views
 bash .track/scripts/track-todo.sh              # default: origin/main + live PR data
 bash .track/scripts/track-todo.sh --local      # local working tree
 bash .track/scripts/track-todo.sh --offline    # skip GitHub PR lookup
@@ -34,7 +34,7 @@ After editing skills, run `/reload-plugins` to pick up changes.
 The plugin has two layers:
 
 1. **Skills** (`skills/`) — markdown protocols that teach Claude the Track workflow. Each skill has a `SKILL.md` with YAML frontmatter (name, description, allowed-tools) and instructional content.
-2. **Scripts** (`.track/scripts/`) — bash enforcement scripts that validate task files, generate TODO.md, lint PRs, and handle post-merge completion. Scripts live inside `.track/` by design.
+2. **Scripts** (`.track/scripts/`) — bash enforcement scripts that validate task files, generate `BOARD.md`, `TODO.md`, and `PROJECTS.md`, lint PRs, and handle post-merge completion. Scripts live inside `.track/` by design.
 
 ### Dual-Copy Scripts
 
@@ -63,7 +63,7 @@ Changes to scripts must be mirrored in both locations. The scaffold copies are t
 | `create` | Create tasks and projects |
 | `decompose` | Break a goal into tasks with dependencies |
 | `validate` | Run validation and interpret errors |
-| `todo` | Regenerate TODO.md |
+| `todo` | Regenerate `BOARD.md`, `TODO.md`, and `PROJECTS.md` |
 
 ## Conventional Commits
 
@@ -261,7 +261,7 @@ Append-only log.
 
 ### Agent Protocol (primary)
 
-1. Read `TODO.md` for current state. Pick a `todo` task or resume an `active` one.
+1. Read `TODO.md` for the execution queue and `BOARD.md` for project context. Pick a `todo` task or resume an `active` one.
 2. Check `files:` overlap against tasks already shown as `active` / `review` — do not touch files owned by another in-progress task.
 3. Create a branch or use the current one.
 4. Open a **draft PR** to start work. No PR = not started.
@@ -271,7 +271,7 @@ Append-only log.
 8. If `gh` auth fails or PR creation fails, **stop and surface the error.**
 9. Implement. When ready, mark the PR ready for review.
 
-`TODO.md` is generated — edit task files in `.track/tasks/`, not TODO.md directly.
+`BOARD.md`, `TODO.md`, and `PROJECTS.md` are generated — edit task files in `.track/tasks/`, not the generated views directly.
 
 `/track:work` contains the full protocol with edge cases. Use it when this section is insufficient.
 

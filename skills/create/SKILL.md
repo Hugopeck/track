@@ -25,7 +25,7 @@ from parsing user input through file creation, validation, and reporting.
 3. Assign IDs and generate slugs
 4. Write task and/or project files
 5. Validate the result
-6. Regenerate TODO.md
+6. Regenerate Track views
 7. Report what was created
 
 This skill does NOT own decomposition (that's `/track:decompose`) or working a
@@ -43,7 +43,7 @@ Lock one of these modes at the start and do not switch mid-run:
 
 - All files are written
 - `bash .track/scripts/track-validate.sh` passes
-- `bash .track/scripts/track-todo.sh --local --offline` regenerates TODO.md
+- `bash .track/scripts/track-todo.sh --local --offline` regenerates `BOARD.md`, `TODO.md`, and `PROJECTS.md`
 - The user sees what was created (IDs, titles, file paths)
 
 Do not report success before validation passes.
@@ -153,7 +153,7 @@ Created from: {brief summary of the user's request}
    closing message until validation passes.
    If `track-validate.sh` is not found, STOP: "Validation script missing. Run
    `/track:init` to install it."
-2. Run `bash .track/scripts/track-todo.sh --local --offline` — regenerate TODO.md
+2. Run `bash .track/scripts/track-todo.sh --local --offline` — regenerate Track views
 3. Show the closing message
 
 ## Closing Message Matrix

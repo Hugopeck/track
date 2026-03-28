@@ -70,14 +70,14 @@ Track reads your codebase, finds natural boundaries, and proposes tasks with non
 > /track:work
 ```
 
-The agent reads `TODO.md`, picks a task that isn't blocked, opens a draft PR, and starts coding. Another agent can do the same on a different task — no conflicts.
+The agent reads `TODO.md`, picks a task that isn't blocked, opens a draft PR, and starts coding. If it needs deeper project context, it reads `BOARD.md`. Another agent can do the same on a different task — no conflicts.
 
 **See what's happening:**
 ```
 > /track:todo
 ```
 
-Regenerates `TODO.md` with live status from GitHub. Shows who's working on what, what's blocked, and what's done.
+Regenerates `BOARD.md`, `TODO.md`, and `PROJECTS.md` with live status from GitHub. Shows who's working on what, what's blocked, what's done, and how projects are progressing.
 
 ## How it works
 
@@ -178,9 +178,15 @@ The `files:` field is Track's coordination mechanism. When an agent picks a task
 
 This is what makes parallel agents safe. Two agents can work on the same repo simultaneously as long as their tasks claim different files. Track's `/track:decompose` command is designed to create tasks with non-overlapping scopes by default.
 
-### TODO.md
+### Generated views
 
-`TODO.md` is a generated view — a human-readable summary of all projects and tasks, grouped by project, with effective status from GitHub. It's gitignored and regenerated on demand. Never edit it by hand; edit the task files in `.track/tasks/` instead.
+Track generates three root-level views:
+
+- `TODO.md` — flat execution list of ready, blocked, and recently completed work
+- `BOARD.md` — grouped-by-project operational board with dependencies, status, and warnings
+- `PROJECTS.md` — high-level project summary with progress bars and status
+
+These files are gitignored and regenerated on demand. Never edit them by hand; edit the task files in `.track/tasks/` instead.
 
 ## Best with Conductor
 
@@ -188,7 +194,7 @@ Track is designed to work with [Conductor](https://conductor.lol) — a Mac app 
 
 Track assigns non-overlapping files to each task. Conductor gives each agent an isolated copy of the repo. Together: parallel agents, zero conflicts.
 
-Track works without Conductor too — you can run agents one at a time and still get persistent task state and TODO tracking.
+Track works without Conductor too — you can run agents one at a time and still get persistent task state and generated view tracking.
 
 ### Recommended Conductor Git preferences
 
@@ -209,7 +215,7 @@ Use the exact text below for copy/paste.
 #### Create PR preferences
 
 ```text
-Read `TODO.md`, `.track/tasks/`, and `CLAUDE.md` first.
+Read `TODO.md`, `BOARD.md`, `.track/tasks/`, and `CLAUDE.md` first.
 
 - Identify the primary Track task in this PR before writing anything.
 - Identify any additional fully completed tasks that belong in this PR.
@@ -227,7 +233,7 @@ Read `TODO.md`, `.track/tasks/`, and `CLAUDE.md` first.
 
 ### `/track:init` — Set up Track in your repo
 
-Scaffolds the entire Track system into your repo: creates `.track/` with all subdirectories, copies enforcement scripts, installs three GitHub Actions workflows (validation, PR lint, post-merge completion), updates your `CLAUDE.md`, installs the Track protocol into `AGENTS.md` for Codex CLI, and adds `TODO.md` to `.gitignore`.
+Scaffolds the entire Track system into your repo: creates `.track/` with all subdirectories, copies enforcement scripts, installs three GitHub Actions workflows (validation, PR lint, post-merge completion), updates your `CLAUDE.md` with the agent protocol, installs the Track protocol into `AGENTS.md` for Codex CLI, and adds `BOARD.md`, `TODO.md`, and `PROJECTS.md` to `.gitignore`.
 
 If it finds existing markdown files with TODO lists, roadmaps, or task-like content, it offers to import them as Track tasks — extracting structure, inferring priority and mode, and letting you pick which items to keep. If there's nothing to import, it creates a starter onboarding project to help you migrate from your current tool (Linear, Jira, Notion, or plain notes).
 
@@ -273,9 +279,9 @@ Runs the validation script against all task and project files. Checks required f
 
 This is a diagnostic-only command — it reads and reports but doesn't modify files.
 
-### `/track:todo` — Regenerate TODO.md
+### `/track:todo` — Regenerate Track views
 
-Regenerates the `TODO.md` coordination view. Detects your environment (GitHub CLI availability, auth tokens, remote access) and picks the best mode:
+Regenerates the Track coordination views: `BOARD.md`, `TODO.md`, and `PROJECTS.md`. Detects your environment (GitHub CLI availability, auth tokens, remote access) and picks the best mode:
 
 - **Full mode** — pulls task state from `origin/main` and live PR data from GitHub for accurate effective status
 - **Offline mode** — uses remote task files but skips GitHub API calls
@@ -332,7 +338,7 @@ Track's protocol is simple enough for any project: book writing, research, home 
 
 **Validation fails?** Run `/track:validate` — it tells you exactly what's wrong and how to fix it.
 
-**TODO.md is stale?** Run `/track:todo` to regenerate. If you're offline: `bash .track/scripts/track-todo.sh --local --offline`
+**Track views are stale?** Run `/track:todo` to regenerate. If you're offline: `bash .track/scripts/track-todo.sh --local --offline`
 
 **"gh not found" or PR status missing?** Install `gh` and run `gh auth login`, then retry.
 

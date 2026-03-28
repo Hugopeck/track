@@ -52,7 +52,7 @@ touch your existing code." "Everything Track installs lives in `.track/` and
 `.github/workflows/` — your source code stays exactly as it is."
 
 **Explain the unfamiliar.** When you create something the user hasn't seen
-before (validation scripts, CI workflows, TODO.md), say what it does in plain
+before (validation scripts, CI workflows, generated Track views), say what it does in plain
 language. Not "installing track-validate.sh" — instead, "Setting up the
 validation script — this catches mistakes in task files before they become
 problems."
@@ -247,7 +247,7 @@ linkage rules kick in earlier."
 ### Phase 6: Update `.gitignore`
 
 1. Read `.gitignore` (or create it if absent)
-2. If `TODO.md` is not already listed, append it
+2. If `BOARD.md`, `TODO.md`, or `PROJECTS.md` are not already listed, append them
 
 ### Phase 7: Update `CLAUDE.md`
 
@@ -288,7 +288,7 @@ Everything you need to start tracking is in place:
   Scripts: {list}
   Workflows: {list}
   Config: conductor.json {created|skipped|replaced}
-  .gitignore: TODO.md {added|already present}
+  .gitignore: BOARD.md / TODO.md / PROJECTS.md {added|already present}
   Version marker: .track/.track-version {written|updated|skipped}
   CLAUDE.md: Track section {appended|already present|replaced}
   AGENTS.md: Track block {written|appended|replaced}
@@ -608,7 +608,7 @@ Read the plan, then:
 1. Connect to the user's tool using the details gathered in 1.1
 2. Import projects as Track project briefs in .track/projects/
 3. Import tasks as Track task files in .track/tasks/
-4. Run validation and regenerate TODO.md
+4. Run validation and regenerate Track views
 5. Present results to the user
 
 If the user chose "Nothing" in task 1.1, help them create their first real
@@ -617,7 +617,7 @@ project and tasks using /track:create or /track:decompose.
 ## Acceptance Criteria
 - [ ] All items from migration plan imported
 - [ ] track-validate.sh passes
-- [ ] TODO.md reflects imported state
+- [ ] Generated Track views reflect imported state
 - [ ] User confirms the import looks correct
 
 ## Notes
@@ -649,7 +649,7 @@ Want to start working right now? Just say:
 I'll create a branch, open a draft PR, and get going. Or open a new workspace
 in Conductor if you'd prefer a fresh start.
 
-Your TODO.md has the full picture. Happy tracking!
+Your Track views have the full picture. Happy tracking!
 ```
 
 If mode is `fresh-init` and no imports were kept and onboarding files were
@@ -666,7 +666,7 @@ a migration plan. After task 1.1 merges, task 1.2 will import your data.
 
 Or open a new workspace in Conductor if you'd prefer a fresh start.
 
-Your TODO.md has the full picture. Happy tracking!
+Your Track views have the full picture. Happy tracking!
 ```
 
 If mode is `fresh-init` and no imports were kept and onboarding already existed,
@@ -679,7 +679,7 @@ Want to pick up where you left off? Just say:
 
   do task @1.1
 
-Your TODO.md has the full picture. Happy tracking!
+Your Track views have the full picture. Happy tracking!
 ```
 
 If mode is `upgrade-continue` and imports were kept from Phase 8, display:
@@ -693,7 +693,7 @@ Want to start working right now? Just say:
 
 Or open a new workspace in Conductor if you'd prefer a fresh start.
 
-Your TODO.md has the full picture. Happy tracking!
+Your Track views have the full picture. Happy tracking!
 ```
 
 If mode is `upgrade-continue` and no imports were kept and onboarding files were
@@ -706,7 +706,7 @@ Want to start right now? Just say:
 
   do task @1.1
 
-Your TODO.md has the full picture. Happy tracking!
+Your Track views have the full picture. Happy tracking!
 ```
 
 If mode is `upgrade-continue` and no imports were kept and onboarding already
@@ -719,7 +719,7 @@ Want to pick up where you left off? Just say:
 
   do task @1.1
 
-Your TODO.md has the full picture. Happy tracking!
+Your Track views have the full picture. Happy tracking!
 ```
 
 ## Rules

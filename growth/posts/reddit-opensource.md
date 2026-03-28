@@ -20,7 +20,7 @@ I've been building Track — a git-native task coordination system for AI coding
 **What it does:**
 - Scaffolds a `.track/` directory in any git repo
 - Markdown task files with YAML frontmatter (status, priority, dependencies, file scopes)
-- Bash scripts validate state, generate TODO.md, lint PRs, auto-complete tasks on merge
+- Bash scripts validate state, generate BOARD.md, TODO.md, and PROJECTS.md, lint PRs, auto-complete tasks on merge
 - Works with Claude Code, Cursor, Codex CLI, Gemini CLI — any agent that reads files
 - PR-driven status: draft PR = active, merged = done. No manual updates.
 

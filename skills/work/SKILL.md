@@ -60,11 +60,11 @@ success before the mode reaches its definition of done.
 ## Glossary
 
 - **Raw Status** — the `status:` field stored in a Track task file
-- **Effective Status** — derived from raw status plus live open PR state; what `TODO.md` shows
+- **Effective Status** — derived from raw status plus live open PR state; what the generated Track views show
 - **Provisional PR** — an implementation PR opened as soon as work starts on a task; draft = active, ready-for-review = review
 - **Project Brief** — a markdown scope contract in `.track/projects/{project_id}-{slug}.md`
 - **Task** — a Track work item at `.track/tasks/{task_id}-{slug}.md` with YAML frontmatter and required body sections
-- **View / Pointer** — a non-canonical navigation surface; `TODO.md` is the primary Track view
+- **View / Pointer** — a non-canonical navigation surface; `TODO.md`, `BOARD.md`, and `PROJECTS.md` are Track's generated views
 
 ## Working Philosophy
 
@@ -86,7 +86,7 @@ Track coordinates work across sessions and agents. These principles make coordin
     {task_id}-{slug}.md
 ```
 
-`TODO.md` is generated and gitignored. It is never canonical state.
+`TODO.md`, `BOARD.md`, and `PROJECTS.md` are generated and gitignored. They are never canonical state.
 
 ## Task File Format
 
@@ -141,7 +141,7 @@ You don't manually set `status: active` to show progress — opening a draft PR 
 
 ## Before Starting Work
 
-1. Read `TODO.md` or scan `.track/tasks/*.md` for available work.
+1. Read `TODO.md` and `BOARD.md`, or scan `.track/tasks/*.md`, for available work.
    If `.track/tasks/` does not exist or is empty, set mode to `empty` and skip to
    the closing message.
 2. Check for plans — scan `.track/plans/*.md` (excluding README.md). If any plan
@@ -238,7 +238,7 @@ fixes a deploy bug AND refactors the test harness should split (independent chan
 
 To split: create new task(s) with proper `depends_on`, update the original task's acceptance criteria to reflect the reduced scope, and add a note explaining the split.
 
-## Regenerating TODO.md
+## Regenerating Track views
 
 After creating, updating, cancelling, or completing tasks:
 
@@ -315,7 +315,7 @@ a goal into tasks.
 
 ## Do Not
 
-- Do not edit `TODO.md` by hand — it is generated and will be overwritten
+- Do not edit `BOARD.md`, `TODO.md`, or `PROJECTS.md` by hand — they are generated and will be overwritten
 - Do not set `status: done` manually — the post-merge workflow handles this
 - Do not create tasks without a matching project brief
 - Do not use the same `files:` glob as an already-active task
