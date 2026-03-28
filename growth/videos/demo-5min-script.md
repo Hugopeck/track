@@ -41,7 +41,7 @@
 - Show Track reading the codebase
 - Show proposed tasks with file scopes
 - Confirm creation
-- Show `TODO.md` with all tasks listed
+- Show `TODO.md` as the execution queue and `BOARD.md` as the project map
 
 ### Scene 5: Parallel Agents (3:00-5:00)
 **Voiceover:** "Now the magic. Three agents, three tasks, zero conflicts."
@@ -52,7 +52,7 @@
 - Show each agent picking a different task
 - Show file scopes preventing overlap
 - Show draft PRs appearing on GitHub
-- Show `TODO.md` updating with live status
+- Show `TODO.md` and `BOARD.md` updating with live status
 - Merge one PR
 - Show task auto-completing
 

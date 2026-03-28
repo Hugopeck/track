@@ -157,11 +157,11 @@ Use these built-in recipes unless the user names a different skill explicitly.
 
 - Prompt: `/track:todo --local --offline`
 - Required tool signal: a Bash call containing `.track/scripts/track-todo.sh`
-- Required artifact: `TODO.md` exists in the isolated worktree after the run
+- Required artifacts: `BOARD.md`, `TODO.md`, and `PROJECTS.md` exist in the isolated worktree after the run
 - Closing message must match:
-  - `TODO.md regenerated (mode: {full|offline|local}).`
+  - `Track views regenerated (mode: {full|offline|local}).`
 - `Do Not` checks:
-  - Never edit `TODO.md` by hand
+  - Never edit `BOARD.md`, `TODO.md`, or `PROJECTS.md` by hand
   - Never override user-supplied flags with auto-detection
 
 If the user names a skill without a built-in recipe, read its `SKILL.md` and

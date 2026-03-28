@@ -132,6 +132,6 @@ I'm building this in public and would love your feedback. What coordination prob
 
 ## Publishing notes
 - Add code syntax highlighting for all blocks
-- Include 2-3 screenshots (terminal showing .track/, TODO.md output)
+- Include 2-3 screenshots (terminal showing .track/, BOARD.md, TODO.md, and PROJECTS.md output)
 - Cover image: terminal with .track/ folder tree
 - Engage with every comment for 48 hours

@@ -46,7 +46,7 @@ assert_contains 'canonical file keeps Also-Completed guidance' "$PREFS_FILE" 'Al
 assert_contains 'canonical file keeps ask-dont-guess safety' "$PREFS_FILE" 'stop and ask instead of guessing'
 assert_contains 'canonical file includes conventional commit format' "$PREFS_FILE" '`type(scope): description`'
 assert_contains 'canonical file identifies primary task first' "$PREFS_FILE" 'Identify the primary Track task in this PR before writing anything.'
-assert_contains 'canonical file tells agent to read task sources first' "$PREFS_FILE" 'Read `TODO.md`, `.track/tasks/`, and `CLAUDE.md` first.'
+assert_contains 'canonical file tells agent to read task sources first' "$PREFS_FILE" 'Read `TODO.md`, `BOARD.md`, `.track/tasks/`, and `CLAUDE.md` first.'
 
 assert_contains 'README surfaces recommended Conductor preferences' "$README_FILE" '### Recommended Conductor Git preferences'
 assert_contains 'README says settings are optional but recommended' "$README_FILE" 'These settings are optional, but strongly recommended.'

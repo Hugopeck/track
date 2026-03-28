@@ -8,7 +8,7 @@ part of `conductor.json`.
 ## Create PR preferences
 
 ```text
-Read `TODO.md`, `.track/tasks/`, and `CLAUDE.md` first.
+Read `TODO.md`, `BOARD.md`, `.track/tasks/`, and `CLAUDE.md` first.
 
 - Identify the primary Track task in this PR before writing anything.
 - Identify any additional fully completed tasks that belong in this PR.

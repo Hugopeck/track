@@ -8,10 +8,14 @@ source "$ROOT_DIR/.track/scripts/track-common.sh"
 DEFAULT_BRANCH="${TRACK_DEFAULT_BRANCH:-main}"
 MODE='shared'
 OFFLINE=0
-OUTPUT_PATH="$ROOT_DIR/TODO.md"
+BOARD_OUTPUT_PATH="$ROOT_DIR/BOARD.md"
+TODO_OUTPUT_PATH="$ROOT_DIR/TODO.md"
+PROJECTS_OUTPUT_PATH="$ROOT_DIR/PROJECTS.md"
 SOURCE_ROOT=''
 TRACK_TODO_TEMP_DIR=''
 WARNINGS=()
+FOOTER_SOURCE_LABEL=''
+FOOTER_UPDATED_AT=''
 
 TASK_FILES=()
 TASK_IDS=()
@@ -25,6 +29,7 @@ TASK_DEPENDS=()
 TASK_FILES_SERIALIZED=()
 TASK_PATHS=()
 TASK_PRS=()
+TASK_UPDATED=()
 
 PROJECT_FILES=()
 PROJECT_IDS=()
@@ -40,6 +45,8 @@ usage() {
 Usage: bash .track/scripts/track-todo.sh [--local] [--offline] [--output PATH]
 
 Default mode reads `.track/` from `origin/main` and overlays live open PR metadata via `gh`.
+`--output PATH` sets the `BOARD.md` output path; sibling `TODO.md` and `PROJECTS.md`
+are written alongside it.
 USAGE
 }
 
@@ -211,9 +218,9 @@ load_open_prs() {
     OPEN_PR_TASK_IDS+=("$TRACK_RESOLVED_TASK_ID")
     OPEN_PR_URLS+=("$url")
     if [[ "$is_draft" == 'true' ]]; then
-      OPEN_PR_STATUSES+=("active")
+      OPEN_PR_STATUSES+=('active')
     else
-      OPEN_PR_STATUSES+=("review")
+      OPEN_PR_STATUSES+=('review')
     fi
   done <<< "$lines"
 }
@@ -252,6 +259,7 @@ load_tasks() {
     TASK_FILES_SERIALIZED+=("$files_serialized")
     TASK_PATHS+=("$(basename "$file")")
     TASK_PRS+=("$pr_url")
+    TASK_UPDATED+=("$TRACK_updated")
   done < <(find "$SOURCE_ROOT/.track/tasks" -maxdepth 1 -type f -name '*.md' | sort)
 }
 
@@ -275,9 +283,36 @@ task_blocked_by_dependencies() {
   return 1
 }
 
-task_blocked_by_overlap() {
+task_unmet_dependencies_csv() {
   local task_index="$1"
-  local other_index
+  local serialized_depends="${TASK_DEPENDS[$task_index]}"
+  local IFS="$TRACK_ITEM_SEP"
+  local deps=() dep dep_index output=''
+
+  read -r -a deps <<< "$serialized_depends"
+  for dep in "${deps[@]-}"; do
+    [[ -z "$dep" ]] && continue
+    if ! dep_index="$(find_task_index_by_id "$dep")"; then
+      if [[ -n "$output" ]]; then
+        output+=', '
+      fi
+      output+="$dep"
+      continue
+    fi
+    if [[ "${TASK_EFFECTIVE_STATUSES[$dep_index]}" != 'done' ]]; then
+      if [[ -n "$output" ]]; then
+        output+=', '
+      fi
+      output+="$dep"
+    fi
+  done
+
+  printf '%s' "$output"
+}
+
+task_overlap_blockers_csv() {
+  local task_index="$1"
+  local other_index output=''
 
   for ((other_index = 0; other_index < ${#TASK_IDS[@]}; other_index++)); do
     [[ $other_index -eq $task_index ]] && continue
@@ -285,11 +320,18 @@ task_blocked_by_overlap() {
       continue
     fi
     if track_globs_overlap_serialized "${TASK_FILES_SERIALIZED[$task_index]}" "${TASK_FILES_SERIALIZED[$other_index]}"; then
-      return 0
+      if [[ -n "$output" ]]; then
+        output+=', '
+      fi
+      output+="${TASK_IDS[$other_index]}"
     fi
   done
 
-  return 1
+  printf '%s' "$output"
+}
+
+task_blocked_by_overlap() {
+  [[ -n "$(task_overlap_blockers_csv "$1")" ]]
 }
 
 task_is_immediate_start() {
@@ -326,42 +368,155 @@ project_sort_key() {
   printf '%02d\t%06d\t%s\n' "$best_rank" "$project_id" "$project_id"
 }
 
+completed_task_sort_key() {
+  local task_index="$1"
+  printf '%s\t%s\n' "${TASK_UPDATED[$task_index]}" "${TASK_IDS[$task_index]}"
+}
 
 markdown_link_text() {
   local text="$1"
-  text=${text//[/\[}
-  text=${text//]/\]}
+  text=${text//[/\\[}
+  text=${text//]/\\]}
   printf '%s' "$text"
 }
-render_task_row() {
+
+task_depends_display() {
   local index="$1"
-  local depends='—'
-  local status_display task_link
-
   if [[ -n "${TASK_DEPENDS[$index]}" ]]; then
-    depends="$(printf '%s' "${TASK_DEPENDS[$index]}" | tr "$TRACK_ITEM_SEP" ',' | sed 's/,/, /g')"
+    printf '%s' "${TASK_DEPENDS[$index]}" | tr "$TRACK_ITEM_SEP" ',' | sed 's/,/, /g'
+  else
+    printf '—'
   fi
+}
 
-  task_link="[$(markdown_link_text "${TASK_TITLES[$index]}")](.track/tasks/${TASK_PATHS[$index]})"
-  status_display="${TASK_EFFECTIVE_STATUSES[$index]}"
+task_status_display() {
+  local index="$1"
+  local status_display="${TASK_EFFECTIVE_STATUSES[$index]}"
   if [[ -n "${TASK_PRS[$index]}" ]]; then
     status_display+=" · [PR](${TASK_PRS[$index]})"
   fi
+  printf '%s' "$status_display"
+}
 
-  printf '| [%s](.track/tasks/%s) | %s | %s | %s | %s | %s |\n' \
+project_done_count() {
+  local project_id="$1"
+  local i count=0
+  for ((i = 0; i < ${#TASK_IDS[@]}; i++)); do
+    [[ "${TASK_PROJECT_IDS[$i]}" != "$project_id" ]] && continue
+    [[ "${TASK_EFFECTIVE_STATUSES[$i]}" == 'done' ]] && count=$((count + 1))
+  done
+  printf '%s' "$count"
+}
+
+project_total_count() {
+  local project_id="$1"
+  local i count=0
+  for ((i = 0; i < ${#TASK_IDS[@]}; i++)); do
+    [[ "${TASK_PROJECT_IDS[$i]}" != "$project_id" ]] && continue
+    count=$((count + 1))
+  done
+  printf '%s' "$count"
+}
+
+project_completion_bar() {
+  local done_count="$1"
+  local total_count="$2"
+  local percent=0 filled empty i bar=''
+
+  if [[ "$total_count" -gt 0 ]]; then
+    percent=$((done_count * 100 / total_count))
+  fi
+
+  filled=$((percent / 10))
+  if [[ $filled -gt 10 ]]; then
+    filled=10
+  fi
+  empty=$((10 - filled))
+
+  for ((i = 0; i < filled; i++)); do
+    bar+='█'
+  done
+  for ((i = 0; i < empty; i++)); do
+    bar+='░'
+  done
+
+  printf '`[%s] %s%%` (%s/%s)' "$bar" "$percent" "$done_count" "$total_count"
+}
+
+project_status_label() {
+  local project_id="$1"
+  local i total_count=0 done_count=0 cancelled_count=0 has_active=0 has_review=0
+
+  for ((i = 0; i < ${#TASK_IDS[@]}; i++)); do
+    [[ "${TASK_PROJECT_IDS[$i]}" != "$project_id" ]] && continue
+    total_count=$((total_count + 1))
+    case "${TASK_EFFECTIVE_STATUSES[$i]}" in
+      done) done_count=$((done_count + 1)) ;;
+      cancelled) cancelled_count=$((cancelled_count + 1)) ;;
+      active) has_active=1 ;;
+      review) has_review=1 ;;
+    esac
+  done
+
+  if [[ $total_count -eq 0 ]]; then
+    printf 'Planning'
+    return 0
+  fi
+
+  if [[ $has_active -eq 1 || $has_review -eq 1 ]]; then
+    printf 'Active'
+    return 0
+  fi
+
+  if [[ $done_count -eq 0 && $cancelled_count -lt $total_count ]]; then
+    printf 'Planning'
+    return 0
+  fi
+
+  if [[ $done_count -gt 0 && $done_count -eq $total_count ]]; then
+    printf 'Done'
+    return 0
+  fi
+
+  if [[ $done_count -eq 0 && $cancelled_count -eq $total_count ]]; then
+    printf 'Cancelled'
+    return 0
+  fi
+
+  if [[ $done_count -gt 0 && $((done_count + cancelled_count)) -eq $total_count ]]; then
+    printf 'Done'
+    return 0
+  fi
+
+  printf 'Active'
+}
+
+render_footer() {
+  printf 'Generated from `%s` `.track/` state plus live open PR metadata. Updated %s.\n' \
+    "$FOOTER_SOURCE_LABEL" \
+    "$FOOTER_UPDATED_AT"
+  printf '%s projects derived from `.track/` state.\n' "${#PROJECT_IDS[@]}"
+}
+
+render_board_task_row() {
+  local index="$1"
+  local task_link
+  task_link="[$(markdown_link_text "${TASK_TITLES[$index]}")](.track/tasks/${TASK_PATHS[$index]})"
+
+  printf '| [%s](.track/tasks/%s) | %s | %s | %s | %s |\n' \
     "${TASK_IDS[$index]}" \
     "${TASK_PATHS[$index]}" \
     "$task_link" \
-    "${TASK_MODES[$index]}" \
     "${TASK_PRIORITIES[$index]}" \
-    "$depends" \
-    "$status_display"
+    "$(task_depends_display "$index")" \
+    "$(task_status_display "$index")"
 }
 
 render_cross_project_dependencies() {
   local seen='' i dep dep_index source_project target_project edge
   local IFS="$TRACK_ITEM_SEP"
   local deps=()
+  local found=0
 
   printf '## Cross-Project Dependencies\n\n```\n'
   for ((i = 0; i < ${#TASK_IDS[@]}; i++)); do
@@ -377,29 +532,14 @@ render_cross_project_dependencies() {
       if [[ "$seen" != *"|$edge|"* ]]; then
         printf '%s\n' "$edge"
         seen+="|$edge|"
+        found=1
       fi
     done
   done
-  printf '```\n\n'
-}
-
-render_immediate_starts() {
-  local i found=0
-  printf '## Immediate Starts\n\n'
-  for ((i = 0; i < ${#TASK_IDS[@]}; i++)); do
-    if task_is_immediate_start "$i"; then
-      printf -- '- [ ] [%s](.track/tasks/%s) — `%s` · `%s`\n' \
-        "$(markdown_link_text "${TASK_TITLES[$i]}")" \
-        "${TASK_PATHS[$i]}" \
-        "${TASK_PROJECT_IDS[$i]}" \
-        "${TASK_PRIORITIES[$i]}"
-      found=1
-    fi
-  done
   if [[ $found -eq 0 ]]; then
-    printf -- '- No ready tasks.\n'
+    printf 'No cross-project dependencies.\n'
   fi
-  printf '\n'
+  printf '```\n\n'
 }
 
 render_warnings() {
@@ -415,21 +555,15 @@ render_warnings() {
   printf '\n'
 }
 
-generate_todo() {
-  local output_file project_sort_lines project_sort_line project_id project_index
+render_board() {
+  local project_sort_lines='' project_sort_line project_id project_index
   local task_sort_lines task_sort_line task_index project_excerpt i
+  local done_count total_count
 
-  output_file="$OUTPUT_PATH"
-  mkdir -p "$(dirname "$output_file")"
-
+  mkdir -p "$(dirname "$BOARD_OUTPUT_PATH")"
   {
-    printf '# Work Items\n\n'
-    printf 'Generated from `%s` `.track/` state plus live open PR metadata. Updated %s.\n\n' \
-      "$([[ "$MODE" == 'local' ]] && printf 'local working tree' || printf "origin/$DEFAULT_BRANCH")" \
-      "$(date -u +'%Y-%m-%d %H:%M UTC')"
-    printf '%s projects derived from `.track/` state.\n\n' "${#PROJECT_IDS[@]}"
+    printf '# Board\n\n'
 
-    project_sort_lines=''
     for project_id in "${PROJECT_IDS[@]-}"; do
       [[ -z "$project_id" ]] && continue
       project_sort_lines+="$(project_sort_key "$project_id")"$'\n'
@@ -439,21 +573,24 @@ generate_todo() {
       [[ -z "$project_sort_line" ]] && continue
       project_id="${project_sort_line##*$'\t'}"
       project_index="$(find_project_index_by_id "$project_id")"
+      done_count="$(project_done_count "$project_id")"
+      total_count="$(project_total_count "$project_id")"
 
       printf -- '---\n\n'
-      printf '## Project %s: %s\n\n' "$project_id" "${PROJECT_TITLES[$project_index]}"
+      printf '## [Project %s: %s](.track/projects/%s) `[%s/%s Tasks]`\n\n' \
+        "$project_id" \
+        "${PROJECT_TITLES[$project_index]}" \
+        "$(basename "${PROJECT_FILES[$project_index]}")" \
+        "$done_count" \
+        "$total_count"
 
       project_excerpt="${PROJECT_EXCERPTS[$project_index]}"
       if [[ -n "$project_excerpt" ]]; then
-        printf '%s\n\n' "$project_excerpt"
+        printf '> %s\n\n' "$project_excerpt"
       fi
 
-      printf '**Brief:** [`.track/projects/%s`](.track/projects/%s)\n\n' \
-        "$(basename "${PROJECT_FILES[$project_index]}")" \
-        "$(basename "${PROJECT_FILES[$project_index]}")"
-
-      printf '| ID | Task | Mode | Priority | Depends | Status |\n'
-      printf '| --- | --- | --- | --- | --- | --- |\n'
+      printf '| ID | Task | Priority | Depends | Status |\n'
+      printf '| --- | --- | --- | --- | --- |\n'
 
       task_sort_lines=''
       for ((i = 0; i < ${#TASK_IDS[@]}; i++)); do
@@ -464,19 +601,164 @@ generate_todo() {
       while IFS= read -r task_sort_line; do
         [[ -z "$task_sort_line" ]] && continue
         task_index="${task_sort_line##*$'\t'}"
-        render_task_row "$task_index"
+        render_board_task_row "$task_index"
       done < <(printf '%s' "$task_sort_lines" | sort)
 
       printf '\n'
     done < <(printf '%s' "$project_sort_lines" | sort)
 
     render_cross_project_dependencies
-    render_immediate_starts
     render_warnings
-  } > "$output_file"
+    render_footer
+  } > "$BOARD_OUTPUT_PATH"
+}
+
+render_todo_section_items() {
+  local section="$1"
+  local found=0 task_sort_lines='' task_sort_line task_index
+  local unmet overlap reasons
+  local completed_sort_lines=''
+
+  case "$section" in
+    immediate|up_next|blocked)
+      for ((task_index = 0; task_index < ${#TASK_IDS[@]}; task_index++)); do
+        [[ "${TASK_EFFECTIVE_STATUSES[$task_index]}" != 'todo' ]] && continue
+        [[ "${TASK_EFFECTIVE_STATUSES[$task_index]}" == 'cancelled' ]] && continue
+        task_sort_lines+="$(task_sort_key "$task_index")"$'\t'"$task_index"$'\n'
+      done
+
+      while IFS= read -r task_sort_line; do
+        [[ -z "$task_sort_line" ]] && continue
+        task_index="${task_sort_line##*$'\t'}"
+        unmet="$(task_unmet_dependencies_csv "$task_index")"
+        overlap="$(task_overlap_blockers_csv "$task_index")"
+
+        case "$section" in
+          immediate)
+            if [[ -z "$unmet" && -z "$overlap" ]] && [[ "${TASK_PRIORITIES[$task_index]}" == 'urgent' || "${TASK_PRIORITIES[$task_index]}" == 'high' ]]; then
+              printf -- '- [ ] [%s] [%s](.track/tasks/%s)\n' \
+                "${TASK_IDS[$task_index]}" \
+                "$(markdown_link_text "${TASK_TITLES[$task_index]}")" \
+                "${TASK_PATHS[$task_index]}"
+              found=1
+            fi
+            ;;
+          up_next)
+            if [[ -z "$unmet" && -z "$overlap" ]] && [[ "${TASK_PRIORITIES[$task_index]}" == 'medium' || "${TASK_PRIORITIES[$task_index]}" == 'low' ]]; then
+              printf -- '- [ ] [%s] [%s](.track/tasks/%s)\n' \
+                "${TASK_IDS[$task_index]}" \
+                "$(markdown_link_text "${TASK_TITLES[$task_index]}")" \
+                "${TASK_PATHS[$task_index]}"
+              found=1
+            fi
+            ;;
+          blocked)
+            if [[ -n "$unmet" || -n "$overlap" ]]; then
+              reasons=''
+              if [[ -n "$unmet" ]]; then
+                reasons="Depends on $unmet"
+              fi
+              if [[ -n "$overlap" ]]; then
+                if [[ -n "$reasons" ]]; then
+                  reasons+="; "
+                fi
+                reasons+="Blocked by active work in $overlap"
+              fi
+              printf -- '- [ ] [%s] [%s](.track/tasks/%s) *(%s)*\n' \
+                "${TASK_IDS[$task_index]}" \
+                "$(markdown_link_text "${TASK_TITLES[$task_index]}")" \
+                "${TASK_PATHS[$task_index]}" \
+                "$reasons"
+              found=1
+            fi
+            ;;
+        esac
+      done < <(printf '%s' "$task_sort_lines" | sort)
+      ;;
+    completed)
+      for ((task_index = 0; task_index < ${#TASK_IDS[@]}; task_index++)); do
+        [[ "${TASK_EFFECTIVE_STATUSES[$task_index]}" == 'done' ]] || continue
+        completed_sort_lines+="$(completed_task_sort_key "$task_index")"$'\t'"$task_index"$'\n'
+      done
+
+      while IFS= read -r task_sort_line; do
+        [[ -z "$task_sort_line" ]] && continue
+        task_index="${task_sort_line##*$'\t'}"
+        printf -- '- [x] [%s] [%s](.track/tasks/%s)\n' \
+          "${TASK_IDS[$task_index]}" \
+          "$(markdown_link_text "${TASK_TITLES[$task_index]}")" \
+          "${TASK_PATHS[$task_index]}"
+        found=1
+      done < <(printf '%s' "$completed_sort_lines" | sort -r)
+      ;;
+  esac
+
+  if [[ $found -eq 0 ]]; then
+    printf -- '- None.\n'
+  fi
+  printf '\n'
+}
+
+render_todo() {
+  mkdir -p "$(dirname "$TODO_OUTPUT_PATH")"
+  {
+    printf '# TODO\n\n'
+    printf '## Immediate Starts (Unblocked & High/Urgent Priority)\n\n'
+    render_todo_section_items immediate
+    printf '## Up Next (Unblocked & Medium/Low Priority)\n\n'
+    render_todo_section_items up_next
+    printf '## Blocked / Waiting on Dependencies\n\n'
+    render_todo_section_items blocked
+    printf '## Recently Completed\n\n'
+    render_todo_section_items completed
+    render_footer
+  } > "$TODO_OUTPUT_PATH"
+}
+
+render_projects() {
+  local project_sort_lines='' project_sort_line project_id project_index
+  local done_count total_count
+
+  mkdir -p "$(dirname "$PROJECTS_OUTPUT_PATH")"
+  {
+    printf '# Projects Overview\n\n'
+    printf '| ID | Project | Description | Completion | Status |\n'
+    printf '| :--- | :--- | :--- | :--- | :--- |\n'
+
+    for project_id in "${PROJECT_IDS[@]-}"; do
+      [[ -z "$project_id" ]] && continue
+      project_sort_lines+="$(printf '%06d\t%s' "$project_id" "$project_id")"$'\n'
+    done
+
+    while IFS= read -r project_sort_line; do
+      [[ -z "$project_sort_line" ]] && continue
+      project_id="${project_sort_line##*$'\t'}"
+      project_index="$(find_project_index_by_id "$project_id")"
+      done_count="$(project_done_count "$project_id")"
+      total_count="$(project_total_count "$project_id")"
+
+      printf '| [%s](.track/projects/%s) | %s | %s | %s | %s |\n' \
+        "$project_id" \
+        "$(basename "${PROJECT_FILES[$project_index]}")" \
+        "$(markdown_link_text "${PROJECT_TITLES[$project_index]}")" \
+        "$(markdown_link_text "${PROJECT_EXCERPTS[$project_index]}")" \
+        "$(project_completion_bar "$done_count" "$total_count")" \
+        "$(project_status_label "$project_id")"
+    done < <(printf '%s' "$project_sort_lines" | sort)
+
+    printf '\n'
+    render_footer
+  } > "$PROJECTS_OUTPUT_PATH"
+}
+
+generate_views() {
+  render_board
+  render_todo
+  render_projects
 }
 
 main() {
+  local output_dir
   cd "$ROOT_DIR"
 
   while [[ $# -gt 0 ]]; do
@@ -489,7 +771,7 @@ main() {
         ;;
       --output)
         shift
-        OUTPUT_PATH="$1"
+        BOARD_OUTPUT_PATH="$1"
         ;;
       -h|--help)
         usage
@@ -504,6 +786,10 @@ main() {
     shift
   done
 
+  output_dir="$(dirname "$BOARD_OUTPUT_PATH")"
+  TODO_OUTPUT_PATH="$output_dir/TODO.md"
+  PROJECTS_OUTPUT_PATH="$output_dir/PROJECTS.md"
+
   load_source_tree
 
   if [[ ! -d "$SOURCE_ROOT/.track/tasks" || ! -d "$SOURCE_ROOT/.track/projects" ]]; then
@@ -511,11 +797,16 @@ main() {
     exit 1
   fi
 
+  FOOTER_SOURCE_LABEL="$([[ "$MODE" == 'local' ]] && printf 'local working tree' || printf 'origin/%s' "$DEFAULT_BRANCH")"
+  FOOTER_UPDATED_AT="$(date -u +'%Y-%m-%d %H:%M UTC')"
+
   load_projects
   load_open_prs
   load_tasks
-  generate_todo
-  printf 'Wrote %s\n' "$OUTPUT_PATH"
+  generate_views
+  printf 'Wrote %s\n' "$BOARD_OUTPUT_PATH"
+  printf 'Wrote %s\n' "$TODO_OUTPUT_PATH"
+  printf 'Wrote %s\n' "$PROJECTS_OUTPUT_PATH"
 }
 
 main "$@"

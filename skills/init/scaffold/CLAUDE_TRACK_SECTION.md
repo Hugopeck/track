@@ -2,14 +2,16 @@
 
 Track is a git-native coordination system. It works in the background — follow its conventions and it keeps everything organized. The protocol below is both reference and guide.
 
-Projects and tasks live in `.track/`. `TODO.md` is the generated shared view of current work.
+Projects and tasks live in `.track/`. `TODO.md`, `BOARD.md`, and `PROJECTS.md` are the generated shared views of current work.
 
 ### Layout
 - `.track/projects/{project_id}-{slug}.md` — project briefs
 - `.track/tasks/{task_id}-{slug}.md` — flat task files
 - `.track/plans/{slug}.md` — short-lived plan documents (auto-expire after 7 days)
 - `.track/scripts/` — bash enforcement scripts (managed by Track)
-- `TODO.md` — generated view; gitignored and never canonical
+- `TODO.md` — flat execution view; gitignored and never canonical
+- `BOARD.md` — grouped project board; gitignored and never canonical
+- `PROJECTS.md` — project summary view; gitignored and never canonical
 
 ### Task Format
 
@@ -50,7 +52,7 @@ Append-only log.
 
 ### Raw vs Effective Status
 - Raw status is the `status:` field stored in the task file
-- Effective status is what `TODO.md` shows
+- Effective status is what the generated Track views show
 - If raw status is `done` or `cancelled`, effective status matches it
 - Otherwise, an open draft PR linked by `Track-Task`, `track:{id}`, title ID, or `task/{id}-{slug}` makes the task effectively `active`
 - Otherwise, an open ready-for-review PR linked by `Track-Task`, `track:{id}`, title ID, or `task/{id}-{slug}` makes the task effectively `review`
@@ -58,7 +60,7 @@ Append-only log.
 
 ### Agent Protocol (primary)
 
-1. Read `TODO.md` for current state. Pick a `todo` task or resume an `active` one.
+1. Read `TODO.md` for the execution queue and `BOARD.md` for project context. Pick a `todo` task or resume an `active` one.
 2. Check `files:` overlap against tasks already shown as `active` / `review` — do not touch files owned by another in-progress task.
 3. Create a branch or use the current one.
 4. Open a **draft PR** to start work. No PR = not started.
@@ -68,7 +70,7 @@ Append-only log.
 8. If `gh` auth fails or PR creation fails, **stop and surface the error.**
 9. Implement. When ready, mark the PR ready for review.
 
-`TODO.md` is generated — edit task files in `.track/tasks/`, not TODO.md directly.
+`BOARD.md`, `TODO.md`, and `PROJECTS.md` are generated — edit task files in `.track/tasks/`, not the generated views directly.
 
 `/track:work` contains the full protocol with edge cases. Use it when this section is insufficient.
 
@@ -132,7 +134,7 @@ When any planning, investigation, or design work produces a plan, **automaticall
 - The body is freeform — paste the plan content as-is, no reformatting needed
 - Plans auto-expire 7 days after `created`; update the date to keep one longer
 
-### Regenerating `TODO.md`
+### Regenerating Track views
 After creating, updating, cancelling, or completing tasks, regenerate the shared view:
 
 ```shell

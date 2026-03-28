@@ -10,7 +10,7 @@ a script, change the canonical copy in the Track plugin and re-run init.
 |--------|---------|--------|
 | `track-common.sh` | Shared library — YAML parser, utilities, glob overlap detection | Sourced by other scripts |
 | `track-validate.sh` | Validate all task files, project briefs, and plan expiry | CI + local |
-| `track-todo.sh` | Generate `TODO.md` from tasks, projects, and PR state | CI + local |
+| `track-todo.sh` | Generate `BOARD.md`, `TODO.md`, and `PROJECTS.md` from tasks, projects, and PR state | CI + local |
 | `track-pr-lint.sh` | Lint PR branch names and titles against task conventions | CI only |
 | `track-complete.sh` | Mark a task as done after its PR merges | CI only (post-merge workflow) |
 

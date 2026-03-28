@@ -106,11 +106,16 @@ printf 'Running extended todo tests...\n\n'
 repo="$(setup_repo)"
 mock_bin="$(mktemp -d)"
 setup_gh_mock "$mock_bin"
-PATH="$mock_bin:$PATH" bash "$repo/.track/scripts/track-todo.sh" --local --output "$repo/TODO.md" >/dev/null
+PATH="$mock_bin:$PATH" bash "$repo/.track/scripts/track-todo.sh" --local --output "$repo/BOARD.md" >/dev/null
 
-assert_contains 'task from body shows active with PR link' '| [1.1](.track/tasks/1.1-test-task.md) | [Test task](.track/tasks/1.1-test-task.md) | implement | medium | — | active · [PR](https://example.com/pr/101) |' "$repo/TODO.md"
-assert_contains 'same task linked by two distinct PRs warns' "multiple open PRs map to task '1.3'" "$repo/TODO.md"
-assert_not_contains 'single-task PR does not warn for 1.1' "multiple open PRs map to task '1.1'" "$repo/TODO.md"
+assert_contains 'board output written to explicit path' '# Board' "$repo/BOARD.md"
+assert_contains 'todo sibling output written automatically' '# TODO' "$repo/TODO.md"
+assert_contains 'projects sibling output written automatically' '# Projects Overview' "$repo/PROJECTS.md"
+assert_contains 'task from body shows active with PR link in board' '| [1.1](.track/tasks/1.1-test-task.md) | [Test task](.track/tasks/1.1-test-task.md) | medium | — | active · [PR](https://example.com/pr/101) |' "$repo/BOARD.md"
+assert_contains 'same task linked by two distinct PRs warns in board' "multiple open PRs map to task '1.3'" "$repo/BOARD.md"
+assert_not_contains 'single-task PR does not warn for 1.1' "multiple open PRs map to task '1.1'" "$repo/BOARD.md"
+assert_contains 'todo keeps dependent task blocked' '- [ ] [1.3] [Dependent task](.track/tasks/1.3-dependent-task.md) *(Depends on 1.1)*' "$repo/TODO.md"
+assert_not_contains 'active task does not appear in ready queues' '- [ ] [1.1] [Test task](.track/tasks/1.1-test-task.md)' "$repo/TODO.md"
 
 rm -rf "$repo" "$mock_bin"
 

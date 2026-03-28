@@ -78,7 +78,7 @@ Append-only log of decisions and updates.
 
 ### Raw Status vs Effective Status
 
-The `status` field in the file is the **raw status**. What shows up in `TODO.md` is the **effective status**, which layers GitHub PR state on top:
+The `status` field in the file is the **raw status**. What shows up in the generated Track views is the **effective status**, which layers GitHub PR state on top:
 
 1. If raw status is `done` or `cancelled` → effective status matches it (terminal, nothing overrides)
 2. If there's an open **draft** PR on branch `task/{id}-{slug}` → effective status is `active`
@@ -129,18 +129,18 @@ Not meant to be run directly. Contains helper functions used by the other three 
 - Glob overlap detection (checks if two tasks touch the same files)
 - Project brief metadata extraction
 
-### `track-todo.sh` — Generate TODO.md
+### `track-todo.sh` — Generate Track views
 
-Reads all projects and tasks, queries GitHub for open PRs, and writes a sorted markdown summary to `TODO.md`.
+Reads all projects and tasks, queries GitHub for open PRs, and writes `BOARD.md`, `TODO.md`, and `PROJECTS.md`.
 
 ```bash
 bash .track/scripts/track-todo.sh            # default: reads from origin/main + live PR data
 bash .track/scripts/track-todo.sh --local    # reads from your local working tree instead
 bash .track/scripts/track-todo.sh --offline  # skips GitHub PR lookup
-bash .track/scripts/track-todo.sh --output path/to/file.md
+bash .track/scripts/track-todo.sh --output path/to/BOARD.md
 ```
 
-`TODO.md` is gitignored — it's a convenience view, not canonical state.
+`BOARD.md`, `TODO.md`, and `PROJECTS.md` are gitignored — they are convenience views, not canonical state.
 
 ### `track-validate.sh` — Validate Track State
 
@@ -209,7 +209,7 @@ You never run this manually — the `.github/workflows/track-complete.yml` workf
 
 ## Limitations
 
-- No web UI, no dashboard — `TODO.md` is the only view
+- No web UI, no dashboard — the generated markdown views are the UI
 - Parallel arrays in bash mean the scripts get unwieldy past ~50-60 tasks (performance is fine, readability isn't)
 - Glob overlap detection is approximate — it compares path prefixes, not full glob semantics
 - One PR per task only — if multiple open PRs map to the same task ID, it's flagged as a warning
