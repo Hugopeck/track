@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.1](https://github.com/Hugopeck/track/compare/v2.3.0...v2.3.1) (2026-03-28)
+
+
+### Documentation
+
+* **conductor:** add Track Git preference guidance ([#30](https://github.com/Hugopeck/track/issues/30)) ([56233d1](https://github.com/Hugopeck/track/commit/56233d1febe60c91fea04a1647070490dbdaf156))
+
 ## [2.3.0](https://github.com/Hugopeck/track/compare/v2.2.0...v2.3.0) (2026-03-28)
 
 
