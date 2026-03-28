@@ -108,18 +108,30 @@ set -euo pipefail
 mode="__MODE__"
 
 if [[ "$1 $2" == 'pr list' && "$*" == *'--head'* ]]; then
-  printf 'true\n'
+  case "$mode" in
+    current-new-review-pr) printf 'false
+' ;;
+    *) printf 'true
+' ;;
+  esac
   exit 0
 fi
 
 if [[ "$1 $2" == 'pr list' ]]; then
   case "$mode" in
     different-prs)
-      printf '%s\t%s\t%s\t%s\t%s\n' 201 'https://example.com/pr/201' true 'task/1.1-test-task' '[1.1] First'
-      printf '%s\t%s\t%s\t%s\t%s\n' 202 'https://example.com/pr/202' true 'feature/second' '[1.3] Second'
+      printf '%s	%s	%s	%s	%s
+' 201 'https://example.com/pr/201' true 'task/1.1-test-task' '[1.1] First'
+      printf '%s	%s	%s	%s	%s
+' 202 'https://example.com/pr/202' true 'feature/second' '[1.3] Second'
       ;;
     single-pr)
-      printf '%s\t%s\t%s\t%s\t%s\n' 201 'https://example.com/pr/201' true 'task/1.1-test-task' '[1.1] Single'
+      printf '%s	%s	%s	%s	%s
+' 201 'https://example.com/pr/201' true 'task/1.1-test-task' '[1.1] Single'
+      ;;
+    current-new-review-pr)
+      printf '%s	%s	%s	%s	%s
+' 203 'https://example.com/pr/203' false 'task/1.4-new-task' '[1.4] New'
       ;;
   esac
   exit 0
@@ -129,14 +141,24 @@ if [[ "$1 $2" == 'pr view' ]]; then
   case "$3" in
     201)
       if [[ "$*" == *'--json body'* ]]; then
-        printf 'Track-Task: 1.1\n'
+        printf 'Track-Task: 1.1
+'
       else
         printf ''
       fi
       ;;
     202)
       if [[ "$*" == *'--json body'* ]]; then
-        printf 'Track-Task: 1.3\n'
+        printf 'Track-Task: 1.3
+'
+      else
+        printf ''
+      fi
+      ;;
+    203)
+      if [[ "$*" == *'--json body'* ]]; then
+        printf 'Track-Task: 1.4
+'
       else
         printf ''
       fi
@@ -202,6 +224,31 @@ Depends on 1.1.
 Fixture with dependency.
 '
 
+review_task_1_4='---
+id: "1.4"
+title: "New task"
+status: review
+mode: plan
+priority: high
+project_id: "1"
+created: 2026-01-02
+updated: 2026-01-02
+depends_on: []
+files:
+  - ".track/projects/1-test-project.md"
+pr: ""
+---
+
+## Context
+New task introduced on the PR branch.
+
+## Acceptance Criteria
+- [ ] Validation passes
+
+## Notes
+Fixture for a PR-local task.
+'
+
 printf 'Running extended validation tests...\n\n'
 
 # Two active tasks in different PRs with unresolved dependency fails
@@ -238,6 +285,18 @@ write_gh_mock "$mock_bin" single-pr
 run_capture env PATH="$mock_bin:$PATH" TRACK_DEFAULT_BRANCH='skip-main' GITHUB_EVENT_NAME='pull_request' GITHUB_HEAD_REF='task/1.1-test-task' PR_TITLE='[1.1] Multi body' PR_BODY=$'Track-Task: 1.1\nTrack-Task: 1.3' bash "$repo/.track/scripts/track-validate.sh"
 assert_code 'PR context with multiple Track-Task lines errors' 1
 assert_stderr_contains 'multiple Track-Task error surfaced' 'multiple Track-Task values'
+cleanup_capture
+rm -rf "$repo" "$bare_dir" "$mock_bin"
+
+# Current PR may introduce a new task file not yet present on origin/main
+setup_repo
+write_task "$repo" '1.1-test-task.md' "$active_task_1_1"
+commit_and_push_main "$repo"
+write_task "$repo" '1.4-new-task.md' "$review_task_1_4"
+mock_bin="$(mktemp -d)"
+write_gh_mock "$mock_bin" current-new-review-pr
+run_capture env PATH="$mock_bin:$PATH" GITHUB_EVENT_NAME='pull_request' GITHUB_HEAD_REF='task/1.4-new-task' PR_TITLE='[1.4] New context' PR_BODY='Track-Task: 1.4' bash "$repo/.track/scripts/track-validate.sh"
+assert_code 'current PR may introduce new task file' 0
 cleanup_capture
 rm -rf "$repo" "$bare_dir" "$mock_bin"
 

@@ -246,12 +246,13 @@ main_task_status_for_path() {
 
 validate_open_prs() {
   local pr_lines number url is_draft head_ref base_ref state title pr_body pr_labels resolver_code
-  local task_id file_on_main main_status
+  local task_id file_on_main main_status branch_task_file current_head_ref
   local pr_task_ids=() pr_urls=()
   local i j
 
   OPEN_PR_TASK_IDS=()
   OPEN_PR_URLS=()
+  current_head_ref="${GITHUB_HEAD_REF:-}"
 
   if ! command -v gh >/dev/null 2>&1; then
     print_warning 'gh not found; skipping live PR checks'
@@ -304,6 +305,10 @@ validate_open_prs() {
 
     file_on_main="$(main_task_file_for_id "$task_id")"
     if [[ -z "$file_on_main" ]]; then
+      branch_task_file="$(find "$TASK_DIR" -maxdepth 1 -type f -name "${task_id}-*.md" | head -n 1)"
+      if [[ -n "$current_head_ref" && "$head_ref" == "$current_head_ref" && -n "$branch_task_file" ]]; then
+        continue
+      fi
       print_error "open PR '$url' references task '$task_id' but no matching task file exists on origin/$DEFAULT_BRANCH. Create the task file or close the orphaned PR"
       continue
     fi
