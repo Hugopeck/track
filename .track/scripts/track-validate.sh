@@ -289,7 +289,8 @@ validate_open_prs() {
     fi
     if [[ $resolver_code -ne 0 ]]; then
       case "$resolver_code" in
-        1|2|3) print_error "open PR '$url' could not be linked to a task: $TRACK_RESOLVER_ERROR" ;;
+        1) ;; # not a Track PR — skip silently
+        2|3) print_error "open PR '$url' could not be linked to a task: $TRACK_RESOLVER_ERROR" ;;
         *) print_error "open PR '$url' could not be linked to a task: unexpected resolver failure" ;;
       esac
       continue
