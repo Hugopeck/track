@@ -13,13 +13,35 @@ if [[ ! -f "$CANONICAL_FILE" ]]; then
   exit 1
 fi
 
-render_agents_file() {
+render_scaffold_agents_file() {
   local target_file="$1"
   {
     printf '<!-- TRACK:START -->\n'
     cat "$CANONICAL_FILE"
     printf '<!-- TRACK:END -->\n'
   } > "$target_file"
+}
+
+render_repo_agents_file() {
+  local target_file="$1" temp_file
+  temp_file="$(mktemp)"
+
+  if rg -Fq '<!-- TRACK:START -->' "$target_file"; then
+    awk '
+      /^<!-- TRACK:START -->$/ { exit }
+      { print }
+    ' "$target_file" > "$temp_file"
+  elif [[ -f "$target_file" ]]; then
+    cat "$target_file" > "$temp_file"
+    if [[ -s "$temp_file" ]]; then
+      printf '\n' >> "$temp_file"
+    fi
+  fi
+
+  printf '<!-- TRACK:START -->\n' >> "$temp_file"
+  cat "$CANONICAL_FILE" >> "$temp_file"
+  printf '<!-- TRACK:END -->\n' >> "$temp_file"
+  mv "$temp_file" "$target_file"
 }
 
 render_repo_claude() {
@@ -42,6 +64,6 @@ render_repo_claude() {
 }
 
 cat "$CANONICAL_FILE" > "$SCAFFOLD_CLAUDE_FILE"
-render_agents_file "$REPO_AGENTS_FILE"
-render_agents_file "$SCAFFOLD_AGENTS_FILE"
+render_repo_agents_file "$REPO_AGENTS_FILE"
+render_scaffold_agents_file "$SCAFFOLD_AGENTS_FILE"
 render_repo_claude
