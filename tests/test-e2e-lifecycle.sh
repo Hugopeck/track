@@ -23,6 +23,17 @@ run_test() {
   fi
 }
 
+run_validate_clean() {
+  env \
+    -u GITHUB_EVENT_NAME \
+    -u GITHUB_HEAD_REF \
+    -u PR_TITLE \
+    -u PR_BODY \
+    -u PR_LABELS \
+    -u GH_TOKEN \
+    bash "$@"
+}
+
 check_contains() {
   local name="$1"
   local file="$2"
@@ -257,7 +268,7 @@ todo_after="$repo/TODO-after.md"
 completed_task="$repo/.track/tasks/1.1-foundation-plumbing.md"
 completed_pr='https://github.com/test/repo/pull/73'
 
-run_test "initial validation passes" 0 bash "$repo/.track/scripts/track-validate.sh"
+run_test "initial validation passes" 0 run_validate_clean "$repo/.track/scripts/track-validate.sh"
 run_test "initial TODO generation passes" 0 bash "$repo/.track/scripts/track-todo.sh" --local --offline --output "$todo_before"
 
 if [[ -f "$todo_before" ]]; then
@@ -279,7 +290,7 @@ check_contains "completed task status set to done" "$completed_task" 'status: do
 check_contains "completed task PR URL recorded" "$completed_task" "pr: \"$completed_pr\""
 check_contains "completed task updated date recorded" "$completed_task" "updated: $today"
 
-run_test "validation after completion passes" 0 bash "$repo/.track/scripts/track-validate.sh"
+run_test "validation after completion passes" 0 run_validate_clean "$repo/.track/scripts/track-validate.sh"
 run_test "TODO regeneration after completion passes" 0 bash "$repo/.track/scripts/track-todo.sh" --local --offline --output "$todo_after"
 
 if [[ -f "$todo_after" ]]; then

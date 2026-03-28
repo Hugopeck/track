@@ -15,7 +15,10 @@ TASK_IDS=()
 TASK_STATUSES=()
 TASK_PROJECT_IDS=()
 TASK_PATHS=()
+TASK_DEPENDS=()
 PROJECT_IDS=()
+OPEN_PR_TASK_IDS=()
+OPEN_PR_URLS=()
 
 print_error() {
   printf 'Error: %s\n' "$1" >&2
@@ -46,6 +49,21 @@ find_task_index_by_id() {
     }
   done
   return 1
+}
+
+find_open_pr_url_by_task_id() {
+  local id="$1"
+  local i url=''
+  for ((i = 0; i < ${#OPEN_PR_TASK_IDS[@]}; i++)); do
+    [[ "${OPEN_PR_TASK_IDS[$i]}" != "$id" ]] && continue
+    if [[ -z "$url" || "${OPEN_PR_URLS[$i]}" == "$url" ]]; then
+      url="${OPEN_PR_URLS[$i]}"
+    else
+      return 1
+    fi
+  done
+  [[ -n "$url" ]] || return 1
+  printf '%s' "$url"
 }
 
 frontmatter_has_key() {
@@ -137,6 +155,7 @@ validate_task_file() {
   TASK_STATUSES+=("$TRACK_status")
   TASK_PROJECT_IDS+=("$TRACK_project_id")
   TASK_PATHS+=("$(basename "$file")")
+  TASK_DEPENDS+=("$(track_serialize_items "${TRACK_depends_on[@]-}")")
 
   for dep in "${TRACK_depends_on[@]-}"; do
     [[ -z "$dep" ]] && continue
@@ -158,13 +177,12 @@ validate_duplicate_ids() {
 }
 
 validate_dependencies() {
-  local i dep dep_index dep_status
+  local i dep dep_index dep_status task_pr_url dep_pr_url
+  local IFS="$TRACK_ITEM_SEP"
+  local deps=()
   for ((i = 0; i < ${#TASK_FILES[@]}; i++)); do
-    if ! track_parse_task_file "${TASK_FILES[$i]}"; then
-      continue
-    fi
-
-    for dep in "${TRACK_depends_on[@]-}"; do
+    read -r -a deps <<< "${TASK_DEPENDS[$i]}"
+    for dep in "${deps[@]-}"; do
       [[ -z "$dep" ]] && continue
       if ! dep_index="$(find_task_index_by_id "$dep")"; then
         print_error "${TASK_FILES[$i]}: depends_on references missing task '$dep'. Create a task with id '$dep' or remove it from depends_on"
@@ -174,7 +192,14 @@ validate_dependencies() {
       dep_status="${TASK_STATUSES[$dep_index]}"
       if [[ "${TASK_STATUSES[$i]}" == 'active' || "${TASK_STATUSES[$i]}" == 'review' ]]; then
         if [[ "$dep_status" != 'done' ]]; then
-          print_error "${TASK_FILES[$i]}: active/review task depends on '$dep' which is '$dep_status' (not done). Complete '$dep' first, remove the dependency, or set this task to todo"
+          if [[ "$dep_status" == 'active' || "$dep_status" == 'review' ]]; then
+            task_pr_url="$(find_open_pr_url_by_task_id "${TASK_IDS[$i]}" 2>/dev/null || true)"
+            dep_pr_url="$(find_open_pr_url_by_task_id "$dep" 2>/dev/null || true)"
+            if [[ -n "$task_pr_url" && "$task_pr_url" == "$dep_pr_url" ]]; then
+              continue
+            fi
+          fi
+          print_error "${TASK_FILES[$i]}: active/review task depends on '$dep' which is '$dep_status' (not done). Complete '$dep' first, remove the dependency, include it in the same PR, or set this task to todo"
         fi
       fi
     done
@@ -186,8 +211,16 @@ open_pr_metadata() {
   gh pr list \
     --state open \
     --base "$base_branch" \
-    --json url,isDraft,headRefName,baseRefName,state \
-    --template '{{range .}}{{printf "%s\t%t\t%s\t%s\t%s\n" .url .isDraft .headRefName .baseRefName .state}}{{end}}'
+    --json number,url,isDraft,headRefName,baseRefName,state,title \
+    --template '{{range .}}{{printf "%v\t%s\t%t\t%s\t%s\t%s\t%s\n" .number .url .isDraft .headRefName .baseRefName .state .title}}{{end}}'
+}
+
+fetch_pr_body() {
+  gh pr view "$1" --json body --template '{{.body}}' 2>/dev/null
+}
+
+fetch_pr_labels() {
+  gh pr view "$1" --json labels --template '{{range $index, $label := .labels}}{{if $index}},{{end}}{{.name}}{{end}}' 2>/dev/null
 }
 
 main_task_file_for_id() {
@@ -212,9 +245,13 @@ main_task_status_for_path() {
 }
 
 validate_open_prs() {
-  local pr_lines url is_draft head_ref base_ref state task_id file_on_main main_status
-  local pr_task_ids=() pr_branches=()
+  local pr_lines number url is_draft head_ref base_ref state title pr_body pr_labels resolver_code
+  local task_id file_on_main main_status
+  local pr_task_ids=() pr_urls=()
   local i j
+
+  OPEN_PR_TASK_IDS=()
+  OPEN_PR_URLS=()
 
   if ! command -v gh >/dev/null 2>&1; then
     print_warning 'gh not found; skipping live PR checks'
@@ -231,49 +268,92 @@ validate_open_prs() {
     return
   fi
 
-  while IFS=$'\t' read -r url is_draft head_ref base_ref state; do
+  while IFS=$'\t' read -r number url is_draft head_ref base_ref state title; do
     [[ -z "$head_ref" ]] && continue
-    if [[ "$head_ref" =~ ^task/([0-9]+\.[0-9]+)-[a-z0-9-]+$ ]]; then
-      task_id="${BASH_REMATCH[1]}"
-      pr_task_ids+=("$task_id")
-      pr_branches+=("$head_ref")
 
-      file_on_main="$(main_task_file_for_id "$task_id")"
-      if [[ -z "$file_on_main" ]]; then
-        print_error "open PR '$url' references task '$task_id' but no matching task file exists on origin/$DEFAULT_BRANCH. Create the task file or close the orphaned PR"
-        continue
-      fi
+    pr_body=''
+    pr_labels=''
+    if ! pr_body="$(fetch_pr_body "$number")"; then
+      print_warning "open PR '$url': could not fetch PR body; falling back to labels/title/branch only"
+      pr_body=''
+    fi
+    if ! pr_labels="$(fetch_pr_labels "$number")"; then
+      print_warning "open PR '$url': could not fetch PR labels; falling back to body/title/branch only"
+      pr_labels=''
+    fi
 
-      main_status="$(main_task_status_for_path "$file_on_main")"
-      if [[ "$main_status" == 'done' || "$main_status" == 'cancelled' ]]; then
-        print_error "open PR '$url' references terminal task '$task_id' (done/cancelled) on origin/$DEFAULT_BRANCH. Close the PR or reopen the task"
-      fi
+    if track_resolve_task_id "$pr_body" "$pr_labels" "$title" "$head_ref"; then
+      resolver_code=0
+    else
+      resolver_code=$?
+    fi
+    if [[ $resolver_code -ne 0 ]]; then
+      case "$resolver_code" in
+        1) ;; # not a Track PR — skip silently
+        2|3) print_error "open PR '$url' could not be linked to a task: $TRACK_RESOLVER_ERROR" ;;
+        *) print_error "open PR '$url' could not be linked to a task: unexpected resolver failure" ;;
+      esac
+      continue
+    fi
+
+    task_id="$TRACK_RESOLVED_TASK_ID"
+    pr_task_ids+=("$task_id")
+    pr_urls+=("$url")
+    OPEN_PR_TASK_IDS+=("$task_id")
+    OPEN_PR_URLS+=("$url")
+
+    file_on_main="$(main_task_file_for_id "$task_id")"
+    if [[ -z "$file_on_main" ]]; then
+      print_error "open PR '$url' references task '$task_id' but no matching task file exists on origin/$DEFAULT_BRANCH. Create the task file or close the orphaned PR"
+      continue
+    fi
+
+    main_status="$(main_task_status_for_path "$file_on_main")"
+    if [[ "$main_status" == 'done' || "$main_status" == 'cancelled' ]]; then
+      print_error "open PR '$url' references terminal task '$task_id' (done/cancelled) on origin/$DEFAULT_BRANCH. Close the PR or reopen the task"
     fi
   done <<< "$pr_lines"
 
   for ((i = 0; i < ${#pr_task_ids[@]}; i++)); do
     for ((j = i + 1; j < ${#pr_task_ids[@]}; j++)); do
-      if [[ "${pr_task_ids[$i]}" == "${pr_task_ids[$j]}" ]]; then
-        print_error "multiple open PRs map to task '${pr_task_ids[$i]}' (${pr_branches[$i]}, ${pr_branches[$j]}). Close the duplicate PR — each task should have exactly one open PR"
+      if [[ "${pr_task_ids[$i]}" == "${pr_task_ids[$j]}" && "${pr_urls[$i]}" != "${pr_urls[$j]}" ]]; then
+        print_error "multiple open PRs map to task '${pr_task_ids[$i]}' (${pr_urls[$i]}, ${pr_urls[$j]}). Close the duplicate PR — each task should have exactly one open PR"
       fi
     done
   done
 }
 
 validate_pull_request_context() {
-  local head_ref branch_task_id task_file pr_draft_state
+  local head_ref pr_title pr_body pr_labels pr_draft_state resolver_code task_id task_file
   head_ref="${GITHUB_HEAD_REF:-}"
+  pr_title="${PR_TITLE:-}"
+  pr_body="${PR_BODY:-}"
+  pr_labels="${PR_LABELS:-}"
   [[ -z "$head_ref" ]] && return
 
-  if [[ ! "$head_ref" =~ ^task/([0-9]+\.[0-9]+)-[a-z0-9-]+$ ]]; then
+  if track_resolve_task_id "$pr_body" "$pr_labels" "$pr_title" "$head_ref"; then
+    resolver_code=0
+  else
+    resolver_code=$?
+  fi
+  if [[ $resolver_code -ne 0 ]]; then
+    case "$resolver_code" in
+      1) return ;;
+      2|3) print_error "pull request context could not be linked to a task: $TRACK_RESOLVER_ERROR" ;;
+      *) print_error 'pull request context could not be linked to a task: unexpected resolver failure' ;;
+    esac
     return
   fi
 
-  branch_task_id="${BASH_REMATCH[1]}"
-  task_file="$(find "$TASK_DIR" -maxdepth 1 -type f -name "${branch_task_id}-*.md" | head -n 1)"
+  if command -v gh >/dev/null 2>&1; then
+    pr_draft_state="$(gh pr list --head "$head_ref" --state open --json isDraft --template '{{range .}}{{printf "%t\n" .isDraft}}{{end}}' 2>/dev/null || true)"
+  fi
+
+  task_id="$TRACK_RESOLVED_TASK_ID"
+  task_file="$(find "$TASK_DIR" -maxdepth 1 -type f -name "${task_id}-*.md" | head -n 1)"
 
   if [[ -z "$task_file" ]]; then
-    print_error "branch '$head_ref' references task '$branch_task_id' but no matching task file exists in .track/tasks/. Create ${branch_task_id}-{slug}.md or rename the branch"
+    print_error "pull request references task '$task_id' but no matching task file exists in .track/tasks/. Create ${task_id}-{slug}.md or fix the PR linkage"
     return
   fi
 
@@ -286,15 +366,12 @@ validate_pull_request_context() {
     print_error "$task_file: task on implementation branch may not be '$TRACK_status' while PR is open. Set status to 'active' (draft PR) or 'review' (ready PR)"
   fi
 
-  if command -v gh >/dev/null 2>&1; then
-    pr_draft_state="$(gh pr list --head "$head_ref" --state open --json isDraft --template '{{range .}}{{printf "%t\n" .isDraft}}{{end}}' 2>/dev/null || true)"
-    if [[ -n "$pr_draft_state" ]]; then
-      if [[ "$pr_draft_state" == 'true' && "$TRACK_status" != 'active' ]]; then
-        print_error "$task_file: draft PR requires raw status 'active' but found '$TRACK_status'. Set status: active"
-      fi
-      if [[ "$pr_draft_state" == 'false' && "$TRACK_status" != 'review' ]]; then
-        print_error "$task_file: ready-for-review PR requires raw status 'review' but found '$TRACK_status'. Set status: review"
-      fi
+  if [[ -n "$pr_draft_state" ]]; then
+    if [[ "$pr_draft_state" == 'true' && "$TRACK_status" != 'active' ]]; then
+      print_error "$task_file: draft PR requires raw status 'active' but found '$TRACK_status'. Set status: active"
+    fi
+    if [[ "$pr_draft_state" == 'false' && "$TRACK_status" != 'review' ]]; then
+      print_error "$task_file: ready-for-review PR requires raw status 'review' but found '$TRACK_status'. Set status: review"
     fi
   fi
 }
@@ -336,6 +413,8 @@ validate_plans() {
 }
 
 main() {
+  cd "$ROOT_DIR"
+
   if [[ ! -d "$TASK_DIR" ]]; then
     print_error '.track/tasks directory not found. Run /track:init to scaffold Track, or create .track/tasks/ manually'
     exit "$EXIT_CODE"
@@ -351,9 +430,9 @@ main() {
   done < <(find "$TASK_DIR" -maxdepth 1 -type f -name '*.md' | sort)
 
   validate_duplicate_ids
+  validate_open_prs
   validate_dependencies
   validate_plans
-  validate_open_prs
 
   if [[ "${GITHUB_EVENT_NAME:-}" == 'pull_request' ]]; then
     validate_pull_request_context

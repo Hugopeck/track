@@ -52,17 +52,21 @@ Append-only log.
 - Raw status is the `status:` field stored in the task file
 - Effective status is what `TODO.md` shows
 - If raw status is `done` or `cancelled`, effective status matches it
-- Otherwise, an open draft PR for `task/{id}-{slug}` makes the task effectively `active`
-- Otherwise, an open ready-for-review PR for `task/{id}-{slug}` makes the task effectively `review`
+- Otherwise, an open draft PR linked by `Track-Task`, `track:{id}`, title ID, or `task/{id}-{slug}` makes the task effectively `active`
+- Otherwise, an open ready-for-review PR linked by `Track-Task`, `track:{id}`, title ID, or `task/{id}-{slug}` makes the task effectively `review`
 - Otherwise, effective status is `todo`
 
 ### Agent Protocol (primary)
 
 1. Read `TODO.md` for current state. Pick a `todo` task or resume an `active` one.
 2. Check `files:` overlap against tasks already shown as `active` / `review` — do not touch files owned by another in-progress task.
-3. Open a **draft PR** to start work. No PR = not started.
-4. Implement. When ready, mark the PR ready for review.
-5. If `gh` auth fails or PR creation fails, **stop and surface the error.**
+3. Prefer branch `task/{id}-{slug}` for the task before opening the PR.
+4. Open a **draft PR** to start work. No PR = not started.
+5. Prefer a PR title that includes the task ID: `[{id}] Title` or `({id}) Title`.
+6. If the branch is not `task/{id}-{slug}`, keep Track linked by adding `Track-Task: {id}` to the PR body. Optional label fallback: `track:{id}`.
+7. If the PR also completes another small task as a drive-by, add `Also-Completed: {id}` to the PR body. On merge, Track marks those tasks done too.
+8. If `gh` auth fails or PR creation fails, **stop and surface the error.**
+9. Implement. When ready, mark the PR ready for review.
 
 `TODO.md` is generated — edit task files in `.track/tasks/`, not TODO.md directly.
 
@@ -82,13 +86,33 @@ Append-only log.
    - update `updated:`
 3. Push and open a **draft PR** immediately
    - PR title must include the task ID in brackets or parentheses: `[4.1] Title` or `feat(scope): (4.1) Title`
-   - CI will lint the branch name and PR title against the task file
+   - Preferred linkage is branch `task/{id}-{slug}` + title `[id]`
+   - If branch naming is missed, add `Track-Task: {id}` to the PR body; optional label: `track:{id}`
+   - CI resolves the task from body, labels, title, then branch name
 4. Do the implementation work with as many commits as needed
 5. When ready for review:
    - set raw `status: review`
    - update `updated:`
    - mark the PR ready for review
 6. When the PR merges, the post-merge workflow writes `status: done`, `pr:`, and `updated:` on `main`
+
+Example fallback when branch naming is missed:
+
+```text
+Branch: feature/test-skill
+Title: feat(skills): [7.2] create /track:test skill
+Body: Track-Task: 7.2
+```
+
+Example drive-by completion (primary task 7.1, also resolved 7.2):
+
+```text
+Branch: task/7.1-test-runner
+Title: feat(tests): [7.1] unified test runner
+Body:
+Track-Task: 7.1
+Also-Completed: 7.2
+```
 
 ### Creating a Task
 - Every task belongs to a project and uses `project_id`

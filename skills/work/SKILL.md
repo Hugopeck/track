@@ -164,8 +164,10 @@ You don't manually set `status: active` to show progress — opening a draft PR 
    - set raw `status: active`
    - update `updated:` to today
 3. Push and open a **draft PR** immediately
-   - PR title must include the task ID: `[{id}] Title` or `({id}) Title`
-   - CI will lint the branch name and PR title
+   - Prefer branch `task/{id}-{slug}` plus PR title `[{id}] Title` or `({id}) Title`
+   - Verify the current branch before opening the PR
+   - If branch naming is off and changing it is inconvenient, keep Track linked with PR body `Track-Task: {id}`; optional label fallback: `track:{id}`
+   - CI resolves the task from PR body, labels, title, then branch name
    - If `gh pr create` fails (auth, network, permissions), STOP. Tell the user:
      "Could not open draft PR: {error}. Fix the issue and retry — Track requires
      a PR to track progress."
@@ -177,6 +179,41 @@ You don't manually set `status: active` to show progress — opening a draft PR 
    - update `updated:`
    - mark the PR ready for review
 6. When the PR merges, the post-merge workflow writes `status: done`, `pr:`, and `updated:` on the default branch
+
+Fallback example when branch naming is missed:
+
+```text
+Preferred:
+- Branch: task/7.2-create-test-skill
+- Title: feat(skills): [7.2] create /track:test skill
+
+Fallback if branch naming is missed:
+- Branch: feature/test-skill
+- Title: feat(skills): [7.2] create /track:test skill
+- Body: Track-Task: 7.2
+```
+
+## Also-Completed (drive-by task completion)
+
+When a PR's primary task is one thing but the work also fully resolves another small task, note it in the PR body. On merge, Track marks all listed tasks done.
+
+Rules:
+- One `Track-Task: {id}` for the primary task (required)
+- One `Also-Completed: {id}` line per additional task (optional, max 2)
+- The additional tasks must be genuinely completed, not partially addressed
+- Same project preferred but not enforced
+
+Example PR body:
+
+```text
+Track-Task: 7.1
+Also-Completed: 7.2
+```
+
+Do NOT use Also-Completed for:
+- Tasks that need their own review cycle
+- Tasks in a different project with different reviewers
+- Partially addressed work — open a separate PR instead
 
 ## Creating a Task
 

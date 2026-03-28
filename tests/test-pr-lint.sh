@@ -7,21 +7,14 @@ SCAFFOLD_SCRIPTS="$SCRIPT_DIR/../skills/init/scaffold/track/scripts"
 PASS=0
 FAIL=0
 
-run_test() {
-  local name="$1"
-  local expected_exit="$2"
-  shift 2
-  local actual_exit=0
+pass() {
+  printf '  PASS: %s\n' "$1"
+  PASS=$((PASS + 1))
+}
 
-  "$@" >/dev/null 2>&1 || actual_exit=$?
-
-  if [[ $actual_exit -eq $expected_exit ]]; then
-    printf '  PASS: %s\n' "$name"
-    PASS=$((PASS + 1))
-  else
-    printf '  FAIL: %s (expected exit %d, got %d)\n' "$name" "$expected_exit" "$actual_exit"
-    FAIL=$((FAIL + 1))
-  fi
+fail() {
+  printf '  FAIL: %s\n' "$1"
+  FAIL=$((FAIL + 1))
 }
 
 setup_repo() {
@@ -34,39 +27,84 @@ setup_repo() {
   printf '%s' "$tmp"
 }
 
-printf 'Running track-pr-lint tests...\n'
+run_capture() {
+  STDOUT_FILE="$(mktemp)"
+  STDERR_FILE="$(mktemp)"
+  RUN_EXIT=0
+  "$@" >"$STDOUT_FILE" 2>"$STDERR_FILE" || RUN_EXIT=$?
+}
+
+assert_code() {
+  local name="$1"
+  local expected="$2"
+  if [[ $RUN_EXIT -eq $expected ]]; then
+    pass "$name"
+  else
+    fail "$name"
+    printf '    expected=%s got=%s\n' "$expected" "$RUN_EXIT"
+  fi
+}
+
+assert_stdout_contains() {
+  local name="$1"
+  local pattern="$2"
+  if grep -Fq -- "$pattern" "$STDOUT_FILE"; then
+    pass "$name"
+  else
+    fail "$name"
+    printf '    missing stdout pattern: %s\n' "$pattern"
+  fi
+}
+
+assert_stderr_contains() {
+  local name="$1"
+  local pattern="$2"
+  if grep -Fq -- "$pattern" "$STDERR_FILE"; then
+    pass "$name"
+  else
+    fail "$name"
+    printf '    missing stderr pattern: %s\n' "$pattern"
+  fi
+}
+
+cleanup_capture() {
+  rm -f "$STDOUT_FILE" "$STDERR_FILE"
+}
+
+printf 'Running track-pr-lint tests...\n\n'
 
 repo="$(setup_repo)"
 
-# Test 1: Valid task branch + title passes
-run_test "valid branch and title" 0 \
-  env GITHUB_HEAD_REF="task/1.1-test-task" PR_TITLE="[1.1] Test task" \
-  bash "$repo/.track/scripts/track-pr-lint.sh"
+# Single task from body resolves
+run_capture env GITHUB_HEAD_REF='task/1.1-test-task' PR_BODY='Track-Task: 1.1' PR_TITLE='[1.1] Single lint' bash "$repo/.track/scripts/track-pr-lint.sh"
+assert_code 'single task from body passes' 0
+assert_stdout_contains 'body resolves single task' 'Resolved task: 1.1 (source: body)'
+cleanup_capture
 
-# Test 2: Non-task branch passes (skipped)
-run_test "non-task branch passes" 0 \
-  env GITHUB_HEAD_REF="feature/something" PR_TITLE="Some feature" \
-  bash "$repo/.track/scripts/track-pr-lint.sh"
+# Single task from title resolves
+run_capture env GITHUB_HEAD_REF='feature/no-body' PR_TITLE='[1.1] Title only' bash "$repo/.track/scripts/track-pr-lint.sh"
+assert_code 'single task from title passes' 0
+assert_stdout_contains 'title resolves single task' 'Resolved task: 1.1 (source: title)'
+assert_stderr_contains 'non-track branch warns fallback' 'using fallback task linkage from title'
+cleanup_capture
 
-# Test 3: Malformed task branch fails
-run_test "malformed task branch fails" 1 \
-  env GITHUB_HEAD_REF="task/bad-format" PR_TITLE="whatever" \
-  bash "$repo/.track/scripts/track-pr-lint.sh"
+# Single task from branch resolves
+run_capture env GITHUB_HEAD_REF='task/1.1-test-task' bash "$repo/.track/scripts/track-pr-lint.sh"
+assert_code 'single task from branch passes' 0
+assert_stdout_contains 'branch resolves single task' 'Resolved task: 1.1 (source: branch)'
+cleanup_capture
 
-# Test 4: Missing task ID in title fails
-run_test "missing task ID in title fails" 1 \
-  env GITHUB_HEAD_REF="task/1.1-test-task" PR_TITLE="Some title without ID" \
-  bash "$repo/.track/scripts/track-pr-lint.sh"
+# Multiple Track-Task lines in body errors
+run_capture env GITHUB_HEAD_REF='task/1.1-test-task' PR_BODY=$'Track-Task: 1.1\nTrack-Task: 1.4' PR_TITLE='[1.1] Multi body' bash "$repo/.track/scripts/track-pr-lint.sh"
+assert_code 'multiple Track-Task lines in body errors' 1
+assert_stderr_contains 'multiple body error surfaced' 'multiple Track-Task values'
+cleanup_capture
 
-# Test 5: Nonexistent task ID fails
-run_test "nonexistent task ID fails" 1 \
-  env GITHUB_HEAD_REF="task/99.1-nonexistent" PR_TITLE="[99.1] Nonexistent" \
-  bash "$repo/.track/scripts/track-pr-lint.sh"
-
-# Test 6: No HEAD_REF passes (not a PR context)
-run_test "no HEAD_REF passes" 0 \
-  env -u GITHUB_HEAD_REF \
-  bash "$repo/.track/scripts/track-pr-lint.sh"
+# Non-Track PR gracefully skips
+run_capture env GITHUB_HEAD_REF='feature/no-signal' PR_TITLE='Regular title' bash "$repo/.track/scripts/track-pr-lint.sh"
+assert_code 'non-Track PR skips gracefully' 0
+assert_stdout_contains 'skip message shown' 'Not a Track PR'
+cleanup_capture
 
 rm -rf "$repo"
 

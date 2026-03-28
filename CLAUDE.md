@@ -207,9 +207,13 @@ This repo uses Track to manage its own work. Projects and tasks live in `.track/
 
 1. Read `TODO.md` for current state. Pick a `todo` task or resume an `active` one.
 2. Check file scopes — do not touch files owned by another in-progress task.
-3. Open a **draft PR** to start work. No PR = not started.
-4. Implement. When ready, mark the PR ready for review.
-5. If `gh` auth fails or PR creation fails, **stop and surface the error.**
+3. Prefer branch `task/{id}-{slug}` for the task before opening the PR.
+4. Open a **draft PR** to start work. No PR = not started.
+5. Prefer a PR title that includes the task ID: `[{id}] Title` or `({id}) Title`.
+6. If the branch is not `task/{id}-{slug}`, keep Track linked by adding `Track-Task: {id}` to the PR body. Optional label fallback: `track:{id}`.
+7. If the PR also completes another small task as a drive-by, add `Also-Completed: {id}` to the PR body. On merge, Track marks those tasks done too.
+8. If `gh` auth fails or PR creation fails, **stop and surface the error.**
+9. Implement. When ready, mark the PR ready for review.
 
 `TODO.md` is generated — edit task files in `.track/tasks/`, not TODO.md directly.
 

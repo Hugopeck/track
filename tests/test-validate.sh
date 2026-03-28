@@ -24,6 +24,17 @@ run_test() {
   fi
 }
 
+run_validate_clean() {
+  env \
+    -u GITHUB_EVENT_NAME \
+    -u GITHUB_HEAD_REF \
+    -u PR_TITLE \
+    -u PR_BODY \
+    -u PR_LABELS \
+    -u GH_TOKEN \
+    bash "$@"
+}
+
 # Create a temp dir that looks like a repo with .track/
 setup_valid_repo() {
   local tmp
@@ -70,12 +81,12 @@ printf 'Running track-validate tests...\n'
 
 # Test 1: Valid fixtures pass validation
 repo="$(setup_valid_repo)"
-run_test "valid fixtures pass" 0 bash "$repo/.track/scripts/track-validate.sh"
+run_test "valid fixtures pass" 0 run_validate_clean "$repo/.track/scripts/track-validate.sh"
 rm -rf "$repo"
 
 # Test 2: Invalid status fails validation
 repo="$(setup_invalid_repo)"
-run_test "invalid status fails" 1 bash "$repo/.track/scripts/track-validate.sh"
+run_test "invalid status fails" 1 run_validate_clean "$repo/.track/scripts/track-validate.sh"
 rm -rf "$repo"
 
 # Test 3: Expired plan (8 days old) gets deleted
@@ -90,7 +101,7 @@ created: $expired_date
 
 This plan is old.
 EOF
-bash "$repo/.track/scripts/track-validate.sh" >/dev/null 2>&1 || true
+run_validate_clean "$repo/.track/scripts/track-validate.sh" >/dev/null 2>&1 || true
 if [[ ! -f "$repo/.track/plans/old-plan.md" ]]; then
   printf '  PASS: expired plan deleted\n'
   PASS=$((PASS + 1))
@@ -112,7 +123,7 @@ created: $fresh_date
 
 This plan is recent.
 EOF
-bash "$repo/.track/scripts/track-validate.sh" >/dev/null 2>&1 || true
+run_validate_clean "$repo/.track/scripts/track-validate.sh" >/dev/null 2>&1 || true
 if [[ -f "$repo/.track/plans/fresh-plan.md" ]]; then
   printf '  PASS: fresh plan preserved\n'
   PASS=$((PASS + 1))
@@ -132,7 +143,7 @@ title: "No date plan"
 
 Missing created field.
 EOF
-stderr_out="$(bash "$repo/.track/scripts/track-validate.sh" 2>&1 >/dev/null || true)"
+stderr_out="$(run_validate_clean "$repo/.track/scripts/track-validate.sh" 2>&1 >/dev/null || true)"
 if echo "$stderr_out" | grep -q "missing 'created' field"; then
   printf '  PASS: missing created field warned\n'
   PASS=$((PASS + 1))
