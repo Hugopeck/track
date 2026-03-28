@@ -114,12 +114,12 @@ fi
 
 if [[ "$1 $2" == 'pr list' ]]; then
   case "$mode" in
-    same-pr|pr-context-pass)
-      printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' 201 'https://example.com/pr/201' true 'task/1.1-test-task' 'main' 'OPEN' '[1.1] [1.3] Batch'
+    different-prs)
+      printf '%s\t%s\t%s\t%s\t%s\n' 201 'https://example.com/pr/201' true 'task/1.1-test-task' '[1.1] First'
+      printf '%s\t%s\t%s\t%s\t%s\n' 202 'https://example.com/pr/202' true 'feature/second' '[1.3] Second'
       ;;
-    different-prs|pr-context-fail)
-      printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' 201 'https://example.com/pr/201' true 'task/1.1-test-task' 'main' 'OPEN' '[1.1] First'
-      printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' 202 'https://example.com/pr/202' true 'feature/second' 'main' 'OPEN' '[1.3] Second'
+    single-pr)
+      printf '%s\t%s\t%s\t%s\t%s\n' 201 'https://example.com/pr/201' true 'task/1.1-test-task' '[1.1] Single'
       ;;
   esac
   exit 0
@@ -129,16 +129,16 @@ if [[ "$1 $2" == 'pr view' ]]; then
   case "$3" in
     201)
       if [[ "$*" == *'--json body'* ]]; then
-        printf 'Track-Task: 1.1\nTrack-Task: 1.3\n'
+        printf 'Track-Task: 1.1\n'
       else
-        printf 'track:1.1,track:1.3'
+        printf ''
       fi
       ;;
     202)
       if [[ "$*" == *'--json body'* ]]; then
         printf 'Track-Task: 1.3\n'
       else
-        printf 'track:1.3'
+        printf ''
       fi
       ;;
   esac
@@ -202,45 +202,9 @@ Depends on 1.1.
 Fixture with dependency.
 '
 
-pr_context_task_1_3='---
-id: "1.3"
-title: "Dependent task"
-status: active
-mode: implement
-priority: high
-project_id: "1"
-created: 2026-01-01
-updated: 2026-01-01
-depends_on:
-  - "1.2"
-files:
-  - "src/**"
-pr: ""
----
-
-## Context
-Depends on done task 1.2 for PR-context validation.
-
-## Acceptance Criteria
-- [ ] Integration complete
-
-## Notes
-Fixture with dependency.
-'
-
 printf 'Running extended validation tests...\n\n'
 
-setup_repo
-write_task "$repo" '1.1-test-task.md' "$active_task_1_1"
-write_task "$repo" '1.3-dependent-task.md' "$active_task_1_3"
-commit_and_push_main "$repo"
-mock_bin="$(mktemp -d)"
-write_gh_mock "$mock_bin" same-pr
-run_capture run_validate_clean env PATH="$mock_bin:$PATH" bash "$repo/.track/scripts/track-validate.sh"
-assert_code 'two active tasks in same PR with dependency chain pass' 0
-cleanup_capture
-rm -rf "$repo" "$bare_dir" "$mock_bin"
-
+# Two active tasks in different PRs with unresolved dependency fails
 setup_repo
 write_task "$repo" '1.1-test-task.md' "$active_task_1_1"
 write_task "$repo" '1.3-dependent-task.md' "$active_task_1_3"
@@ -253,26 +217,27 @@ assert_stderr_contains 'cross-pr dependency error surfaced' 'include it in the s
 cleanup_capture
 rm -rf "$repo" "$bare_dir" "$mock_bin"
 
+# PR context with single Track-Task resolves correctly
 setup_repo
 write_task "$repo" '1.1-test-task.md' "$active_task_1_1"
-write_task "$repo" '1.3-dependent-task.md' "$pr_context_task_1_3"
 commit_and_push_main "$repo"
 mock_bin="$(mktemp -d)"
-write_gh_mock "$mock_bin" pr-context-pass
-run_capture env PATH="$mock_bin:$PATH" TRACK_DEFAULT_BRANCH='skip-main' GITHUB_EVENT_NAME='pull_request' GITHUB_HEAD_REF='task/1.1-test-task' PR_TITLE='[1.1] Batch context' PR_BODY=$'Track-Task: 1.1\nTrack-Task: 1.3' PR_LABELS='track:1.1,track:1.3' bash "$repo/.track/scripts/track-validate.sh"
-assert_code 'PR context with batch body and branch subset passes' 0
+write_gh_mock "$mock_bin" single-pr
+run_capture env PATH="$mock_bin:$PATH" TRACK_DEFAULT_BRANCH='skip-main' GITHUB_EVENT_NAME='pull_request' GITHUB_HEAD_REF='task/1.1-test-task' PR_TITLE='[1.1] Single context' PR_BODY='Track-Task: 1.1' bash "$repo/.track/scripts/track-validate.sh"
+assert_code 'PR context with single Track-Task resolves' 0
 cleanup_capture
 rm -rf "$repo" "$bare_dir" "$mock_bin"
 
+# PR context with multiple Track-Task lines errors
 setup_repo
 write_task "$repo" '1.1-test-task.md' "$active_task_1_1"
-write_task "$repo" '1.3-dependent-task.md' "$pr_context_task_1_3"
+write_task "$repo" '1.3-dependent-task.md' "$active_task_1_3"
 commit_and_push_main "$repo"
 mock_bin="$(mktemp -d)"
-write_gh_mock "$mock_bin" pr-context-fail
-run_capture env PATH="$mock_bin:$PATH" TRACK_DEFAULT_BRANCH='skip-main' GITHUB_EVENT_NAME='pull_request' GITHUB_HEAD_REF='task/1.2-done-task' PR_TITLE='[1.1] Batch context' PR_BODY=$'Track-Task: 1.1\nTrack-Task: 1.3' PR_LABELS='track:1.1,track:1.3' bash "$repo/.track/scripts/track-validate.sh"
-assert_code 'PR context with branch outside batch set fails' 1
-assert_stderr_contains 'branch outside batch set surfaced' 'PR branch references task'
+write_gh_mock "$mock_bin" single-pr
+run_capture env PATH="$mock_bin:$PATH" TRACK_DEFAULT_BRANCH='skip-main' GITHUB_EVENT_NAME='pull_request' GITHUB_HEAD_REF='task/1.1-test-task' PR_TITLE='[1.1] Multi body' PR_BODY=$'Track-Task: 1.1\nTrack-Task: 1.3' bash "$repo/.track/scripts/track-validate.sh"
+assert_code 'PR context with multiple Track-Task lines errors' 1
+assert_stderr_contains 'multiple Track-Task error surfaced' 'multiple Track-Task values'
 cleanup_capture
 rm -rf "$repo" "$bare_dir" "$mock_bin"
 

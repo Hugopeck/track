@@ -140,26 +140,25 @@ fetch_pr_labels() {
 
 find_open_pr_index_by_task_id() {
   local id="$1"
-  local i match_count=0 match_url=''
+  local i match_count=0
   OPEN_PR_MATCH_INDEX=''
   for ((i = 0; i < ${#OPEN_PR_TASK_IDS[@]}; i++)); do
     if [[ "${OPEN_PR_TASK_IDS[$i]}" == "$id" ]]; then
-      if [[ -z "$match_url" || "${OPEN_PR_URLS[$i]}" == "$match_url" ]]; then
-        match_count=$((match_count + 1))
-        match_url="${OPEN_PR_URLS[$i]}"
-        OPEN_PR_MATCH_INDEX="$i"
-      else
-        warn "multiple open PRs map to task '$id'"
-        return 1
-      fi
+      match_count=$((match_count + 1))
+      OPEN_PR_MATCH_INDEX="$i"
     fi
   done
+
+  if [[ $match_count -gt 1 ]]; then
+    warn "multiple open PRs map to task '$id'"
+    return 1
+  fi
 
   [[ $match_count -eq 1 ]]
 }
 
 load_open_prs() {
-  local lines number url is_draft head_ref title pr_body pr_labels resolver_code task_id
+  local lines number url is_draft head_ref title pr_body pr_labels resolver_code
 
   if [[ $OFFLINE -eq 1 ]]; then
     warn 'offline mode enabled; skipping GitHub PR lookup'
@@ -190,7 +189,7 @@ load_open_prs() {
       pr_labels=''
     fi
 
-    if track_resolve_task_ids "$pr_body" "$pr_labels" "$title" "$head_ref"; then
+    if track_resolve_task_id "$pr_body" "$pr_labels" "$title" "$head_ref"; then
       resolver_code=0
     else
       resolver_code=$?
@@ -204,21 +203,18 @@ load_open_prs() {
       continue
     fi
 
-    while IFS= read -r task_id || [[ -n "$task_id" ]]; do
-      [[ -z "$task_id" ]] && continue
-      if ! task_exists_in_source_tree "$task_id"; then
-        warn "open PR '$url' resolved to task '$task_id' from $TRACK_RESOLVED_SOURCE, but no matching task file exists in .track/tasks/"
-        continue
-      fi
+    if ! task_exists_in_source_tree "$TRACK_RESOLVED_TASK_ID"; then
+      warn "open PR '$url' resolved to task '$TRACK_RESOLVED_TASK_ID' from $TRACK_RESOLVED_SOURCE, but no matching task file exists in .track/tasks/"
+      continue
+    fi
 
-      OPEN_PR_TASK_IDS+=("$task_id")
-      OPEN_PR_URLS+=("$url")
-      if [[ "$is_draft" == 'true' ]]; then
-        OPEN_PR_STATUSES+=("active")
-      else
-        OPEN_PR_STATUSES+=("review")
-      fi
-    done <<< "$TRACK_RESOLVED_TASK_IDS"
+    OPEN_PR_TASK_IDS+=("$TRACK_RESOLVED_TASK_ID")
+    OPEN_PR_URLS+=("$url")
+    if [[ "$is_draft" == 'true' ]]; then
+      OPEN_PR_STATUSES+=("active")
+    else
+      OPEN_PR_STATUSES+=("review")
+    fi
   done <<< "$lines"
 }
 

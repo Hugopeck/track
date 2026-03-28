@@ -211,10 +211,9 @@ This repo uses Track to manage its own work. Projects and tasks live in `.track/
 4. Open a **draft PR** to start work. No PR = not started.
 5. Prefer a PR title that includes the task ID: `[{id}] Title` or `({id}) Title`.
 6. If the branch is not `task/{id}-{slug}`, keep Track linked by adding `Track-Task: {id}` to the PR body. Optional label fallback: `track:{id}`.
-7. For a small explicit batch PR, declare every task in the PR body with repeated `Track-Task:` lines. Body is canonical for batch membership; title and branch are only cross-checks.
-8. Batch PRs are exceptional: keep them to at most 3 tasks, same project, `implement` mode only, and only when remaining dependencies are already done or included in the same PR.
-9. If `gh` auth fails or PR creation fails, **stop and surface the error.**
-10. Implement. When ready, mark the PR ready for review.
+7. If the PR also completes another small task as a drive-by, add `Also-Completed: {id}` to the PR body. On merge, Track marks those tasks done too.
+8. If `gh` auth fails or PR creation fails, **stop and surface the error.**
+9. Implement. When ready, mark the PR ready for review.
 
 `TODO.md` is generated — edit task files in `.track/tasks/`, not TODO.md directly.
 

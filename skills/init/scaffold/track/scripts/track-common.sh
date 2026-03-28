@@ -207,124 +207,18 @@ track_is_legacy_id() {
 }
 
 track_reset_task_resolution() {
-  TRACK_RESOLVED_TASK_IDS=''
-  TRACK_RESOLVED_TASK_COUNT=0
-  TRACK_RESOLUTION_MODE=''
   TRACK_RESOLVED_TASK_ID=''
   TRACK_RESOLVED_SOURCE=''
   TRACK_RESOLVER_ERROR=''
-  TRACK_PARSED_TASK_IDS=''
   TRACK_PARSED_TASK_ID=''
   TRACK_PARSE_TASK_ERROR=''
 }
 
-track_first_id_from_set() {
-  local id
-  while IFS= read -r id || [[ -n "$id" ]]; do
-    [[ -z "$id" ]] && continue
-    printf '%s' "$id"
-    return 0
-  done <<< "${1-}"
-  return 1
-}
-
-track_set_contains() {
-  local set_data="${1-}"
-  local target="$2"
-  local id
-  while IFS= read -r id || [[ -n "$id" ]]; do
-    [[ -z "$id" ]] && continue
-    [[ "$id" == "$target" ]] && return 0
-  done <<< "$set_data"
-  return 1
-}
-
-track_append_unique_id() {
-  local var_name="$1"
-  local id="$2"
-  local current="${!var_name-}"
-
-  [[ -z "$id" ]] && return 1
-  if track_set_contains "$current" "$id"; then
-    return 1
-  fi
-
-  if [[ -n "$current" ]]; then
-    printf -v "$var_name" '%s\n%s' "$current" "$id"
-  else
-    printf -v "$var_name" '%s' "$id"
-  fi
-
-  return 0
-}
-
-track_set_count() {
-  local set_data="${1-}"
-  local count=0 id
-  while IFS= read -r id || [[ -n "$id" ]]; do
-    [[ -z "$id" ]] && continue
-    count=$((count + 1))
-  done <<< "$set_data"
-  printf '%s' "$count"
-}
-
-track_join_ids_csv() {
-  local set_data="${1-}"
-  local joined='' id
-  while IFS= read -r id || [[ -n "$id" ]]; do
-    [[ -z "$id" ]] && continue
-    if [[ -n "$joined" ]]; then
-      joined+=', '
-    fi
-    joined+="$id"
-  done <<< "$set_data"
-  printf '%s' "$joined"
-}
-
-track_set_is_subset() {
-  local subset="${1-}"
-  local superset="${2-}"
-  local id
-  while IFS= read -r id || [[ -n "$id" ]]; do
-    [[ -z "$id" ]] && continue
-    if ! track_set_contains "$superset" "$id"; then
-      return 1
-    fi
-  done <<< "$subset"
-  return 0
-}
-
-track_sets_equal() {
-  track_set_is_subset "$1" "$2" && track_set_is_subset "$2" "$1"
-}
-
-track_set_first_outside() {
-  local subset="${1-}"
-  local superset="${2-}"
-  local id
-  while IFS= read -r id || [[ -n "$id" ]]; do
-    [[ -z "$id" ]] && continue
-    if ! track_set_contains "$superset" "$id"; then
-      printf '%s' "$id"
-      return 0
-    fi
-  done <<< "$subset"
-  return 1
-}
-
-track_finalize_parsed_task_ids() {
-  TRACK_PARSED_TASK_ID=''
-  if [[ -n "$TRACK_PARSED_TASK_IDS" ]]; then
-    TRACK_PARSED_TASK_ID="$(track_first_id_from_set "$TRACK_PARSED_TASK_IDS")"
-  fi
-}
-
-track_task_ids_from_pr_body() {
+track_task_id_from_pr_body() {
   local body="${1-}"
-  local line raw_id found=''
+  local line raw_id
   local had_nocasematch=0
 
-  TRACK_PARSED_TASK_IDS=''
   TRACK_PARSED_TASK_ID=''
   TRACK_PARSE_TASK_ERROR=''
 
@@ -342,27 +236,30 @@ track_task_ids_from_pr_body() {
         return 3
       fi
 
-      track_append_unique_id found "$raw_id" >/dev/null || true
+      if [[ -n "$TRACK_PARSED_TASK_ID" && "$TRACK_PARSED_TASK_ID" != "$raw_id" ]]; then
+        TRACK_PARSE_TASK_ERROR="multiple Track-Task values in PR body ('$TRACK_PARSED_TASK_ID' and '$raw_id'); use one Track-Task for the primary task and Also-Completed for extras"
+        [[ $had_nocasematch -eq 1 ]] || shopt -u nocasematch
+        return 3
+      fi
+
+      TRACK_PARSED_TASK_ID="$raw_id"
     fi
   done <<< "$body"
 
   [[ $had_nocasematch -eq 1 ]] || shopt -u nocasematch
 
-  if [[ -z "$found" ]]; then
+  if [[ -z "$TRACK_PARSED_TASK_ID" ]]; then
     return 1
   fi
 
-  TRACK_PARSED_TASK_IDS="$found"
-  track_finalize_parsed_task_ids
   return 0
 }
 
-track_task_ids_from_pr_labels() {
+track_task_id_from_pr_labels() {
   local labels="${1-}"
-  local label raw_id found=''
+  local label raw_id
   local had_nocasematch=0
 
-  TRACK_PARSED_TASK_IDS=''
   TRACK_PARSED_TASK_ID=''
   TRACK_PARSE_TASK_ERROR=''
 
@@ -383,26 +280,29 @@ track_task_ids_from_pr_labels() {
         return 3
       fi
 
-      track_append_unique_id found "$raw_id" >/dev/null || true
+      if [[ -n "$TRACK_PARSED_TASK_ID" && "$TRACK_PARSED_TASK_ID" != "$raw_id" ]]; then
+        TRACK_PARSE_TASK_ERROR="multiple track: labels ('$TRACK_PARSED_TASK_ID' and '$raw_id'); use one label for the primary task"
+        [[ $had_nocasematch -eq 1 ]] || shopt -u nocasematch
+        return 3
+      fi
+
+      TRACK_PARSED_TASK_ID="$raw_id"
     fi
   done < <(printf '%s\n' "$labels" | tr ',|' '\n')
 
   [[ $had_nocasematch -eq 1 ]] || shopt -u nocasematch
 
-  if [[ -z "$found" ]]; then
+  if [[ -z "$TRACK_PARSED_TASK_ID" ]]; then
     return 1
   fi
 
-  TRACK_PARSED_TASK_IDS="$found"
-  track_finalize_parsed_task_ids
   return 0
 }
 
-track_task_ids_from_pr_title() {
+track_task_id_from_pr_title() {
   local title="${1-}"
-  local remaining token inner found=''
+  local remaining token inner
 
-  TRACK_PARSED_TASK_IDS=''
   TRACK_PARSED_TASK_ID=''
   TRACK_PARSE_TASK_ERROR=''
   [[ -z "$title" ]] && return 1
@@ -415,7 +315,11 @@ track_task_ids_from_pr_title() {
     inner="$(track_trim "$inner")"
 
     if track_is_dotted_id "$inner"; then
-      track_append_unique_id found "$inner" >/dev/null || true
+      if [[ -n "$TRACK_PARSED_TASK_ID" && "$TRACK_PARSED_TASK_ID" != "$inner" ]]; then
+        TRACK_PARSE_TASK_ERROR="multiple task IDs in PR title ('$TRACK_PARSED_TASK_ID' and '$inner')"
+        return 3
+      fi
+      TRACK_PARSED_TASK_ID="$inner"
       continue
     fi
 
@@ -425,26 +329,22 @@ track_task_ids_from_pr_title() {
     fi
   done
 
-  if [[ -z "$found" ]]; then
+  if [[ -z "$TRACK_PARSED_TASK_ID" ]]; then
     return 1
   fi
 
-  TRACK_PARSED_TASK_IDS="$found"
-  track_finalize_parsed_task_ids
   return 0
 }
 
-track_task_ids_from_branch() {
+track_task_id_from_branch() {
   local branch_name="${1-}"
 
-  TRACK_PARSED_TASK_IDS=''
   TRACK_PARSED_TASK_ID=''
   TRACK_PARSE_TASK_ERROR=''
   [[ -z "$branch_name" ]] && return 1
 
   if [[ "$branch_name" =~ ^task/([0-9]+\.[0-9]+)-[a-z0-9-]+$ ]]; then
-    TRACK_PARSED_TASK_IDS="${BASH_REMATCH[1]}"
-    track_finalize_parsed_task_ids
+    TRACK_PARSED_TASK_ID="${BASH_REMATCH[1]}"
     return 0
   fi
 
@@ -456,129 +356,75 @@ track_task_ids_from_branch() {
   return 1
 }
 
-track_resolve_task_ids() {
+track_resolve_task_id() {
   local pr_body="${1-}"
   local pr_labels="${2-}"
   local pr_title="${3-}"
   local branch_name="${4-}"
   local code
-  local body_ids='' label_ids='' title_ids='' branch_ids=''
-  local body_count=0 label_count=0 title_count=0 branch_count=0
-  local resolved_ids='' resolved_source='' resolved_mode=''
-  local outside_id
 
   track_reset_task_resolution
 
-  track_task_ids_from_pr_body "$pr_body"
+  track_task_id_from_pr_body "$pr_body"
   code=$?
   case "$code" in
-    0)
-      body_ids="$TRACK_PARSED_TASK_IDS"
-      body_count="$(track_set_count "$body_ids")"
-      ;;
+    0) TRACK_RESOLVED_TASK_ID="$TRACK_PARSED_TASK_ID"; TRACK_RESOLVED_SOURCE='body'; return 0 ;;
     1) ;;
     3) TRACK_RESOLVER_ERROR="$TRACK_PARSE_TASK_ERROR"; return 3 ;;
   esac
 
-  track_task_ids_from_pr_labels "$pr_labels"
+  track_task_id_from_pr_labels "$pr_labels"
   code=$?
   case "$code" in
-    0)
-      label_ids="$TRACK_PARSED_TASK_IDS"
-      label_count="$(track_set_count "$label_ids")"
-      ;;
+    0) TRACK_RESOLVED_TASK_ID="$TRACK_PARSED_TASK_ID"; TRACK_RESOLVED_SOURCE='labels'; return 0 ;;
     1) ;;
     3) TRACK_RESOLVER_ERROR="$TRACK_PARSE_TASK_ERROR"; return 3 ;;
   esac
 
-  track_task_ids_from_pr_title "$pr_title"
+  track_task_id_from_pr_title "$pr_title"
   code=$?
   case "$code" in
-    0)
-      title_ids="$TRACK_PARSED_TASK_IDS"
-      title_count="$(track_set_count "$title_ids")"
-      ;;
+    0) TRACK_RESOLVED_TASK_ID="$TRACK_PARSED_TASK_ID"; TRACK_RESOLVED_SOURCE='title'; return 0 ;;
     1) ;;
     3) TRACK_RESOLVER_ERROR="$TRACK_PARSE_TASK_ERROR"; return 3 ;;
   esac
 
-  track_task_ids_from_branch "$branch_name"
+  track_task_id_from_branch "$branch_name"
   code=$?
   case "$code" in
-    0)
-      branch_ids="$TRACK_PARSED_TASK_IDS"
-      branch_count="$(track_set_count "$branch_ids")"
-      ;;
+    0) TRACK_RESOLVED_TASK_ID="$TRACK_PARSED_TASK_ID"; TRACK_RESOLVED_SOURCE='branch'; return 0 ;;
     1) ;;
     3) TRACK_RESOLVER_ERROR="$TRACK_PARSE_TASK_ERROR"; return 3 ;;
   esac
 
-  if [[ $body_count -ge 2 ]]; then
-    resolved_ids="$body_ids"
-    resolved_source='body'
-    resolved_mode='batch'
-  elif [[ $label_count -ge 2 ]]; then
-    resolved_ids="$label_ids"
-    resolved_source='labels'
-    resolved_mode='batch'
-  elif [[ $body_count -eq 1 ]]; then
-    resolved_ids="$body_ids"
-    resolved_source='body'
-    resolved_mode='single'
-  elif [[ $label_count -eq 1 ]]; then
-    resolved_ids="$label_ids"
-    resolved_source='labels'
-    resolved_mode='single'
-  elif [[ $title_count -eq 1 ]]; then
-    resolved_ids="$title_ids"
-    resolved_source='title'
-    resolved_mode='single'
-  elif [[ $title_count -gt 1 ]]; then
-    TRACK_RESOLVER_ERROR='multiple task IDs in PR title require explicit batch declaration via repeated Track-Task lines or track labels'
-    return 2
-  elif [[ $branch_count -eq 1 ]]; then
-    resolved_ids="$branch_ids"
-    resolved_source='branch'
-    resolved_mode='single'
-  else
-    TRACK_RESOLVER_ERROR='no task ID found in PR body, labels, title, or branch name'
-    return 1
-  fi
-
-  if [[ -n "$body_ids" ]] && ! track_set_is_subset "$body_ids" "$resolved_ids"; then
-    outside_id="$(track_set_first_outside "$body_ids" "$resolved_ids")"
-    TRACK_RESOLVER_ERROR="PR body references task '$outside_id' outside canonical set '$(track_join_ids_csv "$resolved_ids")'"
-    return 2
-  fi
-  if [[ -n "$label_ids" ]] && ! track_set_is_subset "$label_ids" "$resolved_ids"; then
-    outside_id="$(track_set_first_outside "$label_ids" "$resolved_ids")"
-    TRACK_RESOLVER_ERROR="PR labels reference task '$outside_id' outside canonical set '$(track_join_ids_csv "$resolved_ids")'"
-    return 2
-  fi
-  if [[ -n "$title_ids" ]] && ! track_set_is_subset "$title_ids" "$resolved_ids"; then
-    outside_id="$(track_set_first_outside "$title_ids" "$resolved_ids")"
-    TRACK_RESOLVER_ERROR="PR title references task '$outside_id' outside canonical set '$(track_join_ids_csv "$resolved_ids")'"
-    return 2
-  fi
-  if [[ -n "$branch_ids" ]] && ! track_set_is_subset "$branch_ids" "$resolved_ids"; then
-    outside_id="$(track_set_first_outside "$branch_ids" "$resolved_ids")"
-    TRACK_RESOLVER_ERROR="PR branch references task '$outside_id' outside canonical set '$(track_join_ids_csv "$resolved_ids")'"
-    return 2
-  fi
-
-  TRACK_RESOLVED_TASK_IDS="$resolved_ids"
-  TRACK_RESOLVED_TASK_COUNT="$(track_set_count "$resolved_ids")"
-  TRACK_RESOLUTION_MODE="$resolved_mode"
-  TRACK_RESOLVED_TASK_ID="$(track_first_id_from_set "$resolved_ids")"
-  TRACK_RESOLVED_SOURCE="$resolved_source"
-  return 0
+  TRACK_RESOLVER_ERROR='no task ID found in PR body, labels, title, or branch name'
+  return 1
 }
 
-track_task_id_from_pr_body() { track_task_ids_from_pr_body "$@"; }
-track_task_id_from_pr_labels() { track_task_ids_from_pr_labels "$@"; }
-track_task_id_from_pr_title() { track_task_ids_from_pr_title "$@"; }
-track_task_id_from_branch() { track_task_ids_from_branch "$@"; }
-track_resolve_task_id() { track_resolve_task_ids "$@"; }
+track_also_completed_ids_from_body() {
+  local body="${1-}"
+  local line raw_id
+  local had_nocasematch=0
+
+  TRACK_ALSO_COMPLETED_IDS=()
+
+  shopt -q nocasematch && had_nocasematch=1
+  shopt -s nocasematch
+
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    if [[ "$line" =~ ^[[:space:]]*also-completed:[[:space:]]*(.+)[[:space:]]*$ ]]; then
+      raw_id="$(track_strip_quotes "${BASH_REMATCH[1]}")"
+      raw_id="$(track_trim "$raw_id")"
+      if track_is_dotted_id "$raw_id"; then
+        TRACK_ALSO_COMPLETED_IDS+=("$raw_id")
+      fi
+    fi
+  done <<< "$body"
+
+  [[ $had_nocasematch -eq 1 ]] || shopt -u nocasematch
+
+  [[ ${#TRACK_ALSO_COMPLETED_IDS[@]} -gt 0 ]]
+}
 
 track_project_id_from_brief() {
   local file basename

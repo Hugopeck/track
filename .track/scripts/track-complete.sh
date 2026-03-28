@@ -21,37 +21,40 @@ if [[ -n "$COMPLETED_AT" ]]; then
   fi
 fi
 
-if track_resolve_task_ids "$PR_BODY" "$PR_LABELS" "$PR_TITLE" "$TASK_BRANCH"; then
+if track_resolve_task_id "$PR_BODY" "$PR_LABELS" "$PR_TITLE" "$TASK_BRANCH"; then
   RESOLVE_EXIT=0
 else
   RESOLVE_EXIT=$?
 fi
 if [[ $RESOLVE_EXIT -ne 0 ]]; then
   case "$RESOLVE_EXIT" in
-    1) echo "Could not resolve a Track task for merged PR. Add one of: PR body 'Track-Task: {id}', label 'track:{id}', title '[{id}]'/'({id})', or branch 'task/{id}-{slug}'." >&2 ;;
-    2|3) echo "$TRACK_RESOLVER_ERROR" >&2 ;;
-    *) echo 'Unexpected task resolver failure.' >&2 ;;
+    1) echo "Not a Track PR; nothing to complete." ; exit 0 ;;
+    2|3) echo "$TRACK_RESOLVER_ERROR" >&2 ; exit 1 ;;
+    *) echo 'Unexpected task resolver failure.' >&2 ; exit 1 ;;
   esac
-  exit 1
 fi
 
-TASK_IDS_TO_COMPLETE=()
-TASK_FILES_TO_COMPLETE=()
+# Collect primary task + any Also-Completed tasks
+TASK_IDS_TO_COMPLETE=("$TRACK_RESOLVED_TASK_ID")
 
-while IFS= read -r task_id || [[ -n "$task_id" ]]; do
-  [[ -z "$task_id" ]] && continue
+if track_also_completed_ids_from_body "$PR_BODY"; then
+  for also_id in "${TRACK_ALSO_COMPLETED_IDS[@]}"; do
+    if [[ "$also_id" != "$TRACK_RESOLVED_TASK_ID" ]]; then
+      TASK_IDS_TO_COMPLETE+=("$also_id")
+    fi
+  done
+fi
+
+# Preflight: verify all task files exist
+TASK_FILES_TO_COMPLETE=()
+for task_id in "${TASK_IDS_TO_COMPLETE[@]}"; do
   task_file="$(find "$ROOT_DIR/.track/tasks" -maxdepth 1 -type f -name "${task_id}-*.md" | head -n 1)"
   if [[ -z "$task_file" ]]; then
     echo "No task file found for $task_id; completion cannot continue." >&2
     exit 1
   fi
-  if ! track_parse_task_file "$task_file"; then
-    echo "$task_file: $TRACK_parse_error" >&2
-    exit 1
-  fi
-  TASK_IDS_TO_COMPLETE+=("$task_id")
   TASK_FILES_TO_COMPLETE+=("$task_file")
-done <<< "$TRACK_RESOLVED_TASK_IDS"
+done
 
 updated_count=0
 skipped_count=0
@@ -75,7 +78,6 @@ write_task_done() {
   in_frontmatter && /^updated:[[:space:]]*/ { print "updated: " today; next }
   in_frontmatter && /^pr:[[:space:]]*/ { print "pr: \"" pr_url "\""; saw_pr = 1; next }
   { print }
-
 ' "$task_file" > "$tmp_file"
 
   if cmp -s "$task_file" "$tmp_file"; then

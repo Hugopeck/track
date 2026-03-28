@@ -24,30 +24,6 @@ setup_repo() {
   mkdir -p "$tmp/.track/scripts"
   cp "$SCAFFOLD_SCRIPTS"/track-common.sh "$tmp/.track/scripts/"
   cp "$SCAFFOLD_SCRIPTS"/track-pr-lint.sh "$tmp/.track/scripts/"
-  cat > "$tmp/.track/tasks/1.4-related-task.md" <<'TASK'
----
-id: "1.4"
-title: "Related task"
-status: todo
-mode: implement
-priority: medium
-project_id: "1"
-created: 2026-01-01
-updated: 2026-01-01
-depends_on: []
-files: []
-pr: ""
----
-
-## Context
-Related fixture.
-
-## Acceptance Criteria
-- [ ] Done
-
-## Notes
-None.
-TASK
   printf '%s' "$tmp"
 }
 
@@ -99,34 +75,35 @@ printf 'Running track-pr-lint tests...\n\n'
 
 repo="$(setup_repo)"
 
-run_capture env GITHUB_HEAD_REF='task/1.1-test-task' PR_BODY=$'Track-Task: 1.1\nTrack-Task: 1.4' PR_TITLE='[1.1] Batch lint' bash "$repo/.track/scripts/track-pr-lint.sh"
-assert_code 'explicit batch via body passes' 0
-assert_stdout_contains 'body batch logs resolved tasks' 'Resolved tasks: 1.1, 1.4 (source: body)'
+# Single task from body resolves
+run_capture env GITHUB_HEAD_REF='task/1.1-test-task' PR_BODY='Track-Task: 1.1' PR_TITLE='[1.1] Single lint' bash "$repo/.track/scripts/track-pr-lint.sh"
+assert_code 'single task from body passes' 0
+assert_stdout_contains 'body resolves single task' 'Resolved task: 1.1 (source: body)'
 cleanup_capture
 
-run_capture env GITHUB_HEAD_REF='feature/labels-batch' PR_LABELS='track:1.1,track:1.4' bash "$repo/.track/scripts/track-pr-lint.sh"
-assert_code 'explicit batch via labels passes' 0
-assert_stdout_contains 'label batch logs resolved tasks' 'Resolved tasks: 1.1, 1.4 (source: labels)'
-assert_stderr_contains 'label batch warns on non-track branch' 'using fallback task linkage from labels'
+# Single task from title resolves
+run_capture env GITHUB_HEAD_REF='feature/no-body' PR_TITLE='[1.1] Title only' bash "$repo/.track/scripts/track-pr-lint.sh"
+assert_code 'single task from title passes' 0
+assert_stdout_contains 'title resolves single task' 'Resolved task: 1.1 (source: title)'
+assert_stderr_contains 'non-track branch warns fallback' 'using fallback task linkage from title'
 cleanup_capture
 
-run_capture env GITHUB_HEAD_REF='task/1.1-test-task' PR_BODY=$'Track-Task: 1.1\nTrack-Task: 9.9' PR_TITLE='[1.1] Missing task in batch' bash "$repo/.track/scripts/track-pr-lint.sh"
-assert_code 'batch with missing task file fails' 1
-assert_stderr_contains 'missing task file surfaced for batch' "No task file found for ID '9.9'"
+# Single task from branch resolves
+run_capture env GITHUB_HEAD_REF='task/1.1-test-task' bash "$repo/.track/scripts/track-pr-lint.sh"
+assert_code 'single task from branch passes' 0
+assert_stdout_contains 'branch resolves single task' 'Resolved task: 1.1 (source: branch)'
 cleanup_capture
 
-run_capture env GITHUB_HEAD_REF='task/1.1-test-task' PR_BODY=$'Track-Task: 1.1\nTrack-Task: 1.4' PR_TITLE='[1.1] inside batch' bash "$repo/.track/scripts/track-pr-lint.sh"
-assert_code 'branch task inside canonical batch passes' 0
+# Multiple Track-Task lines in body errors
+run_capture env GITHUB_HEAD_REF='task/1.1-test-task' PR_BODY=$'Track-Task: 1.1\nTrack-Task: 1.4' PR_TITLE='[1.1] Multi body' bash "$repo/.track/scripts/track-pr-lint.sh"
+assert_code 'multiple Track-Task lines in body errors' 1
+assert_stderr_contains 'multiple body error surfaced' 'multiple Track-Task values'
 cleanup_capture
 
-run_capture env GITHUB_HEAD_REF='task/1.2-done-task' PR_BODY=$'Track-Task: 1.1\nTrack-Task: 1.4' PR_TITLE='[1.1] foreign branch' bash "$repo/.track/scripts/track-pr-lint.sh"
-assert_code 'branch task outside canonical batch fails' 1
-assert_stderr_contains 'foreign branch conflict surfaced' 'PR branch references task'
-cleanup_capture
-
+# Non-Track PR gracefully skips
 run_capture env GITHUB_HEAD_REF='feature/no-signal' PR_TITLE='Regular title' bash "$repo/.track/scripts/track-pr-lint.sh"
-assert_code 'missing all task signals still fails' 1
-assert_stderr_contains 'no-signal error is actionable' 'Could not resolve a Track task for this PR'
+assert_code 'non-Track PR skips gracefully' 0
+assert_stdout_contains 'skip message shown' 'Not a Track PR'
 cleanup_capture
 
 rm -rf "$repo"

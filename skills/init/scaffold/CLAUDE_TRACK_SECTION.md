@@ -64,10 +64,9 @@ Append-only log.
 4. Open a **draft PR** to start work. No PR = not started.
 5. Prefer a PR title that includes the task ID: `[{id}] Title` or `({id}) Title`.
 6. If the branch is not `task/{id}-{slug}`, keep Track linked by adding `Track-Task: {id}` to the PR body. Optional label fallback: `track:{id}`.
-7. For a small explicit batch PR, declare every task in the PR body with repeated `Track-Task:` lines. Body is canonical for batch membership; title and branch are only cross-checks.
-8. Batch PRs are exceptional: keep them to at most 3 tasks, same project, `implement` mode only, and only when remaining dependencies are already done or included in the same PR.
-9. If `gh` auth fails or PR creation fails, **stop and surface the error.**
-10. Implement. When ready, mark the PR ready for review.
+7. If the PR also completes another small task as a drive-by, add `Also-Completed: {id}` to the PR body. On merge, Track marks those tasks done too.
+8. If `gh` auth fails or PR creation fails, **stop and surface the error.**
+9. Implement. When ready, mark the PR ready for review.
 
 `TODO.md` is generated — edit task files in `.track/tasks/`, not TODO.md directly.
 
@@ -89,8 +88,7 @@ Append-only log.
    - PR title must include the task ID in brackets or parentheses: `[4.1] Title` or `feat(scope): (4.1) Title`
    - Preferred linkage is branch `task/{id}-{slug}` + title `[id]`
    - If branch naming is missed, add `Track-Task: {id}` to the PR body; optional label: `track:{id}`
-   - For an explicit batch PR, repeat `Track-Task: {id}` once per task in the body
-   - CI resolves single-task PRs from body, labels, title, then branch name; batch membership only comes from repeated `Track-Task:` lines or repeated `track:{id}` labels
+   - CI resolves the task from body, labels, title, then branch name
 4. Do the implementation work with as many commits as needed
 5. When ready for review:
    - set raw `status: review`
@@ -106,14 +104,14 @@ Title: feat(skills): [7.2] create /track:test skill
 Body: Track-Task: 7.2
 ```
 
-Example explicit batch PR:
+Example drive-by completion (primary task 7.1, also resolved 7.2):
 
 ```text
 Branch: task/7.1-test-runner
-Title: feat(tests): [7.1] [7.2] land related test work
+Title: feat(tests): [7.1] unified test runner
 Body:
 Track-Task: 7.1
-Track-Task: 7.2
+Also-Completed: 7.2
 ```
 
 ### Creating a Task

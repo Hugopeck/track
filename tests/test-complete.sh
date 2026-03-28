@@ -109,42 +109,45 @@ cleanup_capture() {
 
 printf 'Running track-complete tests...\n\n'
 
+# Single-task branch-only completion
 repo="$(setup_repo)"
-run_capture env PR_BODY=$'Track-Task: 1.1\nTrack-Task: 1.4' PR_TITLE='[1.1] [1.4] Batch complete' TRACK_COMPLETED_AT='2026-03-27T10:11:12Z' bash "$repo/.track/scripts/track-complete.sh" 'task/1.1-test-task' 'https://github.com/test/pull/11'
-assert_code 'body-declared batch completes successfully' 0
-assert_file_contains 'first batched task marked done' "$repo/.track/tasks/1.1-test-task.md" 'status: done'
-assert_file_contains 'second batched task marked done' "$repo/.track/tasks/1.4-related-task.md" 'status: done'
-assert_file_contains 'batch completion writes shared pr url' "$repo/.track/tasks/1.4-related-task.md" 'pr: "https://github.com/test/pull/11"'
+run_capture bash "$repo/.track/scripts/track-complete.sh" 'task/1.1-test-task' 'https://github.com/test/pull/14'
+assert_code 'single-task branch-only completion works' 0
+assert_file_contains 'single-task marks done' "$repo/.track/tasks/1.1-test-task.md" 'status: done'
+cleanup_capture
+rm -rf "$repo"
+
+# Also-Completed marks additional tasks done
+repo="$(setup_repo)"
+run_capture env PR_BODY=$'Track-Task: 1.1\nAlso-Completed: 1.4' PR_TITLE='[1.1] primary task' TRACK_COMPLETED_AT='2026-03-27T10:11:12Z' bash "$repo/.track/scripts/track-complete.sh" 'task/1.1-test-task' 'https://github.com/test/pull/11'
+assert_code 'also-completed succeeds' 0
+assert_file_contains 'primary task marked done' "$repo/.track/tasks/1.1-test-task.md" 'status: done'
+assert_file_contains 'also-completed task marked done' "$repo/.track/tasks/1.4-related-task.md" 'status: done'
+assert_file_contains 'also-completed writes pr url' "$repo/.track/tasks/1.4-related-task.md" 'pr: "https://github.com/test/pull/11"'
 assert_file_contains 'completion uses merged date' "$repo/.track/tasks/1.1-test-task.md" 'updated: 2026-03-27'
 cleanup_capture
 rm -rf "$repo"
 
+# Already-done task is skipped
 repo="$(setup_repo)"
-run_capture env PR_BODY=$'Track-Task: 1.2\nTrack-Task: 1.4' PR_TITLE='[1.2] [1.4] Mixed batch' bash "$repo/.track/scripts/track-complete.sh" 'task/1.2-done-task' 'https://github.com/test/pull/12'
-assert_code 'batch with already-done task still succeeds' 0
+run_capture env PR_BODY=$'Track-Task: 1.1\nAlso-Completed: 1.2' PR_TITLE='[1.1] with done task' bash "$repo/.track/scripts/track-complete.sh" 'task/1.1-test-task' 'https://github.com/test/pull/12'
+assert_code 'also-completed with already-done task succeeds' 0
 assert_stdout_contains 'already-done task is skipped' 'Skipping terminal task 1.2 (done).'
-assert_file_contains 'other task still completed' "$repo/.track/tasks/1.4-related-task.md" 'status: done'
 cleanup_capture
 rm -rf "$repo"
 
+# Missing also-completed task fails preflight
 repo="$(setup_repo)"
 before_status="$(grep -n '^status:' "$repo/.track/tasks/1.1-test-task.md")"
-run_capture env PR_BODY=$'Track-Task: 1.1\nTrack-Task: 9.9' PR_TITLE='[1.1] Missing task' bash "$repo/.track/scripts/track-complete.sh" 'task/1.1-test-task' 'https://github.com/test/pull/13'
-assert_code 'missing task in batch fails before writes' 1
+run_capture env PR_BODY=$'Track-Task: 1.1\nAlso-Completed: 9.9' PR_TITLE='[1.1] missing also' bash "$repo/.track/scripts/track-complete.sh" 'task/1.1-test-task' 'https://github.com/test/pull/13'
+assert_code 'missing also-completed task fails before writes' 1
 assert_stderr_contains 'missing task surfaced during preflight' 'No task file found for 9.9'
 after_status="$(grep -n '^status:' "$repo/.track/tasks/1.1-test-task.md")"
 if [[ "$before_status" == "$after_status" ]]; then
-  pass 'preflight failure leaves existing task untouched'
+  pass 'preflight failure leaves primary task untouched'
 else
-  fail 'preflight failure leaves existing task untouched'
+  fail 'preflight failure leaves primary task untouched'
 fi
-cleanup_capture
-rm -rf "$repo"
-
-repo="$(setup_repo)"
-run_capture bash "$repo/.track/scripts/track-complete.sh" 'task/1.1-test-task' 'https://github.com/test/pull/14'
-assert_code 'single-task branch-only completion still works' 0
-assert_file_contains 'single-task completion still marks done' "$repo/.track/tasks/1.1-test-task.md" 'status: done'
 cleanup_capture
 rm -rf "$repo"
 

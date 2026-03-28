@@ -282,37 +282,35 @@ validate_open_prs() {
       pr_labels=''
     fi
 
-    if track_resolve_task_ids "$pr_body" "$pr_labels" "$title" "$head_ref"; then
+    if track_resolve_task_id "$pr_body" "$pr_labels" "$title" "$head_ref"; then
       resolver_code=0
     else
       resolver_code=$?
     fi
     if [[ $resolver_code -ne 0 ]]; then
       case "$resolver_code" in
-        1|2|3) print_error "open PR '$url' could not be linked to a task set: $TRACK_RESOLVER_ERROR" ;;
-        *) print_error "open PR '$url' could not be linked to a task set: unexpected resolver failure" ;;
+        1|2|3) print_error "open PR '$url' could not be linked to a task: $TRACK_RESOLVER_ERROR" ;;
+        *) print_error "open PR '$url' could not be linked to a task: unexpected resolver failure" ;;
       esac
       continue
     fi
 
-    while IFS= read -r task_id || [[ -n "$task_id" ]]; do
-      [[ -z "$task_id" ]] && continue
-      pr_task_ids+=("$task_id")
-      pr_urls+=("$url")
-      OPEN_PR_TASK_IDS+=("$task_id")
-      OPEN_PR_URLS+=("$url")
+    task_id="$TRACK_RESOLVED_TASK_ID"
+    pr_task_ids+=("$task_id")
+    pr_urls+=("$url")
+    OPEN_PR_TASK_IDS+=("$task_id")
+    OPEN_PR_URLS+=("$url")
 
-      file_on_main="$(main_task_file_for_id "$task_id")"
-      if [[ -z "$file_on_main" ]]; then
-        print_error "open PR '$url' references task '$task_id' but no matching task file exists on origin/$DEFAULT_BRANCH. Create the task file or close the orphaned PR"
-        continue
-      fi
+    file_on_main="$(main_task_file_for_id "$task_id")"
+    if [[ -z "$file_on_main" ]]; then
+      print_error "open PR '$url' references task '$task_id' but no matching task file exists on origin/$DEFAULT_BRANCH. Create the task file or close the orphaned PR"
+      continue
+    fi
 
-      main_status="$(main_task_status_for_path "$file_on_main")"
-      if [[ "$main_status" == 'done' || "$main_status" == 'cancelled' ]]; then
-        print_error "open PR '$url' references terminal task '$task_id' (done/cancelled) on origin/$DEFAULT_BRANCH. Close the PR or reopen the task"
-      fi
-    done <<< "$TRACK_RESOLVED_TASK_IDS"
+    main_status="$(main_task_status_for_path "$file_on_main")"
+    if [[ "$main_status" == 'done' || "$main_status" == 'cancelled' ]]; then
+      print_error "open PR '$url' references terminal task '$task_id' (done/cancelled) on origin/$DEFAULT_BRANCH. Close the PR or reopen the task"
+    fi
   done <<< "$pr_lines"
 
   for ((i = 0; i < ${#pr_task_ids[@]}; i++)); do
@@ -332,15 +330,16 @@ validate_pull_request_context() {
   pr_labels="${PR_LABELS:-}"
   [[ -z "$head_ref" ]] && return
 
-  if track_resolve_task_ids "$pr_body" "$pr_labels" "$pr_title" "$head_ref"; then
+  if track_resolve_task_id "$pr_body" "$pr_labels" "$pr_title" "$head_ref"; then
     resolver_code=0
   else
     resolver_code=$?
   fi
   if [[ $resolver_code -ne 0 ]]; then
     case "$resolver_code" in
-      1|2|3) print_error "pull request context could not be linked to a task set: $TRACK_RESOLVER_ERROR" ;;
-      *) print_error 'pull request context could not be linked to a task set: unexpected resolver failure' ;;
+      1) return ;;
+      2|3) print_error "pull request context could not be linked to a task: $TRACK_RESOLVER_ERROR" ;;
+      *) print_error 'pull request context could not be linked to a task: unexpected resolver failure' ;;
     esac
     return
   fi
@@ -349,33 +348,31 @@ validate_pull_request_context() {
     pr_draft_state="$(gh pr list --head "$head_ref" --state open --json isDraft --template '{{range .}}{{printf "%t\n" .isDraft}}{{end}}' 2>/dev/null || true)"
   fi
 
-  while IFS= read -r task_id || [[ -n "$task_id" ]]; do
-    [[ -z "$task_id" ]] && continue
-    task_file="$(find "$TASK_DIR" -maxdepth 1 -type f -name "${task_id}-*.md" | head -n 1)"
+  task_id="$TRACK_RESOLVED_TASK_ID"
+  task_file="$(find "$TASK_DIR" -maxdepth 1 -type f -name "${task_id}-*.md" | head -n 1)"
 
-    if [[ -z "$task_file" ]]; then
-      print_error "pull request references task '$task_id' but no matching task file exists in .track/tasks/. Create ${task_id}-{slug}.md or fix the PR linkage"
-      continue
-    fi
+  if [[ -z "$task_file" ]]; then
+    print_error "pull request references task '$task_id' but no matching task file exists in .track/tasks/. Create ${task_id}-{slug}.md or fix the PR linkage"
+    return
+  fi
 
-    if ! track_parse_task_file "$task_file"; then
-      print_error "$task_file: $TRACK_parse_error"
-      continue
-    fi
+  if ! track_parse_task_file "$task_file"; then
+    print_error "$task_file: $TRACK_parse_error"
+    return
+  fi
 
-    if [[ "$TRACK_status" == 'done' || "$TRACK_status" == 'cancelled' ]]; then
-      print_error "$task_file: task on implementation branch may not be '$TRACK_status' while PR is open. Set status to 'active' (draft PR) or 'review' (ready PR)"
-    fi
+  if [[ "$TRACK_status" == 'done' || "$TRACK_status" == 'cancelled' ]]; then
+    print_error "$task_file: task on implementation branch may not be '$TRACK_status' while PR is open. Set status to 'active' (draft PR) or 'review' (ready PR)"
+  fi
 
-    if [[ -n "$pr_draft_state" ]]; then
-      if [[ "$pr_draft_state" == 'true' && "$TRACK_status" != 'active' ]]; then
-        print_error "$task_file: draft PR requires raw status 'active' but found '$TRACK_status'. Set status: active"
-      fi
-      if [[ "$pr_draft_state" == 'false' && "$TRACK_status" != 'review' ]]; then
-        print_error "$task_file: ready-for-review PR requires raw status 'review' but found '$TRACK_status'. Set status: review"
-      fi
+  if [[ -n "$pr_draft_state" ]]; then
+    if [[ "$pr_draft_state" == 'true' && "$TRACK_status" != 'active' ]]; then
+      print_error "$task_file: draft PR requires raw status 'active' but found '$TRACK_status'. Set status: active"
     fi
-  done <<< "$TRACK_RESOLVED_TASK_IDS"
+    if [[ "$pr_draft_state" == 'false' && "$TRACK_status" != 'review' ]]; then
+      print_error "$task_file: ready-for-review PR requires raw status 'review' but found '$TRACK_status'. Set status: review"
+    fi
+  fi
 }
 
 cleanup_expired_plans() {
