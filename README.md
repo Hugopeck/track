@@ -6,6 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude_Code-plugin-blueviolet)](#install--30-seconds)
 [![Cursor](https://img.shields.io/badge/Cursor-plugin-blue)](#install--30-seconds)
+[![OpenCode](https://img.shields.io/badge/OpenCode-supported-black)](#opencode)
 [![Bash](https://img.shields.io/badge/shell-bash_3.2%2B-orange)](https://www.gnu.org/software/bash/)
 
 Track is a git-native coordination protocol for AI agents. A `.track/` folder in your repo replaces your PM tool — markdown task files, bash enforcement scripts, PR-driven status. No server, no accounts, no vendor lock-in.
@@ -24,17 +25,17 @@ When AI agents work on your codebase, they don't need a Kanban board. They need 
 |---|---|---|
 | Cost | $8-16/seat/month | Free forever |
 | Infrastructure | Cloud SaaS, vendor lock-in | Git. That's it. |
-| Agent support | Linear Agent only | Claude Code, Cursor, Codex, Gemini CLI |
+| Agent support | Linear Agent only | Claude Code, Cursor, Codex CLI, OpenCode |
 | Data ownership | Their servers | Your repo |
 | Non-code projects | No | Yes — any folder, any project |
 
 ## Install — 30 seconds
 
-Requirements: [Claude Code](https://claude.ai/code), Git, bash 3.2+
+Requirements: Git and bash 3.2+. Claude Code, Cursor, Codex CLI, and OpenCode are optional integrations.
 
 **Step 1: Install on your machine**
 
-Open a workspace in [Conductor](https://conductor.lol) and paste this prompt. Claude does the rest.
+Open a workspace in [Conductor](https://conductor.lol) and paste this prompt if you want the Claude Code path. Claude does the rest.
 
 > Install Track: run `git clone https://github.com/Hugopeck/track.git ~/.claude/skills/track && ~/.claude/skills/track/setup`, then run `/track:init` to set up Track in this repo.
 
@@ -55,6 +56,117 @@ If the install prompt above didn't already run init:
 This creates `.track/`, adds bash scripts, installs GitHub Actions workflows, and updates your `CLAUDE.md` so every agent knows the protocol. If it finds existing markdown TODOs or roadmaps, you can import them as Track tasks. If you initialized before v2.0.0, re-run `/track:init` to migrate legacy root `scripts/` into `.track/scripts/` and add `.track/plans/`.
 
 That's it — you're tracking.
+
+## Works without any AI agent
+
+Track is a protocol, not a plugin. If you do not use Claude Code, Cursor, Codex CLI, or OpenCode, you can still run Track with plain git + bash.
+
+**1. Copy the repo files you need**
+
+Create this structure at the root of your repo:
+
+```
+.track/
+  projects/
+  tasks/
+  plans/
+  scripts/
+```
+
+Copy these scripts from this repo into `.track/scripts/`:
+
+```
+track-common.sh
+track-validate.sh
+track-todo.sh
+track-pr-lint.sh
+track-complete.sh
+```
+
+If you want the same CI automation, also copy the Track GitHub Actions workflows from `.github/workflows/`.
+
+**2. Create projects and tasks manually**
+
+A project file is plain markdown in `.track/projects/`:
+
+```markdown
+# API Migration
+
+## Goal
+Move the API layer to v2 without breaking existing clients.
+
+## Why Now
+The current version blocks the new billing flow.
+```
+
+A task file lives in `.track/tasks/` and uses YAML frontmatter plus markdown sections:
+
+```yaml
+---
+id: "1.1"
+title: "Add v2 auth middleware"
+status: todo
+mode: implement
+priority: high
+project_id: "1"
+created: 2026-03-28
+updated: 2026-03-28
+depends_on: []
+files:
+  - "src/auth.ts"
+  - "src/middleware.ts"
+pr: ""
+---
+
+## Context
+Add the v2 authentication path used by billing endpoints.
+
+## Acceptance Criteria
+- [ ] Requests can authenticate through the new middleware
+- [ ] Existing v1 routes keep working during the migration
+```
+
+**3. Use the scripts directly**
+
+```bash
+# Validate task and project files
+bash .track/scripts/track-validate.sh
+
+# Generate TODO.md from your local tree only
+bash .track/scripts/track-todo.sh --local --offline
+
+# Generate TODO.md with remote/main and live PR data
+bash .track/scripts/track-todo.sh
+```
+
+Use `--local` or `--offline` when you are not using GitHub PR state. `gh` is only needed for the full PR-aware mode.
+
+**4. Run the workflow manually**
+
+- Create and edit files in `.track/projects/` and `.track/tasks/` yourself
+- Run `bash .track/scripts/track-validate.sh` before committing
+- Regenerate `TODO.md` with `bash .track/scripts/track-todo.sh --local --offline`
+- Open pull requests only if you want PR-linked status automation
+
+The agent integrations are convenience layers on top of these files and scripts — not a requirement to use Track.
+
+## OpenCode
+
+Track's OpenCode setup is intentionally minimal: keep the shared workflow in a repo-root `AGENTS.md`, then use `opencode.json` only for any extra repo-specific instruction files.
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": ["CLAUDE.md"]
+}
+```
+
+1. Initialize Track in the repo using the standard setup path so `.track/` and the scripts exist.
+2. Commit `AGENTS.md` at the repo root with the shared Track workflow.
+3. Commit `opencode.json` at the repo root to load any extra repo-specific guidance.
+4. Open the repo in OpenCode.
+
+OpenCode will read `AGENTS.md` automatically, merge the extra files listed in `opencode.json`, and then work against the same `.track/` files and bash scripts used by Claude Code. This support is launch-scoped on purpose: it adds repo instructions and config, not a second OpenCode-only command system.
 
 ## Quick start
 
@@ -310,14 +422,15 @@ These workflows close the loop — status stays accurate without anyone remember
 
 ## Works everywhere
 
-Track is just markdown + bash + git. Any AI agent that can read files can use it.
+Track is just markdown + bash + git. You can run it with no AI agent at all, or layer an agent on top.
 
 | Platform | Status |
 |---|---|
+| No agent | Full support via `.track/` files + bash scripts |
 | Claude Code | Full plugin support |
 | Cursor | Plugin available |
-| Codex CLI | Works via AGENTS.md |
-| Gemini CLI | Works via markdown skills |
+| Codex CLI | Works via `AGENTS.md` |
+| OpenCode | Works via `AGENTS.md` + `opencode.json` |
 
 ## The bigger vision
 
@@ -330,9 +443,12 @@ Track's protocol is simple enough for any project: book writing, research, home 
 | Dependency | Required? | What it's for |
 |-----------|-----------|---------------|
 | **bash** 3.2+ | Yes | Runs the Track scripts. Already on macOS and Linux. |
-| **git** | Yes | Track stores everything in your git repo. |
-| **Claude Code** | For plugin features | Track is a Claude Code plugin. The bash scripts work standalone. |
-| **gh** (GitHub CLI) | Required | PR-based status detection. Install and run `gh auth login`. |
+| **git** | Yes | Stores Track state in your repo. |
+| **gh** (GitHub CLI) | Optional | Enables PR-aware `TODO.md` generation and merge automation. |
+| **Claude Code** | Optional | Runs Track through the Claude plugin and slash commands. |
+| **Cursor** | Optional | Uses the Cursor plugin path. |
+| **Codex CLI** | Optional | Uses repo-root `AGENTS.md` instructions. |
+| **OpenCode** | Optional | Uses repo-root `AGENTS.md` plus `opencode.json`. |
 
 ## Troubleshooting
 
