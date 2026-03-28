@@ -1,3 +1,4 @@
+<!-- TRACK:START -->
 ## Track — Task Coordination
 
 Track is a git-native coordination system. It is the source of truth for task state, task ownership, and task history. Follow its conventions and it keeps everything organized. The protocol below is both reference and guide.
@@ -161,3 +162,4 @@ bash .track/scripts/track-validate.sh
 - **Scope aggressively.** If a task grows beyond its acceptance criteria, split the new work into a separate task rather than expanding the current one.
 - **Let the system track status.** Don't manually update status fields to show progress. Open a draft PR — Track knows you're active. Mark it ready for review — Track knows you're in review. The PR lifecycle is the status lifecycle.
 - **Validate early and often.** Run `bash .track/scripts/track-validate.sh` after every task file change. Errors caught locally are cheap; errors caught in CI block the team.
+<!-- TRACK:END -->

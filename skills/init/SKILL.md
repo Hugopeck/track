@@ -261,7 +261,25 @@ setup, no explaining. They'll just know."
    it to `CLAUDE.md`
 4. If yes, ask the user whether to replace the existing Track section
 
-### Checkpoint after Phase 7
+### Phase 7.5: Update `AGENTS.md`
+
+**Tell the user:** "Adding the Track protocol to your `AGENTS.md` too — Codex
+CLI reads this file automatically, so the same Track workflow works there
+without extra setup."
+
+1. Read `AGENTS.md` (or create it if absent)
+2. Read `${CLAUDE_SKILL_DIR}/scaffold/AGENTS.md`
+3. Treat the block between `<!-- TRACK:START -->` and `<!-- TRACK:END -->` as
+   Track-managed content
+4. If `AGENTS.md` does not exist, write the scaffold file to `AGENTS.md`
+5. If `AGENTS.md` already contains the Track-managed block, replace that block
+   with the scaffold version
+6. If `AGENTS.md` exists but does not contain the Track-managed block, append
+   the scaffold content to the end with a blank line separator
+7. Never remove or rewrite user-authored instructions outside the Track-managed
+   block
+
+### Checkpoint after Phase 7.5
 
 Celebrate the milestone, then preview what's next:
 
@@ -273,13 +291,14 @@ Everything you need to start tracking is in place:
   .gitignore: TODO.md {added|already present}
   Version marker: .track/.track-version {written|updated|skipped}
   CLAUDE.md: Track section {appended|already present|replaced}
+  AGENTS.md: Track block {written|appended|replaced}
 
 Now let me see if you have any existing tasks or plans I can bring into Track...
 ```
 
 - If mode is `fresh-init`, continue to Phase 8
 - If mode is `upgrade-continue`, continue to Phase 8
-- Never conclude the skill after Phase 3, 4, 5, 6, or 7
+- Never conclude the skill after Phase 3, 4, 5, 6, 7, or 7.5
 - Upgrading installed files is not completion; it is only the setup for the
   import/onboarding tail
 

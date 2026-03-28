@@ -52,7 +52,7 @@ If the install prompt above didn't already run init:
 > /track:init
 ```
 
-This creates `.track/`, adds bash scripts, installs GitHub Actions workflows, and updates your `CLAUDE.md` so every agent knows the protocol. If it finds existing markdown TODOs or roadmaps, you can import them as Track tasks. If you initialized before v2.0.0, re-run `/track:init` to migrate legacy root `scripts/` into `.track/scripts/` and add `.track/plans/`.
+This creates `.track/`, adds bash scripts, installs GitHub Actions workflows, updates your `CLAUDE.md`, and installs a Track-managed block in `AGENTS.md` for Codex CLI. If it finds existing markdown TODOs or roadmaps, you can import them as Track tasks. If you initialized before v2.0.0, re-run `/track:init` to migrate legacy root `scripts/` into `.track/scripts/` and add `.track/plans/`.
 
 That's it — you're tracking.
 
@@ -227,7 +227,7 @@ Read `TODO.md`, `.track/tasks/`, and `CLAUDE.md` first.
 
 ### `/track:init` — Set up Track in your repo
 
-Scaffolds the entire Track system into your repo: creates `.track/` with all subdirectories, copies enforcement scripts, installs three GitHub Actions workflows (validation, PR lint, post-merge completion), updates your `CLAUDE.md` with the agent protocol, and adds `TODO.md` to `.gitignore`.
+Scaffolds the entire Track system into your repo: creates `.track/` with all subdirectories, copies enforcement scripts, installs three GitHub Actions workflows (validation, PR lint, post-merge completion), updates your `CLAUDE.md`, installs the Track protocol into `AGENTS.md` for Codex CLI, and adds `TODO.md` to `.gitignore`.
 
 If it finds existing markdown files with TODO lists, roadmaps, or task-like content, it offers to import them as Track tasks — extracting structure, inferring priority and mode, and letting you pick which items to keep. If there's nothing to import, it creates a starter onboarding project to help you migrate from your current tool (Linear, Jira, Notion, or plain notes).
 
@@ -310,7 +310,7 @@ Track is just markdown + bash + git. Any AI agent that can read files can use it
 |---|---|
 | Claude Code | Full plugin support |
 | Cursor | Plugin available |
-| Codex CLI | Works via AGENTS.md |
+| Codex CLI | Supported via scaffolded `AGENTS.md` |
 | Gemini CLI | Works via markdown skills |
 
 ## The bigger vision
@@ -335,6 +335,8 @@ Track's protocol is simple enough for any project: book writing, research, home 
 **TODO.md is stale?** Run `/track:todo` to regenerate. If you're offline: `bash .track/scripts/track-todo.sh --local --offline`
 
 **"gh not found" or PR status missing?** Install `gh` and run `gh auth login`, then retry.
+
+**Codex CLI is not following Track?** Re-run `/track:init` to refresh the Track-managed block in `AGENTS.md`.
 
 **Commands not showing up?** Reinstall the plugin or try `claude --plugin-dir ./path/to/track` to test locally.
 
