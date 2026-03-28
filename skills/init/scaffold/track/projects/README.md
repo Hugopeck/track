@@ -12,7 +12,7 @@ projects by `project_id`, which is derived from the brief filename.
 
 - Brief paths use `.track/projects/{project_id}-{slug}.md`
 - `0-archive.md` is reserved for historical archived work
-- The H1 must match the project title used in `TODO.md`
+- The H1 must match the project title used in `BOARD.md` and `PROJECTS.md`
 - Briefs are markdown-only; do not add frontmatter
 
 ## Required Sections

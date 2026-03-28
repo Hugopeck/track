@@ -28,7 +28,7 @@ after user confirmation.
 4. Propose a task breakdown with non-overlapping file scopes
 5. Wait for user confirmation
 6. Create task (and optionally project) files
-7. Validate and regenerate TODO.md
+7. Validate and regenerate Track views
 8. Report what was created
 
 This skill does NOT own creating individual tasks outside a decomposition
@@ -47,7 +47,7 @@ Lock one of these modes at the start and do not switch mid-run:
 - User confirmed the breakdown
 - All files are written
 - `bash .track/scripts/track-validate.sh` passes
-- `bash .track/scripts/track-todo.sh --local --offline` regenerates TODO.md
+- `bash .track/scripts/track-todo.sh --local --offline` regenerates `BOARD.md`, `TODO.md`, and `PROJECTS.md`
 - The user sees what was created
 
 Do not report success before validation passes.

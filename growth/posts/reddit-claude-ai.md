@@ -22,7 +22,7 @@ So I built Track — a Claude Code plugin that adds task coordination to your re
 - Each task has a `files:` field listing which files it'll touch
 
 **How agents coordinate:**
-- When an agent runs `/track:work`, it reads TODO.md, picks a task that isn't blocked, and starts working
+- When an agent runs `/track:work`, it reads TODO.md, picks a task that isn't blocked, checks BOARD.md if it needs context, and starts working
 - Other agents see which files are claimed and pick different tasks
 - PR state drives status automatically (draft = active, merged = done)
 

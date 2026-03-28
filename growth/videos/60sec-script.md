@@ -26,7 +26,7 @@
 
 ### 0:35-0:45
 **Text:** "PRs auto-created. Status auto-updated."
-**Screen:** GitHub showing 3 draft PRs. TODO.md with live status.
+**Screen:** GitHub showing 3 draft PRs. TODO.md, BOARD.md, and PROJECTS.md with live status.
 
 ### 0:45-0:50
 **Text:** "Merge = Done. Automatically."

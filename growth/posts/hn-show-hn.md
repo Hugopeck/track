@@ -18,7 +18,7 @@ I built this because I was running 3-5 Claude Code agents in parallel via Conduc
 Technical details:
 - Tasks are markdown files with YAML frontmatter (id, status, priority, files, depends_on)
 - Status lifecycle is driven by GitHub PR state: draft=active, ready=review, merged=done
-- Bash scripts validate task files, generate a TODO.md summary, and lint PRs
+- Bash scripts validate task files, generate BOARD.md, TODO.md, and PROJECTS.md, and lint PRs
 - The plugin teaches AI agents the protocol; the scripts enforce it
 - Works standalone (just bash + git) or as a Claude Code / Cursor plugin
 

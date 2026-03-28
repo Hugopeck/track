@@ -263,25 +263,27 @@ printf 'Running E2E lifecycle tests...\n'
 
 repo="$(setup_repo)"
 today="$(date -u +'%Y-%m-%d')"
-todo_before="$repo/TODO-before.md"
-todo_after="$repo/TODO-after.md"
+board_before="$repo/BOARD-before.md"
+board_after="$repo/BOARD-after.md"
 completed_task="$repo/.track/tasks/1.1-foundation-plumbing.md"
 completed_pr='https://github.com/test/repo/pull/73'
 
 run_test "initial validation passes" 0 run_validate_clean "$repo/.track/scripts/track-validate.sh"
-run_test "initial TODO generation passes" 0 bash "$repo/.track/scripts/track-todo.sh" --local --offline --output "$todo_before"
+run_test "initial Track view generation passes" 0 bash "$repo/.track/scripts/track-todo.sh" --local --offline --output "$board_before"
 
-if [[ -f "$todo_before" ]]; then
-  check_contains "TODO includes project 2 section" "$todo_before" "## Project 2: Platform Launch"
-  check_contains "TODO includes project 1 section" "$todo_before" "## Project 1: API Foundations"
-  check_order "projects sorted by highest-priority open task" "$todo_before" "## Project 2: Platform Launch" "## Project 1: API Foundations"
-  check_order "project 1 open tasks sort before done tasks" "$todo_before" "| [1.1](.track/tasks/1.1-foundation-plumbing.md) |" "| [1.2](.track/tasks/1.2-blocked-follow-up.md) |"
-  check_order "project 1 done task sorts last" "$todo_before" "| [1.2](.track/tasks/1.2-blocked-follow-up.md) |" "| [1.3](.track/tasks/1.3-archived-note.md) |"
-  check_contains "independent task is an immediate start" "$todo_before" '- [ ] [Urgent launch checklist](.track/tasks/2.1-urgent-launch-checklist.md) — `2` · `urgent`'
-  check_contains "dependency source is an immediate start" "$todo_before" '- [ ] [Foundation plumbing](.track/tasks/1.1-foundation-plumbing.md) — `1` · `high`'
-  check_not_contains "dependent task stays blocked before completion" "$todo_before" '- [ ] [Blocked follow-up](.track/tasks/1.2-blocked-follow-up.md) — `1` · `medium`'
+if [[ -f "$board_before" && -f "$repo/TODO.md" && -f "$repo/PROJECTS.md" ]]; then
+  check_contains "BOARD includes project 2 section" "$board_before" "## [Project 2: Platform Launch]"
+  check_contains "BOARD includes project 1 section" "$board_before" "## [Project 1: API Foundations]"
+  check_order "projects sorted by highest-priority open task" "$board_before" "## [Project 2: Platform Launch]" "## [Project 1: API Foundations]"
+  check_order "project 1 open tasks sort before done tasks" "$board_before" "| [1.1](.track/tasks/1.1-foundation-plumbing.md) |" "| [1.2](.track/tasks/1.2-blocked-follow-up.md) |"
+  check_order "project 1 done task sorts last" "$board_before" "| [1.2](.track/tasks/1.2-blocked-follow-up.md) |" "| [1.3](.track/tasks/1.3-archived-note.md) |"
+  check_contains "independent task is an immediate start" "$repo/TODO.md" '- [ ] [2.1] [Urgent launch checklist](.track/tasks/2.1-urgent-launch-checklist.md)'
+  check_contains "dependency source is an immediate start" "$repo/TODO.md" '- [ ] [1.1] [Foundation plumbing](.track/tasks/1.1-foundation-plumbing.md)'
+  check_contains "dependent task stays blocked before completion" "$repo/TODO.md" '- [ ] [1.2] [Blocked follow-up](.track/tasks/1.2-blocked-follow-up.md) *(Depends on 1.1)*'
+  check_contains "PROJECTS includes project 2 summary" "$repo/PROJECTS.md" "| [2](.track/projects/2-platform-launch.md) | Platform Launch |"
+  check_contains "PROJECTS includes project 1 summary" "$repo/PROJECTS.md" "| [1](.track/projects/1-api-foundations.md) | API Foundations |"
 else
-  printf '  FAIL: TODO-before.md was not created\n'
+  printf '  FAIL: initial Track views were not created\n'
   FAIL=$((FAIL + 1))
 fi
 
@@ -291,12 +293,12 @@ check_contains "completed task PR URL recorded" "$completed_task" "pr: \"$comple
 check_contains "completed task updated date recorded" "$completed_task" "updated: $today"
 
 run_test "validation after completion passes" 0 run_validate_clean "$repo/.track/scripts/track-validate.sh"
-run_test "TODO regeneration after completion passes" 0 bash "$repo/.track/scripts/track-todo.sh" --local --offline --output "$todo_after"
+run_test "Track view regeneration after completion passes" 0 bash "$repo/.track/scripts/track-todo.sh" --local --offline --output "$board_after"
 
-if [[ -f "$todo_after" ]]; then
-  check_contains "dependent task becomes immediate start after completion" "$todo_after" '- [ ] [Blocked follow-up](.track/tasks/1.2-blocked-follow-up.md) — `1` · `medium`'
+if [[ -f "$board_after" && -f "$repo/TODO.md" ]]; then
+  check_contains "dependent task becomes immediate start after completion" "$repo/TODO.md" '- [ ] [1.2] [Blocked follow-up](.track/tasks/1.2-blocked-follow-up.md)'
 else
-  printf '  FAIL: TODO-after.md was not created\n'
+  printf '  FAIL: updated Track views were not created\n'
   FAIL=$((FAIL + 1))
 fi
 

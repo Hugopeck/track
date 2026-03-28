@@ -13,7 +13,7 @@ Skills are the instruction layer. Scripts (in `.track/scripts/`) are the enforce
 | [create](create/) | `/track:create` | Create tasks and projects from natural language | No |
 | [decompose](decompose/) | `/track:decompose` | Break a goal into parallelizable tasks with non-overlapping file scopes | No |
 | [validate](validate/) | `/track:validate` | Run validation, explain errors, suggest fixes | No |
-| [todo](todo/) | `/track:todo` | Regenerate the `TODO.md` coordination view | No |
+| [todo](todo/) | `/track:todo` | Regenerate `BOARD.md`, `TODO.md`, and `PROJECTS.md` | No |
 | [test](test/) | `/track:test` | Run Track's internal test suite and classify failures | No |
 
 ## How skills work
