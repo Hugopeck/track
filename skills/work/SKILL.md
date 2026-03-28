@@ -154,19 +154,19 @@ You don't manually set `status: active` to show progress — opening a draft PR 
 5. Read the task's `## Context` and `## Notes` — previous sessions may have left important context
 6. If the task's mode is `investigate`, focus on understanding and documenting findings rather than writing code
 7. If the acceptance criteria seem incomplete or unclear, update them before starting implementation
-8. Use a dedicated worktree or branch per task
+8. Use a dedicated worktree or branch per task when possible. If continuing on an existing branch, the PR body handles linkage
 9. If no open tasks exist (all tasks are `done` or `cancelled`), set mode to `empty`
 
 ## Working a Task (Provisional PR Lifecycle)
 
-1. Create branch `task/{id}-{slug}` from the default branch
+1. Create a branch from the default branch (or use the current branch)
 2. First commit updates the task file only:
    - set raw `status: active`
    - update `updated:` to today
 3. Push and open a **draft PR** immediately
-   - Prefer branch `task/{id}-{slug}` plus PR title `[{id}] Title` or `({id}) Title`
-   - Verify the current branch before opening the PR
-   - If branch naming is off and changing it is inconvenient, keep Track linked with PR body `Track-Task: {id}`; optional label fallback: `track:{id}`
+   - Always include `Track-Task: {id}` on the first line of the PR body
+   - Include the task ID in the title: `[{id}] Title` or `({id}) Title`
+   - Optional label: `track:{id}`
    - CI resolves the task from PR body, labels, title, then branch name
    - If `gh pr create` fails (auth, network, permissions), STOP. Tell the user:
      "Could not open draft PR: {error}. Fix the issue and retry — Track requires
@@ -180,15 +180,10 @@ You don't manually set `status: active` to show progress — opening a draft PR 
    - mark the PR ready for review
 6. When the PR merges, the post-merge workflow writes `status: done`, `pr:`, and `updated:` on the default branch
 
-Fallback example when branch naming is missed:
+Example PR linkage:
 
 ```text
-Preferred:
-- Branch: task/7.2-create-test-skill
-- Title: feat(skills): [7.2] create /track:test skill
-
-Fallback if branch naming is missed:
-- Branch: feature/test-skill
+- Branch: any-branch-name
 - Title: feat(skills): [7.2] create /track:test skill
 - Body: Track-Task: 7.2
 ```

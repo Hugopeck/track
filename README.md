@@ -196,8 +196,8 @@ If you use Conductor, Track works best when you also fill in the repo-local Git
 preferences under Settings → Git for that repo.
 
 These settings are optional, but strongly recommended. They reinforce Track's
-existing branch/PR contract earlier in the workflow so the agent starts from the
-right shape instead of relying on CI or post-hoc correction.
+PR linkage contract earlier in the workflow so the agent includes task metadata
+from the start instead of relying on CI or post-hoc correction.
 
 These prompts live in the Conductor UI — not in `conductor.json`. Track keeps
 `conductor.json` limited to repo-tracked script configuration and treats these
@@ -205,18 +205,6 @@ preferences as app-local setup.
 
 Canonical copy lives at `skills/init/scaffold/conductor-git-preferences.md`.
 Use the exact text below for copy/paste.
-
-#### Branch rename preferences
-
-```text
-Read `TODO.md` and `.track/tasks/` first.
-
-- Identify the exact Track task for this work.
-- Rename the branch to `task/{id}-{slug}` with the real task ID and exact task file slug.
-- Copy the slug exactly. Do not shorten, paraphrase, or invent IDs.
-- If no task is selected, pick or resume the task first, then rename.
-- If task linkage is unclear, stop and ask instead of guessing.
-```
 
 #### Create PR preferences
 
@@ -228,8 +216,7 @@ Read `TODO.md`, `.track/tasks/`, and `CLAUDE.md` first.
 - Use one primary task per PR.
 - Use the required conventional-commit title format from `CLAUDE.md`: `type(scope): description`.
 - Include the primary task ID in the title as `[id]` or `(id)`, for example: `feat(scripts): [7.4] support explicit multi-task PR batching`.
-- Prefer task linkage through branch `task/{id}-{slug}`.
-- If the branch is not a Track task branch, put `Track-Task: {id}` on the first line of the PR body.
+- Always put `Track-Task: {id}` on the first line of the PR body. This is the primary linkage mechanism.
 - For any other fully completed task, add `Also-Completed: {id}` lines, max 2.
 - Never use multiple primary `Track-Task:` lines.
 - After linkage lines, keep the body to `## Summary` and `## Test plan`.
@@ -250,7 +237,7 @@ Re-running `/track:init` on an already-initialized repo upgrades in place — re
 
 The core workflow protocol. Auto-loaded in any repo that has a `.track/` folder.
 
-Reads the current state, picks the highest-priority unblocked task (or resumes one you've already started), creates a branch named `task/{id}-{slug}`, opens a draft PR, and begins implementation. The draft PR is what marks the task as `active` — no PR means the task hasn't started.
+Reads the current state, picks the highest-priority unblocked task (or resumes one you've already started), creates a branch, opens a draft PR, and begins implementation. The draft PR is what marks the task as `active` — no PR means the task hasn't started.
 
 The agent checks file scopes before starting to ensure no overlap with other in-progress tasks. It reads the task's `## Context` and `## Acceptance Criteria` sections to understand what to build. When the work is ready, it marks the PR ready for review and sets `status: review`.
 
@@ -310,7 +297,7 @@ Track installs three workflows that automate the lifecycle:
 | Workflow | Trigger | What it does |
 |----------|---------|-------------|
 | `track-validate.yml` | Every push | Runs validation against all `.track/` files |
-| `track-pr-lint.yml` | Pull request | Checks branch name format (`task/{id}-{slug}`) and PR title includes task ID |
+| `track-pr-lint.yml` | Pull request | Validates task linkage (PR body, labels, title) and task file existence |
 | `track-complete.yml` | PR merged | Sets `status: done`, records the PR URL, updates the date |
 
 These workflows close the loop — status stays accurate without anyone remembering to update it.

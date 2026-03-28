@@ -57,23 +57,6 @@ if ! track_parse_task_file "$task_file"; then
   exit "$EXIT_CODE"
 fi
 
-if track_task_id_from_branch "$HEAD_REF"; then
-  if [[ "$HEAD_REF" =~ ^task/([0-9]+\.[0-9]+)-([a-z0-9-]+)$ ]]; then
-    branch_task_id="${BASH_REMATCH[1]}"
-    BRANCH_SLUG="${BASH_REMATCH[2]}"
-    TASK_BASENAME="$(basename "$task_file" .md)"
-    EXPECTED_SLUG="${TASK_BASENAME#"${branch_task_id}-"}"
-    print_info "Branch task ID: $branch_task_id"
-    print_info "Branch slug: $BRANCH_SLUG"
-
-    if [[ "$BRANCH_SLUG" != "$EXPECTED_SLUG" ]]; then
-      print_warning "Branch slug '$BRANCH_SLUG' doesn't match task file slug '$EXPECTED_SLUG' (task file: $TASK_BASENAME.md)"
-    fi
-  fi
-else
-  print_warning "Branch '$HEAD_REF' is not a Track branch; using fallback task linkage from $TRACK_RESOLVED_SOURCE"
-fi
-
 if [[ $EXIT_CODE -eq 0 ]]; then
   print_info 'Track PR lint passed.'
 fi

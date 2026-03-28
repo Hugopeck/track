@@ -47,7 +47,7 @@ assert_not_contains() {
 
 printf 'Running work skill regression tests...\n\n'
 
-assert_contains 'branch convention remains preferred' 'Prefer branch `task/{id}-{slug}` plus PR title `[{id}] Title` or `({id}) Title`'
+assert_contains 'PR body is primary linkage' 'Always include `Track-Task: {id}` on the first line of the PR body'
 assert_contains 'fallback Track-Task documented' 'Track-Task: {id}'
 assert_contains 'optional label fallback documented' 'track:{id}'
 assert_contains 'also-completed section documented' '## Also-Completed'

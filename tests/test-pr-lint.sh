@@ -85,7 +85,6 @@ cleanup_capture
 run_capture env GITHUB_HEAD_REF='feature/no-body' PR_TITLE='[1.1] Title only' bash "$repo/.track/scripts/track-pr-lint.sh"
 assert_code 'single task from title passes' 0
 assert_stdout_contains 'title resolves single task' 'Resolved task: 1.1 (source: title)'
-assert_stderr_contains 'non-track branch warns fallback' 'using fallback task linkage from title'
 cleanup_capture
 
 # Single task from branch resolves

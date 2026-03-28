@@ -63,11 +63,10 @@ else
   fail 'init skill does not explain Conductor UI placement'
 fi
 
-if contains_literal '## Branch rename preferences' "$CONDUCTOR_PREFS_FILE" && \
-   contains_literal '## Create PR preferences' "$CONDUCTOR_PREFS_FILE"; then
-  pass 'canonical Conductor preference file exists'
+if contains_literal '## Create PR preferences' "$CONDUCTOR_PREFS_FILE"; then
+  pass 'canonical Conductor preference file has PR section'
 else
-  fail 'canonical Conductor preference file is missing sections'
+  fail 'canonical Conductor preference file is missing PR section'
 fi
 
 if diff -u "$SCAFFOLD_PLANS_README" "$TRACK_PLANS_README" >/tmp/track-plans-readme-diff 2>&1; then

@@ -37,11 +37,11 @@ assert_contains() {
 
 printf 'Running CLAUDE Track protocol regression tests...\n\n'
 
-assert_contains 'repo CLAUDE prefers task branch' 'CLAUDE.md' 'Prefer branch `task/{id}-{slug}` for the task before opening the PR.'
-assert_contains 'repo CLAUDE documents Track-Task fallback' 'CLAUDE.md' 'Track-Task: {id}'
+assert_contains 'repo CLAUDE uses Track-Task as primary linkage' 'CLAUDE.md' 'Always add `Track-Task: {id}` to the PR body.'
+assert_contains 'repo CLAUDE documents Track-Task' 'CLAUDE.md' 'Track-Task: {id}'
 assert_contains 'repo CLAUDE documents Also-Completed' 'CLAUDE.md' 'Also-Completed: {id}'
-assert_contains 'scaffold CLAUDE prefers task branch' 'skills/init/scaffold/CLAUDE_TRACK_SECTION.md' 'Prefer branch `task/{id}-{slug}` for the task before opening the PR.'
-assert_contains 'scaffold CLAUDE documents Track-Task fallback' 'skills/init/scaffold/CLAUDE_TRACK_SECTION.md' 'Track-Task: {id}'
+assert_contains 'scaffold CLAUDE uses Track-Task as primary linkage' 'skills/init/scaffold/CLAUDE_TRACK_SECTION.md' 'Always add `Track-Task: {id}` to the PR body.'
+assert_contains 'scaffold CLAUDE documents Track-Task' 'skills/init/scaffold/CLAUDE_TRACK_SECTION.md' 'Track-Task: {id}'
 assert_contains 'scaffold CLAUDE documents Also-Completed' 'skills/init/scaffold/CLAUDE_TRACK_SECTION.md' 'Also-Completed:'
 
 printf '\nSummary: %d passed, %d failed\n' "$PASS" "$FAIL"

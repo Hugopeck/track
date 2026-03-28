@@ -60,10 +60,10 @@ Append-only log.
 
 1. Read `TODO.md` for current state. Pick a `todo` task or resume an `active` one.
 2. Check `files:` overlap against tasks already shown as `active` / `review` — do not touch files owned by another in-progress task.
-3. Prefer branch `task/{id}-{slug}` for the task before opening the PR.
+3. Create a branch or use the current one.
 4. Open a **draft PR** to start work. No PR = not started.
 5. Prefer a PR title that includes the task ID: `[{id}] Title` or `({id}) Title`.
-6. If the branch is not `task/{id}-{slug}`, keep Track linked by adding `Track-Task: {id}` to the PR body. Optional label fallback: `track:{id}`.
+6. Always add `Track-Task: {id}` to the PR body. This is the primary linkage. Optional label: `track:{id}`.
 7. If the PR also completes another small task as a drive-by, add `Also-Completed: {id}` to the PR body. On merge, Track marks those tasks done too.
 8. If `gh` auth fails or PR creation fails, **stop and surface the error.**
 9. Implement. When ready, mark the PR ready for review.
@@ -77,17 +77,17 @@ Append-only log.
 2. Pick work that has no unresolved `depends_on` blockers
 3. If the task's mode is `investigate` or `plan`, focus on understanding and documenting findings before writing implementation code
 4. If acceptance criteria seem incomplete, update them before starting
-5. Use a dedicated worktree or branch per task
+5. Use a dedicated worktree or branch per task when possible
 
 ### Working a Task (Provisional PR lifecycle)
-1. Create branch `task/{id}-{slug}` from `main`
+1. Create a branch from `main` (or use the current branch)
 2. First commit updates the task file only:
    - set raw `status: active`
    - update `updated:`
 3. Push and open a **draft PR** immediately
-   - PR title must include the task ID in brackets or parentheses: `[4.1] Title` or `feat(scope): (4.1) Title`
-   - Preferred linkage is branch `task/{id}-{slug}` + title `[id]`
-   - If branch naming is missed, add `Track-Task: {id}` to the PR body; optional label: `track:{id}`
+   - Always include `Track-Task: {id}` on the first line of the PR body
+   - PR title must include the task ID: `[4.1] Title` or `feat(scope): (4.1) Title`
+   - Optional label: `track:{id}`
    - CI resolves the task from body, labels, title, then branch name
 4. Do the implementation work with as many commits as needed
 5. When ready for review:
@@ -96,10 +96,10 @@ Append-only log.
    - mark the PR ready for review
 6. When the PR merges, the post-merge workflow writes `status: done`, `pr:`, and `updated:` on `main`
 
-Example fallback when branch naming is missed:
+Example PR linkage:
 
 ```text
-Branch: feature/test-skill
+Branch: any-branch-name
 Title: feat(skills): [7.2] create /track:test skill
 Body: Track-Task: 7.2
 ```

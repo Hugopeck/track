@@ -213,4 +213,4 @@ You never run this manually — the `.github/workflows/track-complete.yml` workf
 - Parallel arrays in bash mean the scripts get unwieldy past ~50-60 tasks (performance is fine, readability isn't)
 - Glob overlap detection is approximate — it compares path prefixes, not full glob semantics
 - One PR per task only — if multiple open PRs map to the same task ID, it's flagged as a warning
-- Branch names must follow `task/{id}-{slug}` exactly or the PR won't be linked
+- PRs need `Track-Task: {id}` in the body, task ID in the title, or a `task/{id}-{slug}` branch for linkage

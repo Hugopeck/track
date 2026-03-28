@@ -234,9 +234,9 @@ housekeeping files."
 
 ### Phase 5.5: Surface recommended Conductor Git preferences
 
-**Tell the user:** "If you use Conductor, there are two repo-level Git
-preferences worth pasting in — one for branch renaming and one for PR creation.
-They are optional, but they make Track's branch and PR rules kick in earlier."
+**Tell the user:** "If you use Conductor, there is a repo-level Git preference
+for PR creation worth pasting in. It is optional, but it makes Track's PR
+linkage rules kick in earlier."
 
 1. Read `${CLAUDE_SKILL_DIR}/scaffold/conductor-git-preferences.md`
 2. Tell the user these prompts belong in Conductor Settings → Git for this repo
