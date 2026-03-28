@@ -232,6 +232,18 @@ housekeeping files."
 2. If `conductor.json` does not already exist at the repo root, write it there
 3. If it already exists, ask the user whether to replace it
 
+### Phase 5.5: Surface recommended Conductor Git preferences
+
+**Tell the user:** "If you use Conductor, there are two repo-level Git
+preferences worth pasting in — one for branch renaming and one for PR creation.
+They are optional, but they make Track's branch and PR rules kick in earlier."
+
+1. Read `${CLAUDE_SKILL_DIR}/scaffold/conductor-git-preferences.md`
+2. Tell the user these prompts belong in Conductor Settings → Git for this repo
+3. Tell the user they are app-local preferences, not part of `conductor.json`
+4. Offer the two prompt blocks for copy/paste exactly as written in the scaffold file
+5. Do not block init on this step — Track still works without these preferences
+
 ### Phase 6: Update `.gitignore`
 
 1. Read `.gitignore` (or create it if absent)

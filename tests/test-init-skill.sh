@@ -6,6 +6,7 @@ FAIL=0
 SKILL_FILE="skills/init/SKILL.md"
 TRACK_PLANS_README=".track/plans/README.md"
 SCAFFOLD_PLANS_README="skills/init/scaffold/track/plans/README.md"
+CONDUCTOR_PREFS_FILE="skills/init/scaffold/conductor-git-preferences.md"
 
 contains_literal() {
   local pattern="$1"
@@ -46,6 +47,27 @@ if contains_literal '.track/.track-version' "$SKILL_FILE"; then
   pass 'version marker write is documented'
 else
   fail 'version marker write is missing'
+fi
+
+if contains_literal '### Phase 5.5: Surface recommended Conductor Git preferences' "$SKILL_FILE" && \
+   contains_literal '${CLAUDE_SKILL_DIR}/scaffold/conductor-git-preferences.md' "$SKILL_FILE"; then
+  pass 'init skill documents Conductor Git preference guidance'
+else
+  fail 'init skill is missing Conductor Git preference guidance'
+fi
+
+if contains_literal 'Conductor Settings → Git for this repo' "$SKILL_FILE" && \
+   contains_literal 'not part of `conductor.json`' "$SKILL_FILE"; then
+  pass 'init skill explains Conductor UI placement'
+else
+  fail 'init skill does not explain Conductor UI placement'
+fi
+
+if contains_literal '## Branch rename preferences' "$CONDUCTOR_PREFS_FILE" && \
+   contains_literal '## Create PR preferences' "$CONDUCTOR_PREFS_FILE"; then
+  pass 'canonical Conductor preference file exists'
+else
+  fail 'canonical Conductor preference file is missing sections'
 fi
 
 if diff -u "$SCAFFOLD_PLANS_README" "$TRACK_PLANS_README" >/tmp/track-plans-readme-diff 2>&1; then
