@@ -7,6 +7,7 @@ SKILL_FILE="skills/init/SKILL.md"
 TRACK_PLANS_README=".track/plans/README.md"
 SCAFFOLD_PLANS_README="skills/init/scaffold/track/plans/README.md"
 CONDUCTOR_PREFS_FILE="skills/init/scaffold/conductor-git-preferences.md"
+SCAFFOLD_AGENTS_FILE="skills/init/scaffold/AGENTS.md"
 
 contains_literal() {
   local pattern="$1"
@@ -61,6 +62,14 @@ if contains_literal 'Conductor Settings → Git for this repo' "$SKILL_FILE" && 
   pass 'init skill explains Conductor UI placement'
 else
   fail 'init skill does not explain Conductor UI placement'
+fi
+
+if contains_literal '### Phase 7.5: Update `AGENTS.md`' "$SKILL_FILE" && \
+   contains_literal '${CLAUDE_SKILL_DIR}/scaffold/AGENTS.md' "$SKILL_FILE" && \
+   contains_literal '<!-- TRACK:START -->' "$SCAFFOLD_AGENTS_FILE"; then
+  pass 'init skill documents AGENTS.md scaffold support'
+else
+  fail 'init skill is missing AGENTS.md scaffold support'
 fi
 
 if contains_literal '## Create PR preferences' "$CONDUCTOR_PREFS_FILE"; then
