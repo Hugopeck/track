@@ -408,6 +408,18 @@ project_done_count() {
   printf '%s' "$count"
 }
 
+project_completed_count() {
+  local project_id="$1"
+  local i count=0
+  for ((i = 0; i < ${#TASK_IDS[@]}; i++)); do
+    [[ "${TASK_PROJECT_IDS[$i]}" != "$project_id" ]] && continue
+    case "${TASK_EFFECTIVE_STATUSES[$i]}" in
+      done|cancelled) count=$((count + 1)) ;;
+    esac
+  done
+  printf '%s' "$count"
+}
+
 project_total_count() {
   local project_id="$1"
   local i count=0
@@ -734,7 +746,7 @@ render_projects() {
       [[ -z "$project_sort_line" ]] && continue
       project_id="${project_sort_line##*$'\t'}"
       project_index="$(find_project_index_by_id "$project_id")"
-      done_count="$(project_done_count "$project_id")"
+      completed_count="$(project_completed_count "$project_id")"
       total_count="$(project_total_count "$project_id")"
 
       printf '| [%s](.track/projects/%s) | %s | %s | %s | %s |\n' \
@@ -742,7 +754,7 @@ render_projects() {
         "$(basename "${PROJECT_FILES[$project_index]}")" \
         "$(markdown_link_text "${PROJECT_TITLES[$project_index]}")" \
         "$(markdown_link_text "${PROJECT_EXCERPTS[$project_index]}")" \
-        "$(project_completion_bar "$done_count" "$total_count")" \
+        "$(project_completion_bar "$completed_count" "$total_count")" \
         "$(project_status_label "$project_id")"
     done < <(printf '%s' "$project_sort_lines" | sort)
 
