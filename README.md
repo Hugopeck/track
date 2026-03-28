@@ -190,6 +190,52 @@ Track assigns non-overlapping files to each task. Conductor gives each agent an 
 
 Track works without Conductor too — you can run agents one at a time and still get persistent task state and TODO tracking.
 
+### Recommended Conductor Git preferences
+
+If you use Conductor, Track works best when you also fill in the repo-local Git
+preferences under Settings → Git for that repo.
+
+These settings are optional, but strongly recommended. They reinforce Track's
+existing branch/PR contract earlier in the workflow so the agent starts from the
+right shape instead of relying on CI or post-hoc correction.
+
+These prompts live in the Conductor UI — not in `conductor.json`. Track keeps
+`conductor.json` limited to repo-tracked script configuration and treats these
+preferences as app-local setup.
+
+Canonical copy lives at `skills/init/scaffold/conductor-git-preferences.md`.
+Use the exact text below for copy/paste.
+
+#### Branch rename preferences
+
+```text
+Read `TODO.md` and `.track/tasks/` first.
+
+- Identify the exact Track task for this work.
+- Rename the branch to `task/{id}-{slug}` with the real task ID and exact task file slug.
+- Copy the slug exactly. Do not shorten, paraphrase, or invent IDs.
+- If no task is selected, pick or resume the task first, then rename.
+- If task linkage is unclear, stop and ask instead of guessing.
+```
+
+#### Create PR preferences
+
+```text
+Read `TODO.md`, `.track/tasks/`, and `CLAUDE.md` first.
+
+- Identify the primary Track task in this PR before writing anything.
+- Identify any additional fully completed tasks that belong in this PR.
+- Use one primary task per PR.
+- Use the required conventional-commit title format from `CLAUDE.md`: `type(scope): description`.
+- Include the primary task ID in the title as `[id]` or `(id)`, for example: `feat(scripts): [7.4] support explicit multi-task PR batching`.
+- Prefer task linkage through branch `task/{id}-{slug}`.
+- If the branch is not a Track task branch, put `Track-Task: {id}` on the first line of the PR body.
+- For any other fully completed task, add `Also-Completed: {id}` lines, max 2.
+- Never use multiple primary `Track-Task:` lines.
+- After linkage lines, keep the body to `## Summary` and `## Test plan`.
+- If task linkage is unclear, stop and ask instead of guessing.
+```
+
 ## Commands in depth
 
 ### `/track:init` — Set up Track in your repo
