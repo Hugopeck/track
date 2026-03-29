@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.2](https://github.com/Hugopeck/track/compare/v2.4.1...v2.4.2) (2026-03-29)
+
+
+### Bug Fixes
+
+* **init:** no-task restore conductor.json ([#45](https://github.com/Hugopeck/track/issues/45)) ([21e8531](https://github.com/Hugopeck/track/commit/21e8531a1933504efee05359723e9bac414d79fa))
+
 ## [2.4.1](https://github.com/Hugopeck/track/compare/v2.4.0...v2.4.1) (2026-03-29)
 
 
