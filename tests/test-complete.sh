@@ -3,7 +3,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 FIXTURE_DIR="$SCRIPT_DIR/fixtures"
-SCAFFOLD_SCRIPTS="$SCRIPT_DIR/../skills/init/assets/scripts"
+COMMON_SCRIPT="$SCRIPT_DIR/../skills/runtime/scripts/track-common.sh"
+COMPLETE_SCRIPT="$SCRIPT_DIR/../skills/work/scripts/track-complete.sh"
 PASS=0
 FAIL=0
 
@@ -22,8 +23,8 @@ setup_repo() {
   tmp="$(mktemp -d)"
   cp -r "$FIXTURE_DIR/.track" "$tmp/.track"
   mkdir -p "$tmp/.track/scripts"
-  cp "$SCAFFOLD_SCRIPTS"/track-common.sh "$tmp/.track/scripts/"
-  cp "$SCAFFOLD_SCRIPTS"/track-complete.sh "$tmp/.track/scripts/"
+  cp "$COMMON_SCRIPT" "$tmp/.track/scripts/"
+  cp "$COMPLETE_SCRIPT" "$tmp/.track/scripts/"
   cat > "$tmp/.track/tasks/1.4-related-task.md" <<'TASK'
 ---
 id: "1.4"

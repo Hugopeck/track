@@ -18,6 +18,7 @@ fi
 
 # Symlink each skill into the cross-platform discovery path
 for skill in "$CLONE_DIR/skills"/*/; do
+  [ -f "$skill/SKILL.md" ] || continue
   name="$(basename "$skill")"
   ln -sfn "$skill" "$INSTALL_DIR/$name"
   echo "  Installed $name → $INSTALL_DIR/$name"

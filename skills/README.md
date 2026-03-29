@@ -15,6 +15,24 @@ Skills are the instruction layer. Scripts (in `.track/scripts/`) are the enforce
 | [validate](validate/) | `/track:validate` | Run validation, explain errors, suggest fixes | No |
 | [todo](todo/) | `/track:todo` | Regenerate `BOARD.md`, `TODO.md`, and `PROJECTS.md` | No |
 | [test](test/) | `/track:test` | Run Track's internal test suite and classify failures | No |
+| [update-track](update-track/) | `/update-track` | Refresh the installed Track skill clone on this machine | No |
+
+## Directory conventions
+
+Every installable skill directory must contain `SKILL.md`. Optional sibling
+directories are added only when they carry real content:
+
+- `scripts/` — executable helpers owned by that skill
+- `references/` — read-on-demand supporting documentation
+- `assets/` — static files, templates, or install-time resources
+
+Track also uses `skills/runtime/` as an internal shared support area for
+repo-local runtime helpers such as `track-common.sh`. It is not an installable
+skill because it intentionally has no `SKILL.md`.
+
+Discovery and installation must key off `SKILL.md`, not raw directory
+enumeration. That keeps internal support directories out of the user's skill
+catalog.
 
 ## How skills work
 
@@ -50,6 +68,7 @@ The `work` skill is auto-loaded in any repo that contains a `.track/` directory.
 
 1. Create a directory under `skills/` with the skill name.
 2. Add a `SKILL.md` with YAML frontmatter (`name`, `description`, `allowed-tools`) and the protocol body.
-3. Follow the protocol structure: scope, modes, definition of done, closing messages, do-not rules.
-4. Add the skill directory under `skills/`. Plugin wrappers register skills separately.
-5. Add a smoke test recipe in the `test` skill if the skill should be covered by `/track:test`.
+3. Add `scripts/`, `references/`, or `assets/` only when the skill actually needs them.
+4. Follow the protocol structure: scope, modes, definition of done, closing messages, do-not rules.
+5. Keep internal support directories under `skills/` free of `SKILL.md` so install/discovery skips them.
+6. Add a smoke test recipe in the `test` skill if the skill should be covered by `/track:test`.

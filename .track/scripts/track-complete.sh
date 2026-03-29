@@ -1,1 +1,1 @@
-../../skills/init/assets/scripts/track-complete.sh
+../../skills/work/scripts/track-complete.sh

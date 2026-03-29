@@ -2,12 +2,12 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-SCAFFOLD_SCRIPTS="$SCRIPT_DIR/../skills/init/assets/scripts"
+COMMON_SCRIPT="$SCRIPT_DIR/../skills/runtime/scripts/track-common.sh"
 PASS=0
 FAIL=0
 
 # Source the common library
-source "$SCAFFOLD_SCRIPTS/track-common.sh"
+source "$COMMON_SCRIPT"
 
 assert_eq() {
   local name="$1"

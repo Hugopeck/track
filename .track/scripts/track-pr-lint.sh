@@ -1,1 +1,1 @@
-../../skills/init/assets/scripts/track-pr-lint.sh
+../../skills/work/scripts/track-pr-lint.sh

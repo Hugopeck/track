@@ -1,1 +1,1 @@
-../../skills/init/assets/scripts/track-todo.sh
+../../skills/todo/scripts/track-todo.sh

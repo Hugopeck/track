@@ -14,7 +14,10 @@ allowed-tools:
 ## Purpose
 
 `/track:todo` owns Track view regeneration — detecting the environment, choosing
-the right mode, running `track-todo.sh`, and reporting the result.
+the right mode, running `track-todo.sh`, and reporting the result. The
+canonical runtime source lives at `skills/todo/scripts/track-todo.sh`;
+`/track:init` installs it into the adopting repo at
+`.track/scripts/track-todo.sh`.
 
 ## What This Skill Owns
 
