@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.1](https://github.com/Hugopeck/track/compare/v2.4.0...v2.4.1) (2026-03-29)
+
+
+### Bug Fixes
+
+* **todo:** count cancelled tasks in project completion ([#40](https://github.com/Hugopeck/track/issues/40)) ([2804a91](https://github.com/Hugopeck/track/commit/2804a91870dd17f3873d7d9800e0af7ad92149e6))
+
 ## [2.4.0](https://github.com/Hugopeck/track/compare/v2.3.1...v2.4.0) (2026-03-28)
 
 
