@@ -35,11 +35,11 @@ Requirements: Git and bash 3.2+. Claude Code, Cursor, Codex CLI, and OpenCode ar
 
 **Step 1: Install on your machine**
 
-Open a workspace in [Conductor](https://conductor.lol) and paste this prompt if you want an agent to do the install for you.
+Paste this prompt into your coding agent if you want it to do the install for you.
 
 > Install Track on this machine: clone `https://github.com/Hugopeck/track.git` to `~/.local/share/agent-skills/track`, run `~/.local/share/agent-skills/track/install.sh`, then run `/track:init` in this repo.
 
-This is a **prompt**, not a bash command — paste it into a Conductor workspace, not your terminal.
+This is a **prompt**, not a bash command — paste it into your agent chat, not your terminal.
 
 **Manual terminal install:**
 
@@ -208,46 +208,38 @@ Track generates three root-level views:
 
 These files are gitignored and regenerated on demand. Never edit them by hand; edit the task files in `.track/tasks/` instead.
 
-## Best with Conductor
+## Best with isolated worktrees
 
-Track is designed to work with [Conductor](https://conductor.lol) — a Mac app that lets you run many Claude Code agents in parallel, each in its own git worktree.
+Track works best when each active task gets its own branch. If you run multiple
+agents in parallel, give each one its own git worktree rooted at the same repo.
 
-Track assigns non-overlapping files to each task. Conductor gives each agent an isolated copy of the repo. Together: parallel agents, zero conflicts.
+Track assigns non-overlapping files to each task. Separate worktrees give each
+agent isolated filesystem state. Together: parallel agents, fewer conflicts,
+and clearer PR ownership.
 
-Track works without Conductor too — you can run agents one at a time and still get persistent task state and generated view tracking.
+Track still works fine in a single working tree. The branch/worktree pattern is
+recommended because it keeps one task, one branch, and one draft PR aligned.
 
-### Recommended Conductor Git preferences
+### Recommended workflow
 
-If you use Conductor, Track works best when you also fill in the repo-local Git
-preferences under Settings → Git for that repo.
+1. Pick one task from `TODO.md`.
+2. Create a branch for it. If another agent is already working elsewhere,
+   create a dedicated git worktree too.
+3. Open a draft PR immediately and put `Track-Task: {id}` on the first line of
+   the PR body.
+4. Keep one primary task per PR. If you finish a small drive-by task too, add
+   `Also-Completed: {id}`.
+5. When the PR merges, remove the worktree and pick the next task.
 
-These settings are optional, but strongly recommended. They reinforce Track's
-PR linkage contract earlier in the workflow so the agent includes task metadata
-from the start instead of relying on CI or post-hoc correction.
+Example parallel-work setup:
 
-These prompts live in the Conductor UI — not in `conductor.json`. Track keeps
-`conductor.json` limited to repo-tracked script configuration and treats these
-preferences as app-local setup.
-
-Canonical copy lives at `skills/init/assets/conductor-prefs.md`.
-Use the exact text below for copy/paste.
-
-#### Create PR preferences
-
-```text
-Read `TODO.md`, `BOARD.md`, `.track/tasks/`, and `CLAUDE.md` first.
-
-- Identify the primary Track task in this PR before writing anything.
-- Identify any additional fully completed tasks that belong in this PR.
-- Use one primary task per PR.
-- Use the required conventional-commit title format from `CLAUDE.md`: `type(scope): description`.
-- Include the primary task ID in the title as `[id]` or `(id)`, for example: `feat(scripts): [7.4] support explicit multi-task PR batching`.
-- Always put `Track-Task: {id}` on the first line of the PR body. This is the primary linkage mechanism.
-- For any other fully completed task, add `Also-Completed: {id}` lines, max 2.
-- Never use multiple primary `Track-Task:` lines.
-- After linkage lines, keep the body to `## Summary` and `## Test plan`.
-- If task linkage is unclear, stop and ask instead of guessing.
+```bash
+git worktree add ../repo-7.4 -b task/7.4-pr-lint main
+cd ../repo-7.4
 ```
+
+If you only run one agent at a time, you can stay in your current branch and
+skip the extra worktree.
 
 ## Commands in depth
 

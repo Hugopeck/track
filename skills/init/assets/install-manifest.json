@@ -52,16 +52,6 @@
     {
       "source": "skills/init/assets/plans-readme.md",
       "dest": ".track/plans/README.md"
-    },
-    {
-      "source": "skills/init/assets/conductor.json",
-      "dest": "conductor.json"
-    },
-  ],
-  "display_only_assets": [
-    {
-      "source": "skills/init/assets/conductor-prefs.md",
-      "purpose": "copy/paste into Conductor settings"
     }
   ]
 }
