@@ -117,7 +117,7 @@ The protocol is simple enough that it works for anything. A GitHub account and a
 ### Try It
 
 ```bash
-git clone https://github.com/Hugopeck/track.git ~/.claude/skills/track && ~/.claude/skills/track/setup
+git clone https://github.com/Hugopeck/track.git ~/.local/share/agent-skills/track && ~/.local/share/agent-skills/track/install.sh
 ```
 
 Then in any repo: `/track:init`
