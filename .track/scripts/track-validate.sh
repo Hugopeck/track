@@ -1,1 +1,1 @@
-../../skills/init/assets/scripts/track-validate.sh
+../../skills/validate/scripts/track-validate.sh

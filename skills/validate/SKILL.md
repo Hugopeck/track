@@ -16,6 +16,9 @@ allowed-tools:
 
 `/track:validate` owns the validation-and-fix loop — running `track-validate.sh`,
 interpreting errors, guiding the user to fixes, and re-running until clean.
+The canonical runtime source for that script lives at
+`skills/validate/scripts/track-validate.sh`; `/track:init` installs it into the
+adopting repo at `.track/scripts/track-validate.sh`.
 
 ## What This Skill Owns
 

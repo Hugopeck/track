@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PASS=0
+FAIL=0
+INSTALL_FILE='install.sh'
+MANIFEST_FILE='skills/init/assets/install-manifest.json'
+
+contains_literal() {
+  local pattern="$1"
+  local file="$2"
+  if command -v rg >/dev/null 2>&1; then
+    rg -Fq -- "$pattern" "$file"
+  else
+    grep -Fq -- "$pattern" "$file"
+  fi
+}
+
+pass() {
+  printf '  PASS: %s\n' "$1"
+  PASS=$((PASS + 1))
+}
+
+fail() {
+  printf '  FAIL: %s\n' "$1"
+  FAIL=$((FAIL + 1))
+}
+
+printf 'Running install/runtime ownership regression tests...\n\n'
+
+if [[ -f "$MANIFEST_FILE" ]]; then
+  pass 'install manifest exists'
+else
+  fail 'install manifest is missing'
+fi
+
+if contains_literal '[ -f "$skill/SKILL.md" ] || continue' "$INSTALL_FILE"; then
+  pass 'install.sh only symlinks directories with SKILL.md'
+else
+  fail 'install.sh still symlinks every directory under skills/'
+fi
+
+if [[ -f skills/runtime/scripts/track-common.sh ]]; then
+  pass 'shared runtime helper moved to skills/runtime/scripts'
+else
+  fail 'shared runtime helper missing from skills/runtime/scripts'
+fi
+
+if [[ -f skills/validate/scripts/track-validate.sh ]]; then
+  pass 'validate owns track-validate.sh'
+else
+  fail 'validate does not own track-validate.sh'
+fi
+
+if [[ -f skills/todo/scripts/track-todo.sh ]]; then
+  pass 'todo owns track-todo.sh'
+else
+  fail 'todo does not own track-todo.sh'
+fi
+
+if [[ -f skills/work/scripts/track-pr-lint.sh ]] && [[ -f skills/work/scripts/track-complete.sh ]]; then
+  pass 'work owns PR lifecycle scripts'
+else
+  fail 'work is missing PR lifecycle scripts'
+fi
+
+if [[ ! -d skills/init/assets/scripts ]]; then
+  pass 'init no longer owns a monolithic assets/scripts directory'
+else
+  fail 'init still owns assets/scripts'
+fi
+
+printf '\nSummary: %d passed, %d failed\n' "$PASS" "$FAIL"
+
+if [[ $FAIL -ne 0 ]]; then
+  exit 1
+fi

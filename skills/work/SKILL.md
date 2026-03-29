@@ -88,6 +88,12 @@ Track coordinates work across sessions and agents. These principles make coordin
 
 `TODO.md`, `BOARD.md`, and `PROJECTS.md` are generated and gitignored. They are never canonical state.
 
+The PR lifecycle runtime installed by `/track:init` comes from
+`skills/work/scripts/track-pr-lint.sh` and
+`skills/work/scripts/track-complete.sh`. Those sources install into the
+adopting repo at `.track/scripts/track-pr-lint.sh` and
+`.track/scripts/track-complete.sh`.
+
 ## Task File Format
 
 ```yaml

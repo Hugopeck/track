@@ -2,7 +2,10 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-SCAFFOLD_SCRIPTS="$SCRIPT_DIR/../skills/init/assets/scripts"
+COMMON_SCRIPT="$SCRIPT_DIR/../skills/runtime/scripts/track-common.sh"
+VALIDATE_SCRIPT="$SCRIPT_DIR/../skills/validate/scripts/track-validate.sh"
+TODO_SCRIPT="$SCRIPT_DIR/../skills/todo/scripts/track-todo.sh"
+COMPLETE_SCRIPT="$SCRIPT_DIR/../skills/work/scripts/track-complete.sh"
 PASS=0
 FAIL=0
 
@@ -86,10 +89,10 @@ setup_repo() {
   tmp="$(mktemp -d)"
 
   mkdir -p "$tmp/.track"/{projects,tasks,scripts}
-  cp "$SCAFFOLD_SCRIPTS"/track-common.sh "$tmp/.track/scripts/"
-  cp "$SCAFFOLD_SCRIPTS"/track-validate.sh "$tmp/.track/scripts/"
-  cp "$SCAFFOLD_SCRIPTS"/track-todo.sh "$tmp/.track/scripts/"
-  cp "$SCAFFOLD_SCRIPTS"/track-complete.sh "$tmp/.track/scripts/"
+  cp "$COMMON_SCRIPT" "$tmp/.track/scripts/"
+  cp "$VALIDATE_SCRIPT" "$tmp/.track/scripts/"
+  cp "$TODO_SCRIPT" "$tmp/.track/scripts/"
+  cp "$COMPLETE_SCRIPT" "$tmp/.track/scripts/"
 
   cat > "$tmp/.track/projects/1-api-foundations.md" <<'EOF'
 # API Foundations

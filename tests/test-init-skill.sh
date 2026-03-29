@@ -7,6 +7,7 @@ SKILL_FILE="skills/init/SKILL.md"
 TRACK_PLANS_README=".track/plans/README.md"
 ASSET_PLANS_README="skills/init/assets/plans-readme.md"
 CONDUCTOR_PREFS_FILE="skills/init/assets/conductor-prefs.md"
+INSTALL_MANIFEST_FILE="skills/init/assets/install-manifest.json"
 TRACK_MD="TRACK.md"
 
 contains_literal() {
@@ -50,8 +51,15 @@ else
   fail 'version marker write is missing'
 fi
 
+if [[ -f "$INSTALL_MANIFEST_FILE" ]] && \
+   contains_literal 'install-manifest.json' "$SKILL_FILE"; then
+  pass 'init skill documents manifest-driven installation'
+else
+  fail 'init skill is missing manifest-driven installation'
+fi
+
 if contains_literal '### Phase 5.5: Surface recommended Conductor Git preferences' "$SKILL_FILE" && \
-   contains_literal '${CLAUDE_SKILL_DIR}/assets/conductor-prefs.md' "$SKILL_FILE"; then
+   contains_literal 'display_only_assets' "$SKILL_FILE"; then
   pass 'init skill documents Conductor Git preference guidance'
 else
   fail 'init skill is missing Conductor Git preference guidance'

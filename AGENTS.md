@@ -29,7 +29,7 @@ bash .track/scripts/track-todo.sh --offline    # skip GitHub PR lookup
 Track has two layers:
 
 1. **Skills** (`skills/`) — markdown protocols that teach agents the Track workflow. Each skill has a `SKILL.md` with YAML frontmatter (name, description, allowed-tools) and instructional content.
-2. **Scripts** (`skills/init/assets/scripts/`) — bash enforcement scripts that validate task files, generate views, lint PRs, and handle post-merge completion.
+2. **Runtime scripts** (`skills/runtime/scripts/`, `skills/validate/scripts/`, `skills/todo/scripts/`, `skills/work/scripts/`) — bash enforcement scripts that validate task files, generate views, lint PRs, and handle post-merge completion.
 
 ### Repo Layout
 
@@ -38,7 +38,7 @@ This repo is a **skill project** (not a plugin). Skills are the content; plugins
 - `TRACK.md` — canonical Track documentation (single source of truth, embedded into adopting repos)
 - `skills/` — installable agent skills (each subdirectory is a standalone skill)
 - `skills/init/assets/` — everything the init skill deploys to adopting repos (scripts, workflows, config)
-- `.track/` — Track dogfooding itself (scripts are symlinks to `skills/init/assets/scripts/`)
+- `.track/` — Track dogfooding itself (scripts are symlinks to the owned runtime sources under `skills/`)
 - `tests/` — test suite
 - `tools/` — dev utility scripts
 - `growth/` — marketing content
@@ -47,7 +47,7 @@ This repo is a **skill project** (not a plugin). Skills are the content; plugins
 
 - `TRACK.md` — canonical Track documentation shared by `CLAUDE.md` and `AGENTS.md`
 - `skills/work/SKILL.md` — the core workflow protocol (auto-loaded when `.track/` exists)
-- `skills/init/assets/scripts/track-common.sh` — shared YAML frontmatter parser and utility functions
+- `skills/runtime/scripts/track-common.sh` — shared YAML frontmatter parser and utility functions
 - `tools/render-track-section.sh` — regenerates the Track section in this repo's `AGENTS.md`
 
 ### Skill Inventory

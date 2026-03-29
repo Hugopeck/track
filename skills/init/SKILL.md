@@ -66,9 +66,21 @@ you've gone too long. The user should see progress narration at every phase.
 
 ## Asset Locations
 
-Deployable assets live in `${CLAUDE_SKILL_DIR}/assets/`. This directory contains
-scripts, workflows, config templates, and README files that get installed into
-adopting repos. Always read asset files from there. Do not hardcode asset contents.
+Install-time assets live in `${CLAUDE_SKILL_DIR}/assets/`. This directory
+contains the install manifest, workflows, config templates, and README files
+that get installed into adopting repos. Always read install-time asset files
+from there. Do not hardcode asset contents.
+
+Runtime script ownership is split by consuming skill:
+
+- `${CLAUDE_SKILL_DIR}/../runtime/scripts/` — shared shell helpers
+- `${CLAUDE_SKILL_DIR}/../validate/scripts/` — validation runtime
+- `${CLAUDE_SKILL_DIR}/../todo/scripts/` — view-generation runtime
+- `${CLAUDE_SKILL_DIR}/../work/scripts/` — PR lifecycle runtime
+
+The install manifest lives at `${CLAUDE_SKILL_DIR}/assets/install-manifest.json`.
+Treat each `source` entry there as repo-root relative. Resolve repo root by
+going up two directories from `${CLAUDE_SKILL_DIR}` before reading the source file.
 
 The canonical Track documentation lives at `${CLAUDE_SKILL_DIR}/../../TRACK.md` —
 this is the single source of truth for the Track section embedded into
@@ -148,22 +160,24 @@ is whether you are creating it for the first time or repairing missing pieces.
 Steps:
 
 1. Ensure `.track/` exists
-2. If `.track/README.md` does not exist, read `${CLAUDE_SKILL_DIR}/assets/track-readme.md`
-   and write it to `.track/README.md`
-3. Ensure `.track/projects/` exists
-4. If `.track/projects/README.md` does not exist, read
-   `${CLAUDE_SKILL_DIR}/assets/projects-readme.md` and write it to
-   `.track/projects/README.md`
-5. Ensure `.track/tasks/` exists
-6. If `.track/tasks/` is empty, create `.track/tasks/.gitkeep`
-7. Ensure `.track/plans/` exists
-8. If `.track/plans/README.md` does not exist, read
-   `${CLAUDE_SKILL_DIR}/assets/plans-readme.md` and write it to
-   `.track/plans/README.md`
-9. Try to detect the Track version: check if the skill repo has a version tag
+2. Read `${CLAUDE_SKILL_DIR}/assets/install-manifest.json` and locate the
+   `repo_assets` entry whose `dest` is `.track/README.md`
+3. If `.track/README.md` does not exist, read that asset source and write it to
+   `.track/README.md`
+4. Ensure `.track/projects/` exists
+5. Read the `repo_assets` entry whose `dest` is `.track/projects/README.md`
+6. If `.track/projects/README.md` does not exist, read that asset source and
+   write it to `.track/projects/README.md`
+7. Ensure `.track/tasks/` exists
+8. If `.track/tasks/` is empty, create `.track/tasks/.gitkeep`
+9. Ensure `.track/plans/` exists
+10. Read the `repo_assets` entry whose `dest` is `.track/plans/README.md`
+11. If `.track/plans/README.md` does not exist, read that asset source and
+    write it to `.track/plans/README.md`
+12. Try to detect the Track version: check if the skill repo has a version tag
     via `git describe --tags --abbrev=0 2>/dev/null` from the skill directory
-10. If a version is found, write it plus a trailing newline to `.track/.track-version`
-11. If no version can be determined, tell the user you skipped the version
+13. If a version is found, write it plus a trailing newline to `.track/.track-version`
+14. If no version can be determined, tell the user you skipped the version
     marker and continue — do not fail init over this
 
 ### Phase 2.5: Clean up legacy root scripts during upgrade
@@ -200,17 +214,15 @@ to tasks, and handle post-merge cleanup. They run automatically so you don't
 have to think about them."
 
 1. Ensure `.track/scripts/` exists
-2. For each script in `${CLAUDE_SKILL_DIR}/assets/scripts/`:
-   - Read the asset version. If the file is missing, STOP:
-     "Script `{filename}` not found in `${CLAUDE_SKILL_DIR}/assets/scripts/`."
-   - Write to `.track/scripts/{filename}`
+2. Read `${CLAUDE_SKILL_DIR}/assets/install-manifest.json`
+3. For each entry in `runtime_scripts`:
+   - Resolve `{source}` relative to the skill repo root
+   - If the source file is missing, STOP:
+     "Runtime script source `{source}` listed in install-manifest.json was not found."
+   - Write to `{dest}` inside the adopting repo
    - Make executable with `chmod +x`
-3. Scripts to install:
-   - `track-common.sh`
-   - `track-validate.sh`
-   - `track-todo.sh`
-   - `track-pr-lint.sh`
-   - `track-complete.sh`
+4. Runtime scripts are assembled from the owning skills via the manifest rather
+   than coming from a monolithic `assets/scripts/` directory owned by `init`
 
 ### Phase 4: Install GitHub workflows
 
@@ -220,22 +232,23 @@ the bookkeeping takes care of itself. You're one step closer to tracking."
 
 1. Ensure `.github/workflows/` exists. If `.github/` does not exist, create it —
    this is expected for repos that haven't used GitHub Actions before.
-2. For each workflow in `${CLAUDE_SKILL_DIR}/assets/workflows/`:
+2. Read `${CLAUDE_SKILL_DIR}/assets/install-manifest.json`
+3. For each entry in `workflows`:
+   - Resolve `{source}` relative to the skill repo root
    - Read the asset version
-   - Write to `.github/workflows/{filename}`
-3. Workflows to install:
-   - `track-validate.yml`
-   - `track-pr-lint.yml`
-   - `track-complete.yml`
+   - Write to `{dest}`
+4. Workflows stay owned by `init` because they are universal bootstrap glue
 
 ### Phase 5: Install Conductor config
 
 **Tell the user:** "Updating your config and .gitignore — just a couple of
 housekeeping files."
 
-1. Read `${CLAUDE_SKILL_DIR}/assets/conductor.json`
-2. If `conductor.json` does not already exist at the repo root, write it there
-3. If it already exists, ask the user whether to replace it
+1. Read `${CLAUDE_SKILL_DIR}/assets/install-manifest.json`
+2. Locate the `repo_assets` entry whose `dest` is `conductor.json`
+3. Read that asset source
+4. If `conductor.json` does not already exist at the repo root, write it there
+5. If it already exists, ask the user whether to replace it
 
 ### Phase 5.5: Surface recommended Conductor Git preferences
 
@@ -243,11 +256,14 @@ housekeeping files."
 for PR creation worth pasting in. It is optional, but it makes Track's PR
 linkage rules kick in earlier."
 
-1. Read `${CLAUDE_SKILL_DIR}/assets/conductor-prefs.md`
-2. Tell the user these prompts belong in Conductor Settings → Git for this repo
-3. Tell the user they are app-local preferences, not part of `conductor.json`
-4. Offer the two prompt blocks for copy/paste exactly as written in the asset file
-5. Do not block init on this step — Track still works without these preferences
+1. Read `${CLAUDE_SKILL_DIR}/assets/install-manifest.json`
+2. Locate the `display_only_assets` entry whose `source` ends in `conductor-prefs.md`
+3. Read that asset source. In this repo the canonical file is
+   `${CLAUDE_SKILL_DIR}/assets/conductor-prefs.md`
+4. Tell the user these prompts belong in Conductor Settings → Git for this repo
+5. Tell the user they are app-local preferences, not part of `conductor.json`
+6. Offer the two prompt blocks for copy/paste exactly as written in the asset file
+7. Do not block init on this step — Track still works without these preferences
 
 ### Phase 6: Update `.gitignore`
 
