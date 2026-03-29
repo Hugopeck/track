@@ -104,6 +104,31 @@ GH
 printf 'Running extended todo tests...\n\n'
 
 repo="$(setup_repo)"
+cat > "$repo/.track/tasks/1.4-cancelled-task.md" <<'TASK'
+---
+id: "1.4"
+title: "Cancelled task"
+status: cancelled
+mode: implement
+priority: low
+project_id: "1"
+created: 2026-01-01
+updated: 2026-01-02
+depends_on: []
+files: []
+pr: ""
+cancelled_reason: "No longer needed in fixture."
+---
+
+## Context
+Cancelled fixture task.
+
+## Acceptance Criteria
+- [ ] Not applicable
+
+## Notes
+Fixture cancelled task.
+TASK
 mock_bin="$(mktemp -d)"
 setup_gh_mock "$mock_bin"
 PATH="$mock_bin:$PATH" bash "$repo/.track/scripts/track-todo.sh" --local --output "$repo/BOARD.md" >/dev/null
@@ -111,6 +136,7 @@ PATH="$mock_bin:$PATH" bash "$repo/.track/scripts/track-todo.sh" --local --outpu
 assert_contains 'board output written to explicit path' '# Board' "$repo/BOARD.md"
 assert_contains 'todo sibling output written automatically' '# TODO' "$repo/TODO.md"
 assert_contains 'projects sibling output written automatically' '# Projects Overview' "$repo/PROJECTS.md"
+assert_contains 'projects completion counts cancelled tasks' '| [1](.track/projects/1-test-project.md) | Test Project | A test project for validation. | `[█████░░░░░] 50%` (2/4) | Active |' "$repo/PROJECTS.md"
 assert_contains 'task from body shows active with PR link in board' '| [1.1](.track/tasks/1.1-test-task.md) | [Test task](.track/tasks/1.1-test-task.md) | medium | — | active · [PR](https://example.com/pr/101) |' "$repo/BOARD.md"
 assert_contains 'same task linked by two distinct PRs warns in board' "multiple open PRs map to task '1.3'" "$repo/BOARD.md"
 assert_not_contains 'single-task PR does not warn for 1.1' "multiple open PRs map to task '1.1'" "$repo/BOARD.md"
