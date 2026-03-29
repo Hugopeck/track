@@ -87,10 +87,10 @@ else
   fail 'init skill is missing unified Track section support'
 fi
 
-if [[ ! -f conductor.json && ! -f skills/init/assets/conductor.json && ! -f skills/init/assets/conductor-prefs.md ]]; then
-  pass 'repo no longer ships Conductor-specific assets'
+if [[ ! -f skills/init/assets/conductor.json && ! -f skills/init/assets/conductor-prefs.md ]]; then
+  pass 'init no longer ships Conductor-specific assets'
 else
-  fail 'Conductor-specific assets still exist'
+  fail 'Conductor-specific init assets still exist'
 fi
 
 if [[ -f "$TRACK_MD" ]] && contains_literal '## Track — Task Coordination' "$TRACK_MD"; then
