@@ -65,6 +65,7 @@ That's it — you're tracking.
 ## OpenCode
 
 Track's OpenCode setup is intentionally minimal: keep the shared workflow in a repo-root `AGENTS.md`, then use `opencode.json` only for any extra repo-specific instruction files.
+Canonical copy lives at `skills/init/assets/opencode.json`.
 
 ```json
 {
@@ -76,6 +77,7 @@ Track's OpenCode setup is intentionally minimal: keep the shared workflow in a r
 1. Initialize Track in the repo using the standard setup path so `.track/` and the scripts exist.
 2. Commit `AGENTS.md` at the repo root with the shared Track workflow.
 3. Commit `opencode.json` at the repo root to load any extra repo-specific guidance.
+   If you use `/track:init`, it installs this from `skills/init/assets/opencode.json`.
 4. Open the repo in OpenCode.
 
 OpenCode will read `AGENTS.md` automatically, merge the extra files listed in `opencode.json`, and then work against the same `.track/` files and bash scripts used by Claude Code. This support is launch-scoped on purpose: it adds repo instructions and config, not a second OpenCode-only command system.
