@@ -239,31 +239,20 @@ the bookkeeping takes care of itself. You're one step closer to tracking."
    - Write to `{dest}`
 4. Workflows stay owned by `init` because they are universal bootstrap glue
 
-### Phase 5: Install Conductor config
+### Phase 5: Explain the recommended branch/worktree workflow
 
-**Tell the user:** "Updating your config and .gitignore — just a couple of
-housekeeping files."
+**Tell the user:** "One workflow tip before you start: Track works best when
+each active task has its own branch, and parallel agents each get their own git
+worktree."
 
-1. Read `${CLAUDE_SKILL_DIR}/assets/install-manifest.json`
-2. Locate the `repo_assets` entry whose `dest` is `conductor.json`
-3. Read that asset source
-4. If `conductor.json` does not already exist at the repo root, write it there
-5. If it already exists, ask the user whether to replace it
-
-### Phase 5.5: Surface recommended Conductor Git preferences
-
-**Tell the user:** "If you use Conductor, there is a repo-level Git preference
-for PR creation worth pasting in. It is optional, but it makes Track's PR
-linkage rules kick in earlier."
-
-1. Read `${CLAUDE_SKILL_DIR}/assets/install-manifest.json`
-2. Locate the `display_only_assets` entry whose `source` ends in `conductor-prefs.md`
-3. Read that asset source. In this repo the canonical file is
-   `${CLAUDE_SKILL_DIR}/assets/conductor-prefs.md`
-4. Tell the user these prompts belong in Conductor Settings → Git for this repo
-5. Tell the user they are app-local preferences, not part of `conductor.json`
-6. Offer the two prompt blocks for copy/paste exactly as written in the asset file
-7. Do not block init on this step — Track still works without these preferences
+1. Tell the user Track does not require worktrees for single-agent use
+2. Tell the user that if they run multiple agents or parallel sessions, they
+   should use one git worktree and one branch per active task
+3. Tell the user to open a draft PR immediately after starting work because the
+   PR lifecycle is how Track marks tasks `active` and `review`
+4. Tell the user to keep one primary task per PR and put `Track-Task: {id}` on
+   the first line of the PR body
+5. Do not block init on this explanation — it is guidance, not required setup
 
 ### Phase 6: Update `.gitignore`
 
@@ -308,7 +297,7 @@ Celebrate the milestone, then preview what's next:
 Everything you need to start tracking is in place:
   Scripts: {list}
   Workflows: {list}
-  Config: conductor.json {created|skipped|replaced}
+  Workflow: branch/worktree guidance shared
   .gitignore: BOARD.md / TODO.md / PROJECTS.md {added|already present}
   CLAUDE.md: Track section {appended|already present|replaced}
   AGENTS.md: Track section {written|appended|replaced}
@@ -552,8 +541,8 @@ pr: ""
 
 ## Context
 
-This is your first Track task — it also serves as a tutorial for using Track
-with Conductor.
+This is your first Track task — it also serves as a tutorial for Track's
+recommended branch/worktree workflow.
 
 When working this task, follow these steps:
 
@@ -654,8 +643,8 @@ Auto-created during /track:init onboarding.
 
 #### Closing message matrix
 
-The user is already in a Conductor workspace. Offer to start working immediately
-— don't tell them to open a new workspace as the primary path.
+The user is already in a repo session. Offer to start working immediately —
+don't tell them to create a fresh worktree or branch as the primary path.
 
 If mode is `fresh-init` and imports were kept from Phase 8, display:
 
@@ -666,8 +655,7 @@ Want to start working right now? Just say:
 
   do task @{first available task ID}
 
-I'll create a branch, open a draft PR, and get going. Or open a new workspace
-in Conductor if you'd prefer a fresh start.
+I'll create a branch, open a draft PR, and get going. Or start from a fresh worktree or branch if you'd prefer a clean copy.
 
 Your Track views have the full picture. Happy tracking!
 ```
@@ -684,7 +672,7 @@ I'll create a branch and open a draft PR — that's how Track tracks progress.
 Then I'll walk you through discovering your current workflow tools and building
 a migration plan. After task 1.1 merges, task 1.2 will import your data.
 
-Or open a new workspace in Conductor if you'd prefer a fresh start.
+Or start from a fresh worktree or branch if you'd prefer a clean copy.
 
 Your Track views have the full picture. Happy tracking!
 ```
@@ -711,7 +699,7 @@ Want to start working right now? Just say:
 
   do task @{first available task ID}
 
-Or open a new workspace in Conductor if you'd prefer a fresh start.
+Or start from a fresh worktree or branch if you'd prefer a clean copy.
 
 Your Track views have the full picture. Happy tracking!
 ```

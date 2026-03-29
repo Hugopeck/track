@@ -97,7 +97,7 @@ AI agents are the bookkeepers you never had.
 Track is free, open source, and always will be (core).
 
 ⭐ Star it: https://github.com/Hugopeck/track
-💻 Install: `git clone https://github.com/Hugopeck/track.git ~/.claude/skills/track && ~/.claude/skills/track/setup`
+💻 Install: `git clone https://github.com/Hugopeck/track.git ~/.local/share/agent-skills/track && ~/.local/share/agent-skills/track/install.sh`
 
 Stop managing. Start tracking. Get shit done.
 
