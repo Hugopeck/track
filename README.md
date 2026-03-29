@@ -4,8 +4,8 @@
 
 [![Version](https://img.shields.io/github/v/release/Hugopeck/track)](https://github.com/Hugopeck/track/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Claude Code](https://img.shields.io/badge/Claude_Code-plugin-blueviolet)](#install--30-seconds)
-[![Cursor](https://img.shields.io/badge/Cursor-plugin-blue)](#install--30-seconds)
+[![Claude Code](https://img.shields.io/badge/Claude_Code-skills-blueviolet)](#install--30-seconds)
+[![Cursor](https://img.shields.io/badge/Cursor-skills-blue)](#install--30-seconds)
 [![OpenCode](https://img.shields.io/badge/OpenCode-supported-black)](#opencode)
 [![Bash](https://img.shields.io/badge/shell-bash_3.2%2B-orange)](https://www.gnu.org/software/bash/)
 
@@ -35,15 +35,20 @@ Requirements: Git and bash 3.2+. Claude Code, Cursor, Codex CLI, and OpenCode ar
 
 **Step 1: Install on your machine**
 
-Open a workspace in [Conductor](https://conductor.lol) and paste this prompt if you want the Claude Code path. Claude does the rest.
+Open a workspace in [Conductor](https://conductor.lol) and paste this prompt if you want an agent to do the install for you.
 
-> Install Track: run `git clone https://github.com/Hugopeck/track.git ~/.claude/skills/track && ~/.claude/skills/track/setup`, then run `/track:init` to set up Track in this repo.
+> Install Track on this machine: clone `https://github.com/Hugopeck/track.git` to `~/.local/share/agent-skills/track`, run `~/.local/share/agent-skills/track/install.sh`, then run `/track:init` in this repo.
 
 This is a **prompt**, not a bash command — paste it into a Conductor workspace, not your terminal.
 
-**Alternatives:**
-- Claude Code plugin registry: `claude plugin install hugopeck/track`
-- Manual: clone the repo to `~/.claude/skills/track` and run `./setup`
+**Manual terminal install:**
+
+```bash
+git clone https://github.com/Hugopeck/track.git ~/.local/share/agent-skills/track
+~/.local/share/agent-skills/track/install.sh
+```
+
+This installs the Track clone at `~/.local/share/agent-skills/track` and symlinks each skill into `~/.agents/skills/`.
 
 **Step 2: Set up Track in your repo**
 
@@ -64,7 +69,7 @@ Track's OpenCode setup is intentionally minimal: keep the shared workflow in a r
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "instructions": ["CLAUDE.md"]
+  "instructions": ["AGENTS.md"]
 }
 ```
 
@@ -228,7 +233,7 @@ These prompts live in the Conductor UI — not in `conductor.json`. Track keeps
 `conductor.json` limited to repo-tracked script configuration and treats these
 preferences as app-local setup.
 
-Canonical copy lives at `skills/init/scaffold/conductor-git-preferences.md`.
+Canonical copy lives at `skills/init/assets/conductor-prefs.md`.
 Use the exact text below for copy/paste.
 
 #### Create PR preferences
@@ -252,7 +257,7 @@ Read `TODO.md`, `BOARD.md`, `.track/tasks/`, and `CLAUDE.md` first.
 
 ### `/track:init` — Set up Track in your repo
 
-Scaffolds the entire Track system into your repo: creates `.track/` with all subdirectories, copies enforcement scripts, installs three GitHub Actions workflows (validation, PR lint, post-merge completion), updates your `CLAUDE.md` with the agent protocol, installs the Track protocol into `AGENTS.md` for Codex CLI, and adds `BOARD.md`, `TODO.md`, and `PROJECTS.md` to `.gitignore`.
+Scaffolds the entire Track system into your repo: creates `.track/` with all subdirectories, copies enforcement scripts, installs three GitHub Actions workflows (validation, PR lint, post-merge completion), updates your `CLAUDE.md` and `AGENTS.md` with the Track-managed protocol block, and adds `BOARD.md`, `TODO.md`, and `PROJECTS.md` to `.gitignore`.
 
 If it finds existing markdown files with TODO lists, roadmaps, or task-like content, it offers to import them as Track tasks — extracting structure, inferring priority and mode, and letting you pick which items to keep. If there's nothing to import, it creates a starter onboarding project to help you migrate from your current tool (Linear, Jira, Notion, or plain notes).
 
@@ -334,8 +339,8 @@ Track is just markdown + bash + git. You can run it with no AI agent at all, or 
 | Platform | Status |
 |---|---|
 | No agent | Full support via `.track/` files + bash scripts |
-| Claude Code | Full plugin support |
-| Cursor | Plugin available |
+| Claude Code | Full support via installed skills |
+| Cursor | Works via installed skills |
 | Codex CLI | Works via `AGENTS.md` |
 | OpenCode | Works via `AGENTS.md` + `opencode.json` |
 
@@ -352,8 +357,8 @@ Track's protocol is simple enough for any project: book writing, research, home 
 | **bash** 3.2+ | Yes | Runs the Track scripts. Already on macOS and Linux. |
 | **git** | Yes | Stores Track state in your repo. |
 | **gh** (GitHub CLI) | Optional | Enables PR-aware `TODO.md` generation and merge automation. |
-| **Claude Code** | Optional | Runs Track through the Claude plugin and slash commands. |
-| **Cursor** | Optional | Uses the Cursor plugin path. |
+| **Claude Code** | Optional | Runs Track through installed skills and slash commands. |
+| **Cursor** | Optional | Uses installed skills plus repo instructions. |
 | **Codex CLI** | Optional | Uses repo-root `AGENTS.md` instructions. |
 | **OpenCode** | Optional | Uses repo-root `AGENTS.md` plus `opencode.json`. |
 
@@ -367,7 +372,7 @@ Track's protocol is simple enough for any project: book writing, research, home 
 
 **Codex CLI is not following Track?** Re-run `/track:init` to refresh the Track-managed block in `AGENTS.md`.
 
-**Commands not showing up?** Reinstall the plugin or try `claude --plugin-dir ./path/to/track` to test locally.
+**Commands not showing up?** Re-run `~/.local/share/agent-skills/track/install.sh` to refresh the skill symlinks, then restart the agent session.
 
 ## Roadmap
 

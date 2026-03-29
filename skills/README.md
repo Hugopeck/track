@@ -51,5 +51,5 @@ The `work` skill is auto-loaded in any repo that contains a `.track/` directory.
 1. Create a directory under `skills/` with the skill name.
 2. Add a `SKILL.md` with YAML frontmatter (`name`, `description`, `allowed-tools`) and the protocol body.
 3. Follow the protocol structure: scope, modes, definition of done, closing messages, do-not rules.
-4. Register the skill in the plugin manifest (`.claude-plugin/plugin.json`) if it should be user-invocable.
+4. Add the skill directory under `skills/`. Plugin wrappers register skills separately.
 5. Add a smoke test recipe in the `test` skill if the skill should be covered by `/track:test`.
