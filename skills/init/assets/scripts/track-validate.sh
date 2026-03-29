@@ -421,7 +421,7 @@ main() {
   cd "$ROOT_DIR"
 
   if [[ ! -d "$TASK_DIR" ]]; then
-    print_error '.track/tasks directory not found. Run /track:init to scaffold Track, or create .track/tasks/ manually'
+    print_error '.track/tasks directory not found. Run /track:init to deploy Track, or create .track/tasks/ manually'
     exit "$EXIT_CODE"
   fi
 

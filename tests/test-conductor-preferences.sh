@@ -3,7 +3,7 @@ set -euo pipefail
 
 PASS=0
 FAIL=0
-PREFS_FILE="skills/init/scaffold/conductor-git-preferences.md"
+PREFS_FILE="skills/init/assets/conductor-prefs.md"
 README_FILE="README.md"
 INIT_SKILL_FILE="skills/init/SKILL.md"
 
@@ -51,7 +51,7 @@ assert_contains 'canonical file tells agent to read task sources first' "$PREFS_
 assert_contains 'README surfaces recommended Conductor preferences' "$README_FILE" '### Recommended Conductor Git preferences'
 assert_contains 'README says settings are optional but recommended' "$README_FILE" 'These settings are optional, but strongly recommended.'
 assert_contains 'README says prompts live in Conductor UI' "$README_FILE" 'These prompts live in the Conductor UI — not in `conductor.json`.'
-assert_contains 'README references canonical prompt file' "$README_FILE" 'skills/init/scaffold/conductor-git-preferences.md'
+assert_contains 'README references canonical prompt file' "$README_FILE" 'skills/init/assets/conductor-prefs.md'
 assert_contains 'README includes create PR block heading' "$README_FILE" '#### Create PR preferences'
 assert_contains 'README includes create PR block' "$README_FILE" '#### Create PR preferences'
 assert_contains 'README tells agent to identify primary task first' "$README_FILE" 'Identify the primary Track task in this PR before writing anything.'
@@ -59,7 +59,7 @@ assert_contains 'README includes conventional commit format' "$README_FILE" '`ty
 assert_contains 'README includes Track-Task fallback' "$README_FILE" 'Track-Task: {id}'
 assert_contains 'README includes Also-Completed guidance' "$README_FILE" 'Also-Completed: {id}'
 
-assert_contains 'init skill reads canonical prompt file' "$INIT_SKILL_FILE" '${CLAUDE_SKILL_DIR}/scaffold/conductor-git-preferences.md'
+assert_contains 'init skill reads canonical prompt file' "$INIT_SKILL_FILE" '${CLAUDE_SKILL_DIR}/assets/conductor-prefs.md'
 assert_contains 'init skill points to Conductor Settings Git' "$INIT_SKILL_FILE" 'Conductor Settings → Git for this repo'
 assert_contains 'init skill keeps step advisory' "$INIT_SKILL_FILE" 'Do not block init on this step — Track still works without these preferences'
 

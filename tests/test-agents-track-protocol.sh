@@ -3,9 +3,8 @@ set -euo pipefail
 
 PASS=0
 FAIL=0
-CANONICAL_FILE='skills/init/scaffold/TRACK_PROTOCOL_SECTION.md'
+CANONICAL_FILE='TRACK.md'
 REPO_AGENTS_FILE='AGENTS.md'
-SCAFFOLD_AGENTS_FILE='skills/init/scaffold/AGENTS.md'
 
 contains_literal() {
   local pattern="$1"
@@ -38,7 +37,7 @@ assert_contains() {
   fi
 }
 
-extract_agents_block() {
+extract_track_block() {
   local file="$1"
   awk '
     /^<!-- TRACK:START -->$/ { capture=1; next }
@@ -49,23 +48,15 @@ extract_agents_block() {
 
 printf 'Running AGENTS Track protocol regression tests...\n\n'
 
+assert_contains 'TRACK.md exists and has Track heading' "$CANONICAL_FILE" '## Track — Task Coordination'
 assert_contains 'repo AGENTS includes Track block start marker' "$REPO_AGENTS_FILE" '<!-- TRACK:START -->'
 assert_contains 'repo AGENTS includes Track block end marker' "$REPO_AGENTS_FILE" '<!-- TRACK:END -->'
-assert_contains 'scaffold AGENTS includes Track block start marker' "$SCAFFOLD_AGENTS_FILE" '<!-- TRACK:START -->'
-assert_contains 'scaffold AGENTS includes Track block end marker' "$SCAFFOLD_AGENTS_FILE" '<!-- TRACK:END -->'
 
-if diff -u "$CANONICAL_FILE" <(extract_agents_block "$REPO_AGENTS_FILE") >/tmp/track-agents-repo-diff 2>&1; then
-  pass 'repo AGENTS block matches canonical protocol'
+if diff -u "$CANONICAL_FILE" <(extract_track_block "$REPO_AGENTS_FILE") >/tmp/track-agents-repo-diff 2>&1; then
+  pass 'repo AGENTS Track block matches TRACK.md'
 else
-  fail 'repo AGENTS block diverges from canonical protocol'
+  fail 'repo AGENTS Track block diverges from TRACK.md'
   cat /tmp/track-agents-repo-diff
-fi
-
-if diff -u "$CANONICAL_FILE" <(extract_agents_block "$SCAFFOLD_AGENTS_FILE") >/tmp/track-agents-scaffold-diff 2>&1; then
-  pass 'scaffold AGENTS block matches canonical protocol'
-else
-  fail 'scaffold AGENTS block diverges from canonical protocol'
-  cat /tmp/track-agents-scaffold-diff
 fi
 
 printf '\nSummary: %d passed, %d failed\n' "$PASS" "$FAIL"

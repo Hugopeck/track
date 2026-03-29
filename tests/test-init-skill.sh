@@ -5,9 +5,9 @@ PASS=0
 FAIL=0
 SKILL_FILE="skills/init/SKILL.md"
 TRACK_PLANS_README=".track/plans/README.md"
-SCAFFOLD_PLANS_README="skills/init/scaffold/track/plans/README.md"
-CONDUCTOR_PREFS_FILE="skills/init/scaffold/conductor-git-preferences.md"
-SCAFFOLD_AGENTS_FILE="skills/init/scaffold/AGENTS.md"
+ASSET_PLANS_README="skills/init/assets/plans-readme.md"
+CONDUCTOR_PREFS_FILE="skills/init/assets/conductor-prefs.md"
+TRACK_MD="TRACK.md"
 
 contains_literal() {
   local pattern="$1"
@@ -51,7 +51,7 @@ else
 fi
 
 if contains_literal '### Phase 5.5: Surface recommended Conductor Git preferences' "$SKILL_FILE" && \
-   contains_literal '${CLAUDE_SKILL_DIR}/scaffold/conductor-git-preferences.md' "$SKILL_FILE"; then
+   contains_literal '${CLAUDE_SKILL_DIR}/assets/conductor-prefs.md' "$SKILL_FILE"; then
   pass 'init skill documents Conductor Git preference guidance'
 else
   fail 'init skill is missing Conductor Git preference guidance'
@@ -64,12 +64,12 @@ else
   fail 'init skill does not explain Conductor UI placement'
 fi
 
-if contains_literal '### Phase 7.5: Update `AGENTS.md`' "$SKILL_FILE" && \
-   contains_literal '${CLAUDE_SKILL_DIR}/scaffold/AGENTS.md' "$SKILL_FILE" && \
-   contains_literal '<!-- TRACK:START -->' "$SCAFFOLD_AGENTS_FILE"; then
-  pass 'init skill documents AGENTS.md scaffold support'
+if contains_literal '### Phase 7: Update `CLAUDE.md` and `AGENTS.md`' "$SKILL_FILE" && \
+   contains_literal '${CLAUDE_SKILL_DIR}/../../TRACK.md' "$SKILL_FILE" && \
+   contains_literal '<!-- TRACK:START -->' "$SKILL_FILE"; then
+  pass 'init skill documents unified CLAUDE.md/AGENTS.md Track section support'
 else
-  fail 'init skill is missing AGENTS.md scaffold support'
+  fail 'init skill is missing unified Track section support'
 fi
 
 if contains_literal '## Create PR preferences' "$CONDUCTOR_PREFS_FILE"; then
@@ -78,11 +78,10 @@ else
   fail 'canonical Conductor preference file is missing PR section'
 fi
 
-if diff -u "$SCAFFOLD_PLANS_README" "$TRACK_PLANS_README" >/tmp/track-plans-readme-diff 2>&1; then
-  pass 'repo plans README matches scaffold copy'
+if [[ -f "$TRACK_MD" ]] && contains_literal '## Track — Task Coordination' "$TRACK_MD"; then
+  pass 'TRACK.md exists at root with canonical Track documentation'
 else
-  fail 'repo plans README diverges from scaffold copy'
-  cat /tmp/track-plans-readme-diff
+  fail 'TRACK.md is missing or does not contain Track documentation'
 fi
 
 printf '\nSummary: %d passed, %d failed\n' "$PASS" "$FAIL"

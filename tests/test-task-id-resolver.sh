@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-COMMON_SCRIPT="$SCRIPT_DIR/../skills/init/scaffold/track/scripts/track-common.sh"
+COMMON_SCRIPT="$SCRIPT_DIR/../skills/init/assets/scripts/track-common.sh"
 PASS=0
 FAIL=0
 

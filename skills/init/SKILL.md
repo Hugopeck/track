@@ -1,12 +1,13 @@
 ---
 name: init
 description: |
-  Set up Track from scratch or re-run it on an existing Track repo. Scaffold
+  Set up Track from scratch or re-run it on an existing Track repo. Deploy
   everything an adopting repo needs — directories, scripts, CI workflows, and
-  the CLAUDE.md protocol section — then scan existing markdown for importable
-  tasks and projects. If nothing is found, create an onboarding project that
-  teaches the user Track's workflow by having them execute their first task.
-  Upgrades must continue through the full init tail unless the user aborts.
+  the Track sections for CLAUDE.md and AGENTS.md — then scan existing markdown
+  for importable tasks and projects. If nothing is found, create an onboarding
+  project that teaches the user Track's workflow by having them execute their
+  first task. Upgrades must continue through the full init tail unless the
+  user aborts.
 disable-model-invocation: true
 allowed-tools:
   - Bash
@@ -63,11 +64,15 @@ problems."
 **Never go silent.** If two or more phases pass without user-visible output,
 you've gone too long. The user should see progress narration at every phase.
 
-## Scaffold Location
+## Asset Locations
 
-All scaffold files live in `${CLAUDE_SKILL_DIR}/scaffold/`. This directory contains
-the canonical copies of everything that gets installed into the adopting repo.
-Always read scaffold files from there. Do not hardcode scaffold contents.
+Deployable assets live in `${CLAUDE_SKILL_DIR}/assets/`. This directory contains
+scripts, workflows, config templates, and README files that get installed into
+adopting repos. Always read asset files from there. Do not hardcode asset contents.
+
+The canonical Track documentation lives at `${CLAUDE_SKILL_DIR}/../../TRACK.md` —
+this is the single source of truth for the Track section embedded into
+CLAUDE.md and AGENTS.md.
 
 ## Operating Modes
 
@@ -85,7 +90,7 @@ only valid choices are:
 - abort
 
 In `upgrade-continue` mode, never overwrite a user-modified file without asking.
-If a file in `.track/tasks/` or `.track/projects/` differs from the scaffold
+If a file in `.track/tasks/` or `.track/projects/` differs from the asset
 version, it is user content — preserve it.
 
 ## Definition of Done
@@ -143,23 +148,23 @@ is whether you are creating it for the first time or repairing missing pieces.
 Steps:
 
 1. Ensure `.track/` exists
-2. If `.track/README.md` does not exist, read `${CLAUDE_SKILL_DIR}/scaffold/track/README.md`
+2. If `.track/README.md` does not exist, read `${CLAUDE_SKILL_DIR}/assets/track-readme.md`
    and write it to `.track/README.md`
 3. Ensure `.track/projects/` exists
 4. If `.track/projects/README.md` does not exist, read
-   `${CLAUDE_SKILL_DIR}/scaffold/track/projects/README.md` and write it to
+   `${CLAUDE_SKILL_DIR}/assets/projects-readme.md` and write it to
    `.track/projects/README.md`
 5. Ensure `.track/tasks/` exists
 6. If `.track/tasks/` is empty, create `.track/tasks/.gitkeep`
 7. Ensure `.track/plans/` exists
 8. If `.track/plans/README.md` does not exist, read
-   `${CLAUDE_SKILL_DIR}/scaffold/track/plans/README.md` and write it to
+   `${CLAUDE_SKILL_DIR}/assets/plans-readme.md` and write it to
    `.track/plans/README.md`
-9. Try to read `${CLAUDE_SKILL_DIR}/../../.claude-plugin/plugin.json`
-10. If that manifest exists and has a `version`, write that version plus a
-    trailing newline to `.track/.track-version`
-11. If the manifest is missing or unreadable, tell the user you skipped the
-    version marker and continue — do not fail init over this
+9. Try to detect the Track version: check if the skill repo has a version tag
+    via `git describe --tags --abbrev=0 2>/dev/null` from the skill directory
+10. If a version is found, write it plus a trailing newline to `.track/.track-version`
+11. If no version can be determined, tell the user you skipped the version
+    marker and continue — do not fail init over this
 
 ### Phase 2.5: Clean up legacy root scripts during upgrade
 
@@ -195,9 +200,9 @@ to tasks, and handle post-merge cleanup. They run automatically so you don't
 have to think about them."
 
 1. Ensure `.track/scripts/` exists
-2. For each script in `${CLAUDE_SKILL_DIR}/scaffold/track/scripts/`:
-   - Read the scaffold version. If the scaffold file is missing, STOP:
-     "Scaffold script `{filename}` not found in `${CLAUDE_SKILL_DIR}/scaffold/track/scripts/`."
+2. For each script in `${CLAUDE_SKILL_DIR}/assets/scripts/`:
+   - Read the asset version. If the file is missing, STOP:
+     "Script `{filename}` not found in `${CLAUDE_SKILL_DIR}/assets/scripts/`."
    - Write to `.track/scripts/{filename}`
    - Make executable with `chmod +x`
 3. Scripts to install:
@@ -215,8 +220,8 @@ the bookkeeping takes care of itself. You're one step closer to tracking."
 
 1. Ensure `.github/workflows/` exists. If `.github/` does not exist, create it —
    this is expected for repos that haven't used GitHub Actions before.
-2. For each workflow in `${CLAUDE_SKILL_DIR}/scaffold/github-workflows/`:
-   - Read the scaffold version
+2. For each workflow in `${CLAUDE_SKILL_DIR}/assets/workflows/`:
+   - Read the asset version
    - Write to `.github/workflows/{filename}`
 3. Workflows to install:
    - `track-validate.yml`
@@ -228,7 +233,7 @@ the bookkeeping takes care of itself. You're one step closer to tracking."
 **Tell the user:** "Updating your config and .gitignore — just a couple of
 housekeeping files."
 
-1. Read `${CLAUDE_SKILL_DIR}/scaffold/conductor.json`
+1. Read `${CLAUDE_SKILL_DIR}/assets/conductor.json`
 2. If `conductor.json` does not already exist at the repo root, write it there
 3. If it already exists, ask the user whether to replace it
 
@@ -238,10 +243,10 @@ housekeeping files."
 for PR creation worth pasting in. It is optional, but it makes Track's PR
 linkage rules kick in earlier."
 
-1. Read `${CLAUDE_SKILL_DIR}/scaffold/conductor-git-preferences.md`
+1. Read `${CLAUDE_SKILL_DIR}/assets/conductor-prefs.md`
 2. Tell the user these prompts belong in Conductor Settings → Git for this repo
 3. Tell the user they are app-local preferences, not part of `conductor.json`
-4. Offer the two prompt blocks for copy/paste exactly as written in the scaffold file
+4. Offer the two prompt blocks for copy/paste exactly as written in the asset file
 5. Do not block init on this step — Track still works without these preferences
 
 ### Phase 6: Update `.gitignore`
@@ -249,37 +254,37 @@ linkage rules kick in earlier."
 1. Read `.gitignore` (or create it if absent)
 2. If `BOARD.md`, `TODO.md`, or `PROJECTS.md` are not already listed, append them
 
-### Phase 7: Update `CLAUDE.md`
+### Phase 7: Update `CLAUDE.md` and `AGENTS.md`
 
-**Tell the user:** "Adding the Track protocol to your CLAUDE.md — this means
-every agent that opens this repo will automatically know how to use Track. No
-setup, no explaining. They'll just know."
+**Tell the user:** "Adding the Track section to your CLAUDE.md and AGENTS.md —
+this means every agent that opens this repo will automatically know how to use
+Track. No setup, no explaining. They'll just know."
 
-1. Read `CLAUDE.md` (or create it if absent)
-2. Check if it already contains a `## Track` section
-3. If not, read `${CLAUDE_SKILL_DIR}/scaffold/CLAUDE_TRACK_SECTION.md` and append
-   it to `CLAUDE.md`
-4. If yes, ask the user whether to replace the existing Track section
+Both files use the same embedding mechanism: `<!-- TRACK:START -->` /
+`<!-- TRACK:END -->` markers wrapping the content from `TRACK.md`.
 
-### Phase 7.5: Update `AGENTS.md`
+1. Read `${CLAUDE_SKILL_DIR}/../../TRACK.md` — this is the canonical Track
+   documentation.
 
-**Tell the user:** "Adding the Track protocol to your `AGENTS.md` too — Codex
-CLI reads this file automatically, so the same Track workflow works there
-without extra setup."
+For each of `CLAUDE.md` and `AGENTS.md`:
 
-1. Read `AGENTS.md` (or create it if absent)
-2. Read `${CLAUDE_SKILL_DIR}/scaffold/AGENTS.md`
+2. Read the file (or create it if absent)
 3. Treat the block between `<!-- TRACK:START -->` and `<!-- TRACK:END -->` as
    Track-managed content
-4. If `AGENTS.md` does not exist, write the scaffold file to `AGENTS.md`
-5. If `AGENTS.md` already contains the Track-managed block, replace that block
-   with the scaffold version
-6. If `AGENTS.md` exists but does not contain the Track-managed block, append
-   the scaffold content to the end with a blank line separator
+4. If the file does not exist, create it with the Track section:
+   ```
+   <!-- TRACK:START -->
+   {content of TRACK.md}
+   <!-- TRACK:END -->
+   ```
+5. If the file already contains the Track-managed block, replace that block
+   with the current `TRACK.md` content wrapped in the markers
+6. If the file exists but does not contain the Track-managed block, append
+   the Track section to the end with a blank line separator
 7. Never remove or rewrite user-authored instructions outside the Track-managed
    block
 
-### Checkpoint after Phase 7.5
+### Checkpoint after Phase 7
 
 Celebrate the milestone, then preview what's next:
 
@@ -289,16 +294,15 @@ Everything you need to start tracking is in place:
   Workflows: {list}
   Config: conductor.json {created|skipped|replaced}
   .gitignore: BOARD.md / TODO.md / PROJECTS.md {added|already present}
-  Version marker: .track/.track-version {written|updated|skipped}
   CLAUDE.md: Track section {appended|already present|replaced}
-  AGENTS.md: Track block {written|appended|replaced}
+  AGENTS.md: Track section {written|appended|replaced}
 
 Now let me see if you have any existing tasks or plans I can bring into Track...
 ```
 
 - If mode is `fresh-init`, continue to Phase 8
 - If mode is `upgrade-continue`, continue to Phase 8
-- Never conclude the skill after Phase 3, 4, 5, 6, 7, or 7.5
+- Never conclude the skill after Phase 3, 4, 5, 6, or 7
 - Upgrading installed files is not completion; it is only the setup for the
   import/onboarding tail
 
@@ -725,9 +729,9 @@ Your Track views have the full picture. Happy tracking!
 ## Rules
 
 - Never overwrite existing files without asking unless this skill explicitly says
-  to refresh scaffolded installed files in `.track/scripts/` or `.github/workflows/`
-- Always read scaffold files from `${CLAUDE_SKILL_DIR}/scaffold/` — do not
-  hardcode scaffold contents
+  to refresh installed files in `.track/scripts/` or `.github/workflows/`
+- Always read asset files from `${CLAUDE_SKILL_DIR}/assets/` and Track docs from
+  `${CLAUDE_SKILL_DIR}/../../TRACK.md` — do not hardcode file contents
 - Make all scripts executable after copying
 - Ensure `.track/` exists before running validation
 - Preserve existing user-authored Track content
@@ -740,7 +744,7 @@ Your Track views have the full picture. Happy tracking!
 - Do not stop at the first local maximum because validation happens to pass after
   Phase 7
 - Existing `.track/` state is not a reason to skip import or onboarding; it is
-  only a reason to avoid duplicating first-time scaffolding
+  only a reason to avoid duplicating first-time setup
 - If the user invoked `/track:init` and did not abort, complete the init flow
 - Do not overwrite user-authored files in `.track/tasks/` or `.track/projects/` without asking
 - Do not silently switch from `upgrade-continue` to recreating everything — preserve user content
