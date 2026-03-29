@@ -58,6 +58,13 @@ else
   fail 'init skill is missing manifest-driven installation'
 fi
 
+if ! contains_literal 'opencode.json' "$SKILL_FILE" && \
+   ! contains_literal 'opencode.json' "$INSTALL_MANIFEST_FILE"; then
+  pass 'init stays free of OpenCode-specific repo config'
+else
+  fail 'init still references OpenCode-specific repo config'
+fi
+
 if contains_literal '### Phase 5.5: Surface recommended Conductor Git preferences' "$SKILL_FILE" && \
    contains_literal 'display_only_assets' "$SKILL_FILE"; then
   pass 'init skill documents Conductor Git preference guidance'

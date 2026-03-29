@@ -57,10 +57,6 @@
       "source": "skills/init/assets/conductor.json",
       "dest": "conductor.json"
     },
-    {
-      "source": "skills/init/assets/opencode.json",
-      "dest": "opencode.json"
-    }
   ],
   "display_only_assets": [
     {

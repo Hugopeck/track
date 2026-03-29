@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude_Code-skills-blueviolet)](#install--30-seconds)
 [![Cursor](https://img.shields.io/badge/Cursor-skills-blue)](#install--30-seconds)
-[![OpenCode](https://img.shields.io/badge/OpenCode-supported-black)](#opencode)
+[![OpenCode](https://img.shields.io/badge/OpenCode-supported-black)](#install--30-seconds)
 [![Bash](https://img.shields.io/badge/shell-bash_3.2%2B-orange)](https://www.gnu.org/software/bash/)
 
 Track is a git-native coordination protocol for AI agents. A `.track/` folder in your repo replaces your PM tool — markdown task files, bash enforcement scripts, PR-driven status. No server, no accounts, no vendor lock-in.
@@ -64,23 +64,17 @@ That's it — you're tracking.
 
 ## OpenCode
 
-Track's OpenCode setup is intentionally minimal: keep the shared workflow in a repo-root `AGENTS.md`, then use `opencode.json` only for any extra repo-specific instruction files.
-Canonical copy lives at `skills/init/assets/opencode.json`.
+Track stays vendor-neutral. If a tool reads the repo-root `AGENTS.md`, that is
+enough — no OpenCode-specific config file is required or installed by
+`/track:init`.
 
-```json
-{
-  "$schema": "https://opencode.ai/config.json",
-  "instructions": ["AGENTS.md"]
-}
-```
-
-1. Initialize Track in the repo using the standard setup path so `.track/` and the scripts exist.
+1. Initialize Track in the repo using the standard setup path so `.track/` and
+   the scripts exist.
 2. Commit `AGENTS.md` at the repo root with the shared Track workflow.
-3. Commit `opencode.json` at the repo root to load any extra repo-specific guidance.
-   If you use `/track:init`, it installs this from `skills/init/assets/opencode.json`.
-4. Open the repo in OpenCode.
+3. Open the repo in OpenCode.
 
-OpenCode will read `AGENTS.md` automatically, merge the extra files listed in `opencode.json`, and then work against the same `.track/` files and bash scripts used by Claude Code. This support is launch-scoped on purpose: it adds repo instructions and config, not a second OpenCode-only command system.
+OpenCode can then work against the same `.track/` files and bash scripts used
+by the other agents, without any extra vendor-specific repo config.
 
 ## Quick start
 
@@ -344,7 +338,7 @@ Track is just markdown + bash + git. You can run it with no AI agent at all, or 
 | Claude Code | Full support via installed skills |
 | Cursor | Works via installed skills |
 | Codex CLI | Works via `AGENTS.md` |
-| OpenCode | Works via `AGENTS.md` + `opencode.json` |
+| OpenCode | Works via `AGENTS.md` |
 
 ## The bigger vision
 
@@ -362,7 +356,7 @@ Track's protocol is simple enough for any project: book writing, research, home 
 | **Claude Code** | Optional | Runs Track through installed skills and slash commands. |
 | **Cursor** | Optional | Uses installed skills plus repo instructions. |
 | **Codex CLI** | Optional | Uses repo-root `AGENTS.md` instructions. |
-| **OpenCode** | Optional | Uses repo-root `AGENTS.md` plus `opencode.json`. |
+| **OpenCode** | Optional | Uses repo-root `AGENTS.md`. |
 
 ## Troubleshooting
 

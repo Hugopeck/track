@@ -249,10 +249,6 @@ housekeeping files."
 3. Read that asset source
 4. If `conductor.json` does not already exist at the repo root, write it there
 5. If it already exists, ask the user whether to replace it
-6. Locate the `repo_assets` entry whose `dest` is `opencode.json`
-7. Read that asset source
-8. If `opencode.json` does not already exist at the repo root, write it there
-9. If it already exists, ask the user whether to replace it
 
 ### Phase 5.5: Surface recommended Conductor Git preferences
 
