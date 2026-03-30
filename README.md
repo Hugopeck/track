@@ -4,9 +4,8 @@
 
 [![Version](https://img.shields.io/github/v/release/Hugopeck/track)](https://github.com/Hugopeck/track/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Claude Code](https://img.shields.io/badge/Claude_Code-skills-blueviolet)](#install--30-seconds)
-[![Cursor](https://img.shields.io/badge/Cursor-skills-blue)](#install--30-seconds)
-[![OpenCode](https://img.shields.io/badge/OpenCode-supported-black)](#install--30-seconds)
+[![Agent Skills](https://img.shields.io/badge/agent_skills-open_standard-blueviolet)](#works-everywhere)
+[![AGENTS.md](https://img.shields.io/badge/repo_instructions-AGENTS.md-black)](#shared-repo-instructions)
 [![Bash](https://img.shields.io/badge/shell-bash_3.2%2B-orange)](https://www.gnu.org/software/bash/)
 
 Track is a git-native coordination protocol for AI agents. A `.track/` folder in your repo replaces your PM tool — markdown task files, bash enforcement scripts, PR-driven status. No server, no accounts, no vendor lock-in.
@@ -25,13 +24,13 @@ When AI agents work on your codebase, they don't need a Kanban board. They need 
 |---|---|---|
 | Cost | $8-16/seat/month | Free forever |
 | Infrastructure | Cloud SaaS, vendor lock-in | Git. That's it. |
-| Agent support | Linear Agent only | Claude Code, Cursor, Codex CLI, OpenCode |
+| Agent support | Linear Agent only | Installed skills, repo-root `AGENTS.md`, or no agent at all |
 | Data ownership | Their servers | Your repo |
 | Non-code projects | No | Yes — any folder, any project |
 
 ## Install — 30 seconds
 
-Requirements: Git and bash 3.2+. Claude Code, Cursor, Codex CLI, and OpenCode are optional integrations.
+Requirements: Git and bash 3.2+. Installed skills and repo-root `AGENTS.md` are optional integration surfaces.
 
 **Step 1: Install on your machine**
 
@@ -58,23 +57,24 @@ If the install prompt above didn't already run init:
 > /track:init
 ```
 
-This creates `.track/`, adds bash scripts, installs GitHub Actions workflows, updates your `CLAUDE.md`, and installs a Track-managed block in `AGENTS.md` for Codex CLI. If it finds existing markdown TODOs or roadmaps, you can import them as Track tasks. If you initialized before v2.0.0, re-run `/track:init` to migrate legacy root `scripts/` into `.track/scripts/` and add `.track/plans/`.
+This creates `.track/`, adds bash scripts, installs GitHub Actions workflows, updates your `CLAUDE.md` to point at `AGENTS.md`, and installs a Track-managed block in `AGENTS.md` as the shared repo instruction surface. If it finds existing markdown TODOs or roadmaps, you can import them as Track tasks. If you initialized before v2.0.0, re-run `/track:init` to migrate legacy root `scripts/` into `.track/scripts/` and add `.track/plans/`.
 
 That's it — you're tracking.
 
-## OpenCode
+## Shared repo instructions
 
-Track stays vendor-neutral. If a tool reads the repo-root `AGENTS.md`, that is
-enough — no OpenCode-specific config file is required or installed by
+Track stays vendor-neutral. If an agent reads the repo-root `AGENTS.md`, that
+is enough — no vendor-specific repo config is required or installed by
 `/track:init`.
 
 1. Initialize Track in the repo using the standard setup path so `.track/` and
    the scripts exist.
 2. Commit `AGENTS.md` at the repo root with the shared Track workflow.
-3. Open the repo in OpenCode.
+3. Use an agent that supports installed skills, or any agent that reads
+   `AGENTS.md`.
 
-OpenCode can then work against the same `.track/` files and bash scripts used
-by the other agents, without any extra vendor-specific repo config.
+`CLAUDE.md` stays as a thin pointer to `AGENTS.md`, so every entry point lands
+on the same instructions without duplicating repo guidance.
 
 ## Quick start
 
@@ -327,10 +327,8 @@ Track is just markdown + bash + git. You can run it with no AI agent at all, or 
 | Platform | Status |
 |---|---|
 | No agent | Full support via `.track/` files + bash scripts |
-| Claude Code | Full support via installed skills |
-| Cursor | Works via installed skills |
-| Codex CLI | Works via `AGENTS.md` |
-| OpenCode | Works via `AGENTS.md` |
+| Installed skills | Full support via installed skills |
+| `AGENTS.md`-aware agents | Works via repo-root `AGENTS.md` |
 
 ## The bigger vision
 
@@ -345,10 +343,8 @@ Track's protocol is simple enough for any project: book writing, research, home 
 | **bash** 3.2+ | Yes | Runs the Track scripts. Already on macOS and Linux. |
 | **git** | Yes | Stores Track state in your repo. |
 | **gh** (GitHub CLI) | Optional | Enables PR-aware `TODO.md` generation and merge automation. |
-| **Claude Code** | Optional | Runs Track through installed skills and slash commands. |
-| **Cursor** | Optional | Uses installed skills plus repo instructions. |
-| **Codex CLI** | Optional | Uses repo-root `AGENTS.md` instructions. |
-| **OpenCode** | Optional | Uses repo-root `AGENTS.md`. |
+| Installed-skill-compatible agent | Optional | Runs Track through installed skills and slash commands. |
+| `AGENTS.md`-aware agent | Optional | Uses repo-root `AGENTS.md` instructions. |
 
 ## Troubleshooting
 
@@ -358,7 +354,7 @@ Track's protocol is simple enough for any project: book writing, research, home 
 
 **"gh not found" or PR status missing?** Install `gh` and run `gh auth login`, then retry.
 
-**Codex CLI is not following Track?** Re-run `/track:init` to refresh the Track-managed block in `AGENTS.md`.
+**An agent is not following Track?** Re-run `/track:init` to refresh the Track-managed block in `AGENTS.md`, then start a fresh agent session.
 
 **Commands not showing up?** Re-run `~/.local/share/agent-skills/track/install.sh` to refresh the skill symlinks, then restart the agent session.
 
