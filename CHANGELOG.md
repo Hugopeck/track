@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.4.2](https://github.com/Hugopeck/track/compare/v2.4.1...v2.4.2) (2026-03-30)
+
+
+### Bug Fixes
+
+* **init:** no-task restore conductor.json ([#45](https://github.com/Hugopeck/track/issues/45)) ([21e8531](https://github.com/Hugopeck/track/commit/21e8531a1933504efee05359723e9bac414d79fa))
+* **track:** complete merged task ([f5852de](https://github.com/Hugopeck/track/commit/f5852de837452935c0ebf7fe02ed3cea0b7e116d))
+
+
+### Documentation
+
+* **skills:** [3.7] finalize project 3 cleanup ([#47](https://github.com/Hugopeck/track/issues/47)) ([11e36a2](https://github.com/Hugopeck/track/commit/11e36a215bb93f29208770ee8d9d8ef3129a7270))
+
 ## [2.4.1](https://github.com/Hugopeck/track/compare/v2.4.0...v2.4.1) (2026-03-29)
 
 
