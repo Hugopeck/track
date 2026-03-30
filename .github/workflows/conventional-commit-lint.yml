@@ -28,18 +28,6 @@ jobs:
             style
             build
             revert
-          scopes: |
-            skills
-            scripts
-            init
-            work
-            create
-            decompose
-            validate
-            todo
-            track
-            release
-            config
           requireScope: false
           subjectPattern: ^.+$
           subjectPatternError: "PR title must have a description after the type/scope prefix"
