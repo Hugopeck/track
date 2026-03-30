@@ -85,7 +85,7 @@ The `status` field in the file is the **raw status**. What shows up in the gener
 3. If there's an open **ready-for-review** PR on that branch → effective status is `review`
 4. Otherwise → effective status is `todo`
 
-This means you don't manually set `status: active` to show progress — opening a draft PR does it automatically.
+You must set `status: active` when opening a draft PR and `status: review` when marking it ready. CI enforces this. The post-merge workflow handles `status: done`.
 
 ## Project Briefs
 

@@ -143,7 +143,7 @@ Append-only log.
 3. If there's an open **ready-for-review** PR → effective = `review`
 4. Otherwise → effective = `todo`
 
-You don't manually set `status: active` to show progress — opening a draft PR does it automatically.
+You must set `status: active` when opening a draft PR and `status: review` when marking it ready. CI enforces this. The post-merge workflow handles `status: done`.
 
 ## Before Starting Work
 

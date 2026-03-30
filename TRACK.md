@@ -159,5 +159,5 @@ bash .track/scripts/track-validate.sh
 - **Update task files as you work, not after.** When you discover new context, constraints, or dead ends, append to the task's `## Notes` immediately. Future sessions depend on this context.
 - **Check for conflicts before starting.** Scan active and review tasks for overlapping `files:` globs. Starting work on contested files creates merge conflicts.
 - **Scope aggressively.** If a task grows beyond its acceptance criteria, split the new work into a separate task rather than expanding the current one.
-- **Let the system track status.** Don't manually update status fields to show progress. Open a draft PR — Track knows you're active. Mark it ready for review — Track knows you're in review. The PR lifecycle is the status lifecycle.
+- **Let the PR lifecycle drive status.** Open a draft PR — and set `status: active` in the task file. Mark it ready for review — and set `status: review`. The post-merge workflow handles `status: done` automatically. CI enforces these match.
 - **Validate early and often.** Run `bash .track/scripts/track-validate.sh` after every task file change. Errors caught locally are cheap; errors caught in CI block the team.
