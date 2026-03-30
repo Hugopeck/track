@@ -30,6 +30,7 @@ TASK_FILES_SERIALIZED=()
 TASK_PATHS=()
 TASK_PRS=()
 TASK_UPDATED=()
+TASK_BLOCKED_REASONS=()
 
 PROJECT_FILES=()
 PROJECT_IDS=()
@@ -238,7 +239,9 @@ load_tasks() {
     effective_status="$TRACK_status"
     pr_url=''
 
-    if ! track_is_terminal_status "$TRACK_status"; then
+    if [[ "$TRACK_status" == 'blocked' ]]; then
+      effective_status='blocked'
+    elif ! track_is_terminal_status "$TRACK_status"; then
       if find_open_pr_index_by_task_id "$TRACK_id"; then
         pr_url="${OPEN_PR_URLS[$OPEN_PR_MATCH_INDEX]}"
         effective_status="${OPEN_PR_STATUSES[$OPEN_PR_MATCH_INDEX]}"
@@ -260,6 +263,7 @@ load_tasks() {
     TASK_PATHS+=("$(basename "$file")")
     TASK_PRS+=("$pr_url")
     TASK_UPDATED+=("$TRACK_updated")
+    TASK_BLOCKED_REASONS+=("$TRACK_blocked_reason")
   done < <(find "$SOURCE_ROOT/.track/tasks" -maxdepth 1 -type f -name '*.md' | sort)
 }
 
@@ -465,7 +469,7 @@ project_status_label() {
     case "${TASK_EFFECTIVE_STATUSES[$i]}" in
       done) done_count=$((done_count + 1)) ;;
       cancelled) cancelled_count=$((cancelled_count + 1)) ;;
-      active) has_active=1 ;;
+      active|blocked) has_active=1 ;;
       review) has_review=1 ;;
     esac
   done
@@ -687,6 +691,18 @@ render_todo_section_items() {
         esac
       done < <(printf '%s' "$task_sort_lines" | sort)
       ;;
+    explicitly_blocked)
+      for ((task_index = 0; task_index < ${#TASK_IDS[@]}; task_index++)); do
+        [[ "${TASK_EFFECTIVE_STATUSES[$task_index]}" == 'blocked' ]] || continue
+        local reason="${TASK_BLOCKED_REASONS[$task_index]}"
+        printf -- '- [ ] [%s] [%s](.track/tasks/%s) *(%s)*\n' \
+          "${TASK_IDS[$task_index]}" \
+          "$(markdown_link_text "${TASK_TITLES[$task_index]}")" \
+          "${TASK_PATHS[$task_index]}" \
+          "${reason:-blocked}"
+        found=1
+      done
+      ;;
     completed)
       for ((task_index = 0; task_index < ${#TASK_IDS[@]}; task_index++)); do
         [[ "${TASK_EFFECTIVE_STATUSES[$task_index]}" == 'done' ]] || continue
@@ -721,6 +737,8 @@ render_todo() {
     render_todo_section_items up_next
     printf '## Blocked / Waiting on Dependencies\n\n'
     render_todo_section_items blocked
+    printf '## Explicitly Blocked\n\n'
+    render_todo_section_items explicitly_blocked
     printf '## Recently Completed\n\n'
     render_todo_section_items completed
     render_footer

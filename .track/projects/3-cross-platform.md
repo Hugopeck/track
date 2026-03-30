@@ -1,3 +1,12 @@
+---
+id: "3"
+title: "Open-Standard Agent Support"
+priority: medium
+status: active
+created: 2026-03-30
+updated: 2026-03-30
+---
+
 # Open-Standard Agent Support
 
 ## Goal

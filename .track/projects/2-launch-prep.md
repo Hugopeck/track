@@ -1,3 +1,12 @@
+---
+id: "2"
+title: "Launch Prep"
+priority: high
+status: active
+created: 2026-03-30
+updated: 2026-03-30
+---
+
 # Launch Prep
 
 ## Goal

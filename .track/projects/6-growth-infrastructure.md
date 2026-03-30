@@ -1,3 +1,12 @@
+---
+id: "6"
+title: "Growth Infrastructure"
+priority: low
+status: active
+created: 2026-03-30
+updated: 2026-03-30
+---
+
 # Growth Infrastructure
 
 ## Goal

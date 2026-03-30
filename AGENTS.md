@@ -254,7 +254,7 @@ Append-only log.
 ```
 
 ### Fields
-- `status`: `todo | active | review | done | cancelled`
+- `status`: `todo | active | review | blocked | done | cancelled`
 - `mode`: `investigate | plan | implement`
 - `priority`: `urgent | high | medium | low`
 - `project_id`: filename-derived project identifier from `.track/projects/`
@@ -262,11 +262,13 @@ Append-only log.
 - `files`: glob patterns for files the task expects to modify
 - `pr`: optional on raw task files; populated on `done` for historical traceability
 - `cancelled_reason`: required when `status: cancelled`
+- `blocked_reason`: required when `status: blocked`
 
 ### Raw vs Effective Status
 - Raw status is the `status:` field stored in the task file
 - Effective status is what `TODO.md` shows
 - If raw status is `done` or `cancelled`, effective status matches it
+- If raw status is `blocked`, effective status is `blocked` (skips PR overlay)
 - Otherwise, an open draft PR linked by `Track-Task`, `track:{id}`, title ID, or `task/{id}-{slug}` makes the task effectively `active`
 - Otherwise, an open ready-for-review PR linked by `Track-Task`, `track:{id}`, title ID, or `task/{id}-{slug}` makes the task effectively `review`
 - Otherwise, effective status is `todo`
