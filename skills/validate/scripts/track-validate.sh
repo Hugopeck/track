@@ -78,10 +78,48 @@ frontmatter_has_key() {
   ' "$file"
 }
 
+validate_project_brief() {
+  local file="$1"
+  local filename_id h1_title
+  local required_fields=(id title priority status created updated)
+  local key
+
+  filename_id="$(track_project_id_from_brief "$file")" || return
+
+  if ! track_parse_project_file "$file"; then
+    print_error "$file: $TRACK_parse_error"
+    return
+  fi
+
+  for key in "${required_fields[@]}"; do
+    if ! track_field_present "$key"; then
+      print_error "$file: missing required field '$key'. Add '$key:' to the YAML frontmatter"
+    fi
+  done
+
+  if [[ -n "$TRACK_id" && "$TRACK_id" != "$filename_id" ]]; then
+    print_error "$file: frontmatter id '$TRACK_id' does not match filename-derived id '$filename_id'"
+  fi
+
+  h1_title="$(track_project_title_from_brief "$file")"
+  if [[ -n "$TRACK_title" && -n "$h1_title" && "$TRACK_title" != "$h1_title" ]]; then
+    print_error "$file: frontmatter title '$TRACK_title' does not match H1 heading '$h1_title'"
+  fi
+
+  if track_field_present priority && ! contains_value "$TRACK_priority" urgent high medium low; then
+    print_error "$file: invalid priority '$TRACK_priority'. Valid values: urgent, high, medium, low"
+  fi
+
+  if track_field_present status && ! contains_value "$TRACK_status" planning active done paused; then
+    print_error "$file: invalid project status '$TRACK_status'. Valid values: planning, active, done, paused"
+  fi
+}
+
 collect_project_ids() {
   local file project_id
   while IFS= read -r file; do
     project_id="$(track_project_id_from_brief "$file")" || continue
+    validate_project_brief "$file"
     PROJECT_IDS+=("$project_id")
   done < <(find "$PROJECT_DIR" -maxdepth 1 -type f -name '[0-9]*-*.md' | sort)
 }
@@ -112,8 +150,8 @@ validate_task_file() {
     fi
   done
 
-  if ! contains_value "$TRACK_status" todo active review done cancelled; then
-    print_error "$file: invalid status '$TRACK_status'. Valid values: todo, active, review, done, cancelled"
+  if ! contains_value "$TRACK_status" todo active review blocked done cancelled; then
+    print_error "$file: invalid status '$TRACK_status'. Valid values: todo, active, review, blocked, done, cancelled"
   fi
 
   if ! contains_value "$TRACK_mode" investigate plan implement; then
@@ -146,6 +184,10 @@ validate_task_file() {
 
   if [[ "$TRACK_status" == 'cancelled' && -z "$TRACK_cancelled_reason" ]]; then
     print_error "$file: cancelled tasks require cancelled_reason. Add 'cancelled_reason: \"reason\"' to the frontmatter"
+  fi
+
+  if [[ "$TRACK_status" == 'blocked' && -z "$TRACK_blocked_reason" ]]; then
+    print_error "$file: blocked tasks require blocked_reason. Add 'blocked_reason: \"reason\"' to the frontmatter"
   fi
 
   validate_required_sections "$file"
@@ -371,6 +413,10 @@ validate_pull_request_context() {
     print_error "$task_file: task on implementation branch may not be '$TRACK_status' while PR is open. Set status to 'active' (draft PR) or 'review' (ready PR)"
   fi
 
+  if [[ "$TRACK_status" == 'blocked' ]]; then
+    print_error "$task_file: blocked task should not have an open PR. Unblock the task first or close the PR"
+  fi
+
   if [[ -n "$pr_draft_state" ]]; then
     if [[ "$pr_draft_state" == 'true' && "$TRACK_status" != 'active' ]]; then
       print_error "$task_file: draft PR requires raw status 'active' but found '$TRACK_status'. Set status: active"
@@ -446,17 +492,18 @@ main() {
   if [[ $EXIT_CODE -eq 0 ]]; then
     local num_tasks=${#TASK_IDS[@]}
     local num_projects=${#PROJECT_IDS[@]}
-    local num_todo=0 num_active=0 num_review=0 num_done=0
+    local num_todo=0 num_active=0 num_review=0 num_blocked=0 num_done=0
     local s
     for s in "${TASK_STATUSES[@]-}"; do
       case "$s" in
         todo) num_todo=$((num_todo + 1)) ;;
         active) num_active=$((num_active + 1)) ;;
         review) num_review=$((num_review + 1)) ;;
+        blocked) num_blocked=$((num_blocked + 1)) ;;
         done) num_done=$((num_done + 1)) ;;
       esac
     done
-    echo "Track validation passed. $num_tasks tasks across $num_projects projects. $num_todo todo, $num_active active, $num_review review, $num_done done."
+    echo "Track validation passed. $num_tasks tasks across $num_projects projects. $num_todo todo, $num_active active, $num_review review, $num_blocked blocked, $num_done done."
   fi
 
   exit "$EXIT_CODE"

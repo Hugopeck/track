@@ -110,8 +110,9 @@ printf '\n── Status ranking ──\n'
 assert_eq "active is 0" "0" "$(track_status_rank active)"
 assert_eq "review is 1" "1" "$(track_status_rank review)"
 assert_eq "todo is 2" "2" "$(track_status_rank todo)"
-assert_eq "done is 3" "3" "$(track_status_rank done)"
-assert_eq "cancelled is 4" "4" "$(track_status_rank cancelled)"
+assert_eq "blocked is 3" "3" "$(track_status_rank blocked)"
+assert_eq "done is 4" "4" "$(track_status_rank done)"
+assert_eq "cancelled is 5" "5" "$(track_status_rank cancelled)"
 assert_eq "unknown status is 99" "99" "$(track_status_rank bogus)"
 
 # ─── Terminal status ─────────────────────────────────────────────────

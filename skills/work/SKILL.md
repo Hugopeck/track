@@ -127,7 +127,7 @@ Append-only log.
 |-------|--------|---------|
 | `id` | `{project}.{task}` | Unique identifier. Number before dot must match `project_id`. |
 | `title` | Free text | One-line objective. |
-| `status` | `todo`, `active`, `review`, `done`, `cancelled` | Lifecycle position. |
+| `status` | `todo`, `active`, `review`, `blocked`, `done`, `cancelled` | Lifecycle position. |
 | `mode` | `investigate`, `plan`, `implement` | What kind of work. |
 | `priority` | `urgent`, `high`, `medium`, `low` | Relative importance. |
 | `project_id` | Number string | Must match a brief in `projects/`. |
@@ -135,13 +135,15 @@ Append-only log.
 | `files` | List of glob patterns | Files this task expects to touch. Used for overlap detection. |
 | `pr` | URL string | Populated when completed via merged PR. |
 | `cancelled_reason` | Free text | Required when `status: cancelled`. |
+| `blocked_reason` | Free text | Required when `status: blocked`. |
 
 ## Raw vs Effective Status
 
 1. If raw status is `done` or `cancelled` → effective status matches (terminal)
-2. If there's an open **draft** PR on `task/{id}-{slug}` → effective = `active`
-3. If there's an open **ready-for-review** PR → effective = `review`
-4. Otherwise → effective = `todo`
+2. If raw status is `blocked` → effective = `blocked` (not terminal, but skips PR overlay)
+3. If there's an open **draft** PR on `task/{id}-{slug}` → effective = `active`
+4. If there's an open **ready-for-review** PR → effective = `review`
+5. Otherwise → effective = `todo`
 
 You must set `status: active` when opening a draft PR and `status: review` when marking it ready. CI enforces this. The post-merge workflow handles `status: done`.
 

@@ -42,6 +42,7 @@ track_reset_task_parse() {
   TRACK_updated=''
   TRACK_pr=''
   TRACK_cancelled_reason=''
+  TRACK_blocked_reason=''
   TRACK_depends_on=()
   TRACK_files=()
 }
@@ -69,6 +70,7 @@ track_assign_scalar() {
     updated) TRACK_updated="$value" ;;
     pr) TRACK_pr="$value" ;;
     cancelled_reason) TRACK_cancelled_reason="$value" ;;
+    blocked_reason) TRACK_blocked_reason="$value" ;;
   esac
 }
 
@@ -188,8 +190,9 @@ track_status_rank() {
     active) printf '0' ;;
     review) printf '1' ;;
     todo) printf '2' ;;
-    done) printf '3' ;;
-    cancelled) printf '4' ;;
+    blocked) printf '3' ;;
+    done) printf '4' ;;
+    cancelled) printf '5' ;;
     *) printf '99' ;;
   esac
 }
@@ -460,6 +463,44 @@ track_project_goal_excerpt() {
   ' "$1"
 }
 
+track_parse_project_file() {
+  local file="$1"
+  local line line_no=0 in_frontmatter=0 key value
+
+  track_reset_task_parse
+
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line="${line%$'\r'}"
+    line_no=$((line_no + 1))
+
+    if [[ $line_no -eq 1 ]]; then
+      if [[ "$line" != '---' ]]; then
+        TRACK_parse_error="file must start with '---' on line 1 (YAML frontmatter opening)"
+        return 1
+      fi
+      in_frontmatter=1
+      continue
+    fi
+
+    if [[ $in_frontmatter -eq 1 ]]; then
+      if [[ "$line" == '---' ]]; then
+        TRACK_frontmatter_closed=1
+        return 0
+      fi
+
+      if [[ "$line" =~ ^([A-Za-z_][A-Za-z0-9_]*)[[:space:]]*:[[:space:]]*(.*)$ ]]; then
+        key="${BASH_REMATCH[1]}"
+        value="${BASH_REMATCH[2]}"
+        track_mark_present "$key"
+        track_assign_scalar "$key" "$(track_strip_quotes "$value")"
+      fi
+    fi
+  done < "$file"
+
+  TRACK_parse_error="frontmatter never closed. Add a '---' line after the last frontmatter field"
+  return 1
+}
+
 track_glob_base() {
   local glob="$1"
   glob="${glob%%\**}"
@@ -527,7 +568,7 @@ track_match_files_to_task() {
 
     status="$TRACK_status"
     case "$status" in
-      todo|active|review) ;;
+      todo|active|review|blocked) ;;
       done|cancelled) continue ;;
       *)
         TRACK_MATCH_ERROR="$task_file: unsupported task status '$status'"

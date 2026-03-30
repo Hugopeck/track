@@ -1,3 +1,12 @@
+---
+id: "4"
+title: "Growth Content"
+priority: medium
+status: planning
+created: 2026-03-30
+updated: 2026-03-30
+---
+
 # Growth Content
 
 ## Goal

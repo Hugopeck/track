@@ -154,5 +154,137 @@ else
 fi
 rm -rf "$repo"
 
+# Test 6: Blocked status without blocked_reason fails
+repo="$(setup_valid_repo)"
+cat > "$repo/.track/tasks/1.4-blocked-no-reason.md" << 'EOF'
+---
+id: "1.4"
+title: "Blocked without reason"
+status: blocked
+mode: implement
+priority: medium
+project_id: "1"
+created: 2026-01-01
+updated: 2026-01-01
+depends_on: []
+files: []
+pr: ""
+---
+
+## Context
+Blocked but no reason given.
+
+## Acceptance Criteria
+- [ ] Something
+
+## Notes
+Test.
+EOF
+run_test "blocked without blocked_reason fails" 1 run_validate_clean "$repo/.track/scripts/track-validate.sh"
+rm -rf "$repo"
+
+# Test 7: Blocked status with blocked_reason passes
+repo="$(setup_valid_repo)"
+cat > "$repo/.track/tasks/1.4-blocked-with-reason.md" << 'EOF'
+---
+id: "1.4"
+title: "Blocked with reason"
+status: blocked
+mode: implement
+priority: medium
+project_id: "1"
+created: 2026-01-01
+updated: 2026-01-01
+depends_on: []
+files: []
+pr: ""
+blocked_reason: "Waiting on external API access"
+---
+
+## Context
+Blocked with a reason.
+
+## Acceptance Criteria
+- [ ] Something
+
+## Notes
+Test.
+EOF
+run_test "blocked with blocked_reason passes" 0 run_validate_clean "$repo/.track/scripts/track-validate.sh"
+rm -rf "$repo"
+
+# Test 8: Project brief missing frontmatter fails
+repo="$(setup_valid_repo)"
+cat > "$repo/.track/projects/1-test-project.md" << 'EOF'
+# Test Project
+
+## Goal
+A test project.
+
+## Why Now
+Testing.
+
+## In Scope
+- Testing
+
+## Out Of Scope
+- Nothing
+
+## Shared Context
+Test.
+
+## Dependency Notes
+None.
+
+## Success Definition
+Tests pass.
+
+## Candidate Task Seeds
+- Test
+EOF
+run_test "project without frontmatter fails" 1 run_validate_clean "$repo/.track/scripts/track-validate.sh"
+rm -rf "$repo"
+
+# Test 9: Project brief with mismatched id fails
+repo="$(setup_valid_repo)"
+cat > "$repo/.track/projects/1-test-project.md" << 'EOF'
+---
+id: "2"
+title: "Test Project"
+priority: medium
+status: active
+created: 2026-01-01
+updated: 2026-01-01
+---
+
+# Test Project
+
+## Goal
+A test project.
+
+## Why Now
+Testing.
+
+## In Scope
+- Testing
+
+## Out Of Scope
+- Nothing
+
+## Shared Context
+Test.
+
+## Dependency Notes
+None.
+
+## Success Definition
+Tests pass.
+
+## Candidate Task Seeds
+- Test
+EOF
+run_test "project with mismatched id fails" 1 run_validate_clean "$repo/.track/scripts/track-validate.sh"
+rm -rf "$repo"
+
 printf '\nResults: %d passed, %d failed\n' "$PASS" "$FAIL"
 [[ $FAIL -eq 0 ]]

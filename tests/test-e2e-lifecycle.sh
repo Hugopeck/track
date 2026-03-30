@@ -95,6 +95,15 @@ setup_repo() {
   cp "$COMPLETE_SCRIPT" "$tmp/.track/scripts/"
 
   cat > "$tmp/.track/projects/1-api-foundations.md" <<'EOF'
+---
+id: "1"
+title: "API Foundations"
+priority: high
+status: active
+created: 2026-01-01
+updated: 2026-01-01
+---
+
 # API Foundations
 
 ## Goal
@@ -125,6 +134,15 @@ Project 1 tasks flow cleanly through the lifecycle.
 EOF
 
   cat > "$tmp/.track/projects/2-platform-launch.md" <<'EOF'
+---
+id: "2"
+title: "Platform Launch"
+priority: urgent
+status: active
+created: 2026-01-01
+updated: 2026-01-01
+---
+
 # Platform Launch
 
 ## Goal

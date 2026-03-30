@@ -1,3 +1,12 @@
+---
+id: "1"
+title: "Track Improvements"
+priority: high
+status: active
+created: 2026-03-30
+updated: 2026-03-30
+---
+
 # Track Improvements
 
 ## Goal

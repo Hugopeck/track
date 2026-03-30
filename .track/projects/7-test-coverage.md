@@ -1,3 +1,12 @@
+---
+id: "7"
+title: "Automated Test Coverage"
+priority: high
+status: active
+created: 2026-03-30
+updated: 2026-03-30
+---
+
 # Automated Test Coverage
 
 ## Goal
