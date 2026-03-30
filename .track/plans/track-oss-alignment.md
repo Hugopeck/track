@@ -12,7 +12,7 @@ Track is being reshaped into two products:
 - **Track OSS** — Full-featured local server with LLM inference. Free, open source, user's API key, Bun/TS binary.
 - **Track Cloud** — Managed hosted server for teams. Revenue layer.
 
-This repo becomes the protocol, skills, and script foundation. A separate `track-server` repo holds the Bun server. Both repos are scoped here because they share the event contract.
+This repo becomes the protocol, skills, scripts, and future local runtime foundation. The Bun/TypeScript server/runtime is part of the same product surface and implements the event contract defined here.
 
 Key shifts from current state:
 - **9 skills → 2**: unified `track` (auto-discovered) + `init`
@@ -56,9 +56,9 @@ Key shifts from current state:
 - Keep `skills/runtime/scripts/track-common.sh` as shared library
 - Update `skills/init/SKILL.md` for hooks + rulesets
 
-### 1B. Event Contract — `EVENT-CONTRACT.md`
+### 1B. Event Contract — `.track/specs/event-contract.md`
 
-The interface between this repo and track-server. Lives at repo root.
+The internal interface between Track emitters and the future local runtime. Lives in `.track/specs/`.
 
 **Event types:**
 ```
@@ -91,7 +91,7 @@ track.link          — retroactive attribution (/track link {id})
 
 **Attribution model** (server applies, documented here):
 - `task_id`: nullable — `null` = untracked activity
-- `attribution`: `matched_branch` / `matched_scope` / `llm_inferred` / `manual` / `null`
+- `attribution_source`: `matched_branch` / `matched_scope` / `llm_inferred` / `manual` / `null`
 - ALL events stored regardless of attribution
 
 **LLM interface spec:**
@@ -182,7 +182,7 @@ Add `track_match_files_to_task()`:
 
 ---
 
-## Part 2: Server Repo (track-server — Bun/TS)
+## Part 2: Local Runtime (Bun/TS)
 
 ### 2A. Why Bun
 
@@ -195,7 +195,7 @@ Add `track_match_files_to_task()`:
 ### 2B. Server Architecture
 
 ```
-track-server/
+.track/runtime/
   src/
     index.ts              — HTTP server entry point
     routes/
@@ -340,8 +340,8 @@ No Anthropic SDK, no OpenAI SDK. Raw `fetch` against the OpenAI-compatible API s
 User: "Set up Track for this project"
 
 Agent (via /track:init skill):
-1. Download track-server binary → ~/.track/track-server
-2. Initialize: track-server init (creates SQLite DB + default config)
+1. Install local Track runtime binary → ~/.track/bin/track-server
+2. Initialize: `track-server init` (creates SQLite DB + default config)
 3. Check for LLM API key:
    - Env: OPENAI_API_KEY, ANTHROPIC_API_KEY, or TRACK_LLM_API_KEY
    - Found → configure in ~/.track/config.toml
@@ -387,7 +387,7 @@ Simple single-page HTML served on `localhost:4747`:
 ## Implementation Phases
 
 ### Phase 1: Foundation (this repo)
-1. Write `EVENT-CONTRACT.md`
+1. Write `.track/specs/event-contract.md`
 2. Add `track_match_files_to_task()` to track-common.sh
 3. Create hook templates (commit-msg linter + post-commit emitter)
 4. Create `track-ruleset.json`
@@ -399,7 +399,7 @@ Simple single-page HTML served on `localhost:4747`:
 3. Retire standalone skills (work, create, decompose, validate, todo, test, update-track)
 4. Update all documentation (TRACK.md, README.md, AGENTS.md)
 
-### Phase 3: Server Bootstrap (track-server repo)
+### Phase 3: Local Runtime Bootstrap (this repo)
 1. Scaffold Bun project with SQLite schema
 2. Event ingestion endpoint (`POST /events`)
 3. Deterministic matcher (branch/scope → task)
@@ -407,19 +407,19 @@ Simple single-page HTML served on `localhost:4747`:
 5. REST API for queries
 6. Health check endpoint
 
-### Phase 4: LLM Integration (track-server repo)
+### Phase 4: LLM Integration (this repo)
 1. OpenAI-compatible inference module
 2. Attribution pipeline (deterministic → LLM fallback)
 3. Confidence thresholding
 4. Prompt tuning
 
-### Phase 5: Install Experience (both repos)
+### Phase 5: Install Experience (this repo)
 1. `bun compile` binary distribution
 2. launchd/systemd service registration
 3. Init skill wires everything together
 4. End-to-end verification
 
-### Phase 6: Dashboard (track-server repo)
+### Phase 6: Dashboard (this repo)
 1. Single-page HTML dashboard
 2. Task view + untracked activity stream
 3. Retroactive attribution UI
@@ -446,7 +446,7 @@ Simple single-page HTML served on `localhost:4747`:
 - `bash .track/scripts/track-validate.sh` passes
 - New tests pass (scope matching, commit lint, event contract, ruleset)
 - Unified skill handles all current skill use cases
-- Hook templates produce valid JSON per EVENT-CONTRACT.md
+- Hook templates produce valid JSON per `.track/specs/event-contract.md`
 - Server (when built) ingests events and returns correct attributions
 - `bun compile` produces working binary
 - Install flow works end-to-end on macOS (launchd) and Linux (systemd)
