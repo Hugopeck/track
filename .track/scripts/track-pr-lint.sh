@@ -1,0 +1,1 @@
+../../skills/work/scripts/track-pr-lint.sh

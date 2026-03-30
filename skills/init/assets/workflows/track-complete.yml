@@ -1,0 +1,45 @@
+name: Track Complete
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  complete-task:
+    if: github.event.pull_request.merged == true && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    env:
+      TASK_BRANCH: ${{ github.event.pull_request.head.ref }}
+      PR_URL: ${{ github.event.pull_request.html_url }}
+      PR_TITLE: ${{ github.event.pull_request.title }}
+      PR_BODY: ${{ github.event.pull_request.body }}
+      PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      TRACK_COMPLETED_AT: ${{ github.event.pull_request.merged_at }}
+      BASE_REF: ${{ github.event.pull_request.base.ref }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+
+      - name: Complete merged Track task
+        run: bash .track/scripts/track-complete.sh "$TASK_BRANCH" "$PR_URL"
+
+      - name: Commit writeback
+        run: |
+          if git diff --quiet; then
+            echo "No completion writeback needed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .track/tasks
+          git commit -m "fix(track): complete merged task"
+          for attempt in 1 2 3; do
+            git pull --rebase origin "$BASE_REF" && git push && break
+            echo "Push attempt $attempt failed; retrying..."
+            sleep 2
+          done

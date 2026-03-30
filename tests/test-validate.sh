@@ -3,7 +3,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 FIXTURE_DIR="$SCRIPT_DIR/fixtures"
-SCAFFOLD_SCRIPTS="$SCRIPT_DIR/../skills/init/scaffold/scripts"
+COMMON_SCRIPT="$SCRIPT_DIR/../skills/runtime/scripts/track-common.sh"
+VALIDATE_SCRIPT="$SCRIPT_DIR/../skills/validate/scripts/track-validate.sh"
 PASS=0
 FAIL=0
 
@@ -24,14 +25,25 @@ run_test() {
   fi
 }
 
+run_validate_clean() {
+  env \
+    -u GITHUB_EVENT_NAME \
+    -u GITHUB_HEAD_REF \
+    -u PR_TITLE \
+    -u PR_BODY \
+    -u PR_LABELS \
+    -u GH_TOKEN \
+    bash "$@"
+}
+
 # Create a temp dir that looks like a repo with .track/
 setup_valid_repo() {
   local tmp
   tmp="$(mktemp -d)"
   cp -r "$FIXTURE_DIR/.track" "$tmp/.track"
-  mkdir -p "$tmp/scripts"
-  cp "$SCAFFOLD_SCRIPTS"/track-common.sh "$tmp/scripts/"
-  cp "$SCAFFOLD_SCRIPTS"/track-validate.sh "$tmp/scripts/"
+  mkdir -p "$tmp/.track/scripts"
+  cp "$COMMON_SCRIPT" "$tmp/.track/scripts/"
+  cp "$VALIDATE_SCRIPT" "$tmp/.track/scripts/"
   printf '%s' "$tmp"
 }
 
@@ -70,12 +82,208 @@ printf 'Running track-validate tests...\n'
 
 # Test 1: Valid fixtures pass validation
 repo="$(setup_valid_repo)"
-run_test "valid fixtures pass" 0 bash "$repo/scripts/track-validate.sh"
+run_test "valid fixtures pass" 0 run_validate_clean "$repo/.track/scripts/track-validate.sh"
 rm -rf "$repo"
 
 # Test 2: Invalid status fails validation
 repo="$(setup_invalid_repo)"
-run_test "invalid status fails" 1 bash "$repo/scripts/track-validate.sh"
+run_test "invalid status fails" 1 run_validate_clean "$repo/.track/scripts/track-validate.sh"
+rm -rf "$repo"
+
+# Test 3: Expired plan (8 days old) gets deleted
+repo="$(setup_valid_repo)"
+mkdir -p "$repo/.track/plans"
+expired_date="$(date -u -v-8d +%Y-%m-%d 2>/dev/null || date -u -d '8 days ago' +%Y-%m-%d)"
+cat > "$repo/.track/plans/old-plan.md" << EOF
+---
+title: "Expired plan"
+created: $expired_date
+---
+
+This plan is old.
+EOF
+run_validate_clean "$repo/.track/scripts/track-validate.sh" >/dev/null 2>&1 || true
+if [[ ! -f "$repo/.track/plans/old-plan.md" ]]; then
+  printf '  PASS: expired plan deleted\n'
+  PASS=$((PASS + 1))
+else
+  printf '  FAIL: expired plan not deleted\n'
+  FAIL=$((FAIL + 1))
+fi
+rm -rf "$repo"
+
+# Test 4: Fresh plan (1 day old) is preserved
+repo="$(setup_valid_repo)"
+mkdir -p "$repo/.track/plans"
+fresh_date="$(date -u -v-1d +%Y-%m-%d 2>/dev/null || date -u -d '1 day ago' +%Y-%m-%d)"
+cat > "$repo/.track/plans/fresh-plan.md" << EOF
+---
+title: "Fresh plan"
+created: $fresh_date
+---
+
+This plan is recent.
+EOF
+run_validate_clean "$repo/.track/scripts/track-validate.sh" >/dev/null 2>&1 || true
+if [[ -f "$repo/.track/plans/fresh-plan.md" ]]; then
+  printf '  PASS: fresh plan preserved\n'
+  PASS=$((PASS + 1))
+else
+  printf '  FAIL: fresh plan was deleted\n'
+  FAIL=$((FAIL + 1))
+fi
+rm -rf "$repo"
+
+# Test 5: Plan without created field triggers warning
+repo="$(setup_valid_repo)"
+mkdir -p "$repo/.track/plans"
+cat > "$repo/.track/plans/no-date-plan.md" << 'EOF'
+---
+title: "No date plan"
+---
+
+Missing created field.
+EOF
+stderr_out="$(run_validate_clean "$repo/.track/scripts/track-validate.sh" 2>&1 >/dev/null || true)"
+if echo "$stderr_out" | grep -q "missing 'created' field"; then
+  printf '  PASS: missing created field warned\n'
+  PASS=$((PASS + 1))
+else
+  printf '  FAIL: no warning for missing created field\n'
+  FAIL=$((FAIL + 1))
+fi
+rm -rf "$repo"
+
+# Test 6: Blocked status without blocked_reason fails
+repo="$(setup_valid_repo)"
+cat > "$repo/.track/tasks/1.4-blocked-no-reason.md" << 'EOF'
+---
+id: "1.4"
+title: "Blocked without reason"
+status: blocked
+mode: implement
+priority: medium
+project_id: "1"
+created: 2026-01-01
+updated: 2026-01-01
+depends_on: []
+files: []
+pr: ""
+---
+
+## Context
+Blocked but no reason given.
+
+## Acceptance Criteria
+- [ ] Something
+
+## Notes
+Test.
+EOF
+run_test "blocked without blocked_reason fails" 1 run_validate_clean "$repo/.track/scripts/track-validate.sh"
+rm -rf "$repo"
+
+# Test 7: Blocked status with blocked_reason passes
+repo="$(setup_valid_repo)"
+cat > "$repo/.track/tasks/1.4-blocked-with-reason.md" << 'EOF'
+---
+id: "1.4"
+title: "Blocked with reason"
+status: blocked
+mode: implement
+priority: medium
+project_id: "1"
+created: 2026-01-01
+updated: 2026-01-01
+depends_on: []
+files: []
+pr: ""
+blocked_reason: "Waiting on external API access"
+---
+
+## Context
+Blocked with a reason.
+
+## Acceptance Criteria
+- [ ] Something
+
+## Notes
+Test.
+EOF
+run_test "blocked with blocked_reason passes" 0 run_validate_clean "$repo/.track/scripts/track-validate.sh"
+rm -rf "$repo"
+
+# Test 8: Project brief missing frontmatter fails
+repo="$(setup_valid_repo)"
+cat > "$repo/.track/projects/1-test-project.md" << 'EOF'
+# Test Project
+
+## Goal
+A test project.
+
+## Why Now
+Testing.
+
+## In Scope
+- Testing
+
+## Out Of Scope
+- Nothing
+
+## Shared Context
+Test.
+
+## Dependency Notes
+None.
+
+## Success Definition
+Tests pass.
+
+## Candidate Task Seeds
+- Test
+EOF
+run_test "project without frontmatter fails" 1 run_validate_clean "$repo/.track/scripts/track-validate.sh"
+rm -rf "$repo"
+
+# Test 9: Project brief with mismatched id fails
+repo="$(setup_valid_repo)"
+cat > "$repo/.track/projects/1-test-project.md" << 'EOF'
+---
+id: "2"
+title: "Test Project"
+priority: medium
+status: active
+created: 2026-01-01
+updated: 2026-01-01
+---
+
+# Test Project
+
+## Goal
+A test project.
+
+## Why Now
+Testing.
+
+## In Scope
+- Testing
+
+## Out Of Scope
+- Nothing
+
+## Shared Context
+Test.
+
+## Dependency Notes
+None.
+
+## Success Definition
+Tests pass.
+
+## Candidate Task Seeds
+- Test
+EOF
+run_test "project with mismatched id fails" 1 run_validate_clean "$repo/.track/scripts/track-validate.sh"
 rm -rf "$repo"
 
 printf '\nResults: %d passed, %d failed\n' "$PASS" "$FAIL"

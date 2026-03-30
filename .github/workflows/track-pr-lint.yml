@@ -1,0 +1,23 @@
+name: Track PR Lint
+
+on:
+  pull_request:
+
+jobs:
+  pr-lint:
+    name: Track PR Lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lint PR branch and title
+        env:
+          GITHUB_HEAD_REF: ${{ github.head_ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: bash .track/scripts/track-pr-lint.sh

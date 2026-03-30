@@ -1,3 +1,12 @@
+---
+id: "1"
+title: "Test Project"
+priority: medium
+status: active
+created: 2026-01-01
+updated: 2026-01-01
+---
+
 # Test Project
 
 ## Goal

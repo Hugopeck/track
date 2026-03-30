@@ -1,0 +1,152 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+FIXTURE_DIR="$SCRIPT_DIR/fixtures"
+COMMON_SCRIPT="$SCRIPT_DIR/../skills/runtime/scripts/track-common.sh"
+TODO_SCRIPT="$SCRIPT_DIR/../skills/todo/scripts/track-todo.sh"
+PASS=0
+FAIL=0
+
+pass() {
+  printf '  PASS: %s\n' "$1"
+  PASS=$((PASS + 1))
+}
+
+fail() {
+  printf '  FAIL: %s\n' "$1"
+  FAIL=$((FAIL + 1))
+}
+
+assert_contains() {
+  local name="$1"
+  local pattern="$2"
+  local file="$3"
+  if grep -Fq -- "$pattern" "$file"; then
+    pass "$name"
+  else
+    fail "$name"
+    printf '    missing pattern %q in %s\n' "$pattern" "$file"
+  fi
+}
+
+assert_not_contains() {
+  local name="$1"
+  local pattern="$2"
+  local file="$3"
+  if grep -Fq -- "$pattern" "$file"; then
+    fail "$name"
+    printf '    unexpected pattern %q in %s\n' "$pattern" "$file"
+  else
+    pass "$name"
+  fi
+}
+
+setup_repo() {
+  local tmp
+  tmp="$(mktemp -d)"
+  cp -r "$FIXTURE_DIR/.track" "$tmp/.track"
+  mkdir -p "$tmp/.track/scripts"
+  cp "$COMMON_SCRIPT" "$tmp/.track/scripts/"
+  cp "$TODO_SCRIPT" "$tmp/.track/scripts/"
+  printf '%s' "$tmp"
+}
+
+setup_gh_mock() {
+  local dir="$1"
+  mkdir -p "$dir"
+  cat > "$dir/gh" <<'GH'
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ "$1 $2" == 'pr list' ]]; then
+  if [[ "$*" == *'--json number,url,isDraft,headRefName,title'* ]]; then
+    printf '%s\t%s\t%s\t%s\t%s\n' 101 'https://example.com/pr/101' true 'task/1.1-test-task' '[1.1] Draft PR'
+    printf '%s\t%s\t%s\t%s\t%s\n' 102 'https://example.com/pr/102' false 'feature/label-single' 'Ready single'
+    printf '%s\t%s\t%s\t%s\t%s\n' 103 'https://example.com/pr/103' false 'task/1.3-dependent-task' '[1.3] Duplicate branch PR'
+    exit 0
+  fi
+fi
+
+if [[ "$1 $2" == 'pr view' ]]; then
+  pr_number="$3"
+  case "$pr_number" in
+    101)
+      if [[ "$*" == *'--json body'* ]]; then
+        printf 'Track-Task: 1.1\n'
+      else
+        printf ''
+      fi
+      ;;
+    102)
+      if [[ "$*" == *'--json body'* ]]; then
+        printf ''
+      else
+        printf 'track:1.3'
+      fi
+      ;;
+    103)
+      if [[ "$*" == *'--json body'* ]]; then
+        printf ''
+      else
+        printf ''
+      fi
+      ;;
+  esac
+  exit 0
+fi
+
+echo "unexpected gh invocation: $*" >&2
+exit 1
+GH
+  chmod +x "$dir/gh"
+}
+
+printf 'Running extended todo tests...\n\n'
+
+repo="$(setup_repo)"
+cat > "$repo/.track/tasks/1.4-cancelled-task.md" <<'TASK'
+---
+id: "1.4"
+title: "Cancelled task"
+status: cancelled
+mode: implement
+priority: low
+project_id: "1"
+created: 2026-01-01
+updated: 2026-01-02
+depends_on: []
+files: []
+pr: ""
+cancelled_reason: "No longer needed in fixture."
+---
+
+## Context
+Cancelled fixture task.
+
+## Acceptance Criteria
+- [ ] Not applicable
+
+## Notes
+Fixture cancelled task.
+TASK
+mock_bin="$(mktemp -d)"
+setup_gh_mock "$mock_bin"
+PATH="$mock_bin:$PATH" bash "$repo/.track/scripts/track-todo.sh" --local --output "$repo/BOARD.md" >/dev/null
+
+assert_contains 'board output written to explicit path' '# Board' "$repo/BOARD.md"
+assert_contains 'todo sibling output written automatically' '# TODO' "$repo/TODO.md"
+assert_contains 'projects sibling output written automatically' '# Projects Overview' "$repo/PROJECTS.md"
+assert_contains 'projects completion counts cancelled tasks' '| [1](.track/projects/1-test-project.md) | Test Project | A test project for validation. | `[█████░░░░░] 50%` (2/4) | Active |' "$repo/PROJECTS.md"
+assert_contains 'task from body shows active with PR link in board' '| [1.1](.track/tasks/1.1-test-task.md) | [Test task](.track/tasks/1.1-test-task.md) | medium | — | active · [PR](https://example.com/pr/101) |' "$repo/BOARD.md"
+assert_contains 'same task linked by two distinct PRs warns in board' "multiple open PRs map to task '1.3'" "$repo/BOARD.md"
+assert_not_contains 'single-task PR does not warn for 1.1' "multiple open PRs map to task '1.1'" "$repo/BOARD.md"
+assert_contains 'todo keeps dependent task blocked' '- [ ] [1.3] [Dependent task](.track/tasks/1.3-dependent-task.md) *(Depends on 1.1)*' "$repo/TODO.md"
+assert_not_contains 'active task does not appear in ready queues' '- [ ] [1.1] [Test task](.track/tasks/1.1-test-task.md)' "$repo/TODO.md"
+
+rm -rf "$repo" "$mock_bin"
+
+printf '\nSummary: %d passed, %d failed\n' "$PASS" "$FAIL"
+if [[ $FAIL -ne 0 ]]; then
+  exit 1
+fi

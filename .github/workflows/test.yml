@@ -12,14 +12,5 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Test validation
-        run: bash tests/test-validate.sh
-
-      - name: Test TODO generation
-        run: bash tests/test-todo.sh
-
-      - name: Test PR lint
-        run: bash tests/test-pr-lint.sh
-
-      - name: Test completion
-        run: bash tests/test-complete.sh
+      - name: Run Track test suite
+        run: bash tests/run-all.sh

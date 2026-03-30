@@ -1,0 +1,61 @@
+{
+  "runtime_scripts": [
+    {
+      "source": "skills/runtime/scripts/track-common.sh",
+      "dest": ".track/scripts/track-common.sh",
+      "executable": true
+    },
+    {
+      "source": "skills/validate/scripts/track-validate.sh",
+      "dest": ".track/scripts/track-validate.sh",
+      "executable": true
+    },
+    {
+      "source": "skills/todo/scripts/track-todo.sh",
+      "dest": ".track/scripts/track-todo.sh",
+      "executable": true
+    },
+    {
+      "source": "skills/work/scripts/track-pr-lint.sh",
+      "dest": ".track/scripts/track-pr-lint.sh",
+      "executable": true
+    },
+    {
+      "source": "skills/work/scripts/track-complete.sh",
+      "dest": ".track/scripts/track-complete.sh",
+      "executable": true
+    }
+  ],
+  "workflows": [
+    {
+      "source": "skills/init/assets/workflows/track-validate.yml",
+      "dest": ".github/workflows/track-validate.yml"
+    },
+    {
+      "source": "skills/init/assets/workflows/track-pr-lint.yml",
+      "dest": ".github/workflows/track-pr-lint.yml"
+    },
+    {
+      "source": "skills/init/assets/workflows/track-complete.yml",
+      "dest": ".github/workflows/track-complete.yml"
+    }
+  ],
+  "repo_assets": [
+    {
+      "source": "skills/init/assets/track-readme.md",
+      "dest": ".track/README.md"
+    },
+    {
+      "source": "skills/init/assets/projects-readme.md",
+      "dest": ".track/projects/README.md"
+    },
+    {
+      "source": "skills/init/assets/plans-readme.md",
+      "dest": ".track/plans/README.md"
+    },
+    {
+      "source": "skills/init/assets/specs-readme.md",
+      "dest": ".track/specs/README.md"
+    }
+  ]
+}
