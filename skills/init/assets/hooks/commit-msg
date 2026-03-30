@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# commit-msg: conventional commit linter
+# Deployed by track init to .git/hooks/commit-msg (or .husky/commit-msg)
+# Requires bash 3.2+, zero external dependencies
+
+COMMIT_MSG_FILE="$1"
+
+if [[ -z "$COMMIT_MSG_FILE" ]]; then
+  printf 'ERROR: commit-msg hook called without commit message file argument\n' >&2
+  exit 1
+fi
+
+if [[ ! -f "$COMMIT_MSG_FILE" ]]; then
+  printf 'ERROR: commit message file not found: %s\n' "$COMMIT_MSG_FILE" >&2
+  exit 1
+fi
+
+COMMIT_MSG="$(cat "$COMMIT_MSG_FILE")"
+FIRST_LINE="${COMMIT_MSG%%$'\n'*}"
+
+# Allow generated commit messages that don't require conventional format
+case "$FIRST_LINE" in
+  Merge\ *|Revert\ *|fixup\!\ *|squash\!\ *)
+    exit 0
+    ;;
+esac
+
+PATTERN='^(feat|fix|docs|refactor|test|ci|chore)(\([^) \t][^)]*\))?!?: .+'
+
+if [[ "$FIRST_LINE" =~ $PATTERN ]]; then
+  exit 0
+fi
+
+printf 'ERROR: Commit message does not follow conventional commits format.\n' >&2
+printf '\n' >&2
+printf 'Required format:  type(scope): description\n' >&2
+printf '  Allowed types:  feat fix docs refactor test ci chore\n' >&2
+printf '  scope:          optional, must be non-empty if provided\n' >&2
+printf '  breaking:       add ! before the colon for breaking changes\n' >&2
+printf '\n' >&2
+printf 'Examples:\n' >&2
+printf '  feat(auth): add JWT validation\n' >&2
+printf '  fix: handle null pointer in parser\n' >&2
+printf '  docs(api): update endpoint documentation\n' >&2
+printf '  feat(api)!: breaking change to response format\n' >&2
+printf '  chore: update dependencies\n' >&2
+printf '\n' >&2
+printf 'Your message:  %s\n' "$FIRST_LINE" >&2
+exit 1

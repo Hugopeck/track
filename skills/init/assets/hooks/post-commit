@@ -1,0 +1,152 @@
+#!/usr/bin/env bash
+# post-commit: Track event emitter
+# Deployed by track init to .git/hooks/post-commit (or .husky/post-commit)
+# Requires bash 3.2+
+#
+# Behavior:
+#   1. If ~/.track/bin/track is installed: delegate to `track emit post-commit` (fire-and-forget)
+#   2. Otherwise: append a minimal JSON event to .track/events/log.jsonl as offline fallback
+#
+# Never blocks the commit. All errors are silently swallowed.
+
+_track_post_commit() {
+  local TRACK_BIN="${TRACK_BIN:-${HOME}/.track/bin/track}"
+
+  # Primary path: delegate to installed track binary
+  if [[ -x "$TRACK_BIN" ]]; then
+    "$TRACK_BIN" emit post-commit &
+    return 0
+  fi
+
+  # Fallback path: write minimal JSON event to local log
+  _track_post_commit_fallback
+}
+
+_track_post_commit_fallback() {
+  local repo_root branch commit_sha timestamp repo
+  local commit_msg cc_type cc_scope cc_scope_json cc_subject cc_breaking
+  local changed_files files_json file log_file log_dir
+  local subject_esc repo_esc branch_esc
+
+  # Resolve repo root — skip if not in a git repo
+  repo_root="$(git rev-parse --show-toplevel 2>/dev/null)" || return 0
+
+  # Only write if .track/events/ directory exists (opt-in signal that track is initialized)
+  log_dir="${repo_root}/.track/events"
+  [[ -d "$log_dir" ]] || return 0
+  log_file="${log_dir}/log.jsonl"
+
+  # Gather commit metadata
+  commit_sha="$(git rev-parse HEAD 2>/dev/null)" || return 0
+  branch="$(git symbolic-ref --short HEAD 2>/dev/null)" || branch="HEAD"
+  timestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null)" || return 0
+
+  # Resolve repo identifier from remote (prefer owner/repo form)
+  repo="$(git remote get-url origin 2>/dev/null)" || repo=""
+  if [[ -n "$repo" ]]; then
+    # Strip protocol prefix and .git suffix, keep last two path segments
+    repo="${repo##*://}"        # remove https:// or git://
+    repo="${repo##*@}"          # remove git@
+    repo="${repo/://}"          # normalize git@host:owner/repo → host/owner/repo form
+    repo="${repo%.git}"         # remove trailing .git
+    repo="${repo#*/}"           # remove host prefix, keep owner/repo
+  fi
+  [[ -n "$repo" ]] || repo="$(basename "$repo_root")"
+
+  # Parse conventional commit from HEAD summary line
+  commit_msg="$(git log -1 --format='%s' 2>/dev/null)" || return 0
+  cc_type=""
+  cc_scope=""
+  cc_subject=""
+  cc_breaking="false"
+
+  # bash 3.2+ regex: ^(feat|fix|docs|refactor|test|ci|chore)(\(.+\))?(!)?:\ .+
+  # Note: regex patterns with ] or ) must be stored in variables to avoid
+  # bash misinterpreting them as closing the [[ ... ]] construct.
+  local cc_type_pattern='^(feat|fix|docs|refactor|test|ci|chore)'
+  local cc_scope_pattern='^\(([^)]+)\)'
+  if [[ "$commit_msg" =~ $cc_type_pattern ]]; then
+    cc_type="${BASH_REMATCH[1]}"
+    local rest="${commit_msg#"${cc_type}"}"
+
+    # Optional scope: (...) — must be non-empty
+    if [[ "$rest" =~ $cc_scope_pattern ]]; then
+      cc_scope="${BASH_REMATCH[1]}"
+      rest="${rest#"(${cc_scope})"}"
+    fi
+
+    # Optional breaking marker
+    if [[ "$rest" == '!'* ]]; then
+      cc_breaking="true"
+      rest="${rest#!}"
+    fi
+
+    # Must be followed by ": "
+    if [[ "$rest" == ': '* ]]; then
+      cc_subject="${rest#': '}"
+    else
+      # Not a valid conventional commit — skip fallback emit
+      return 0
+    fi
+  else
+    # Not a conventional commit — skip fallback emit
+    return 0
+  fi
+
+  # Build changed files JSON array
+  # --root handles the initial commit case (no parent) — lists all introduced files
+  changed_files="$(git diff-tree --root --no-commit-id -r --name-only HEAD 2>/dev/null)" || return 0
+  [[ -n "$changed_files" ]] || return 0
+
+  files_json=""
+  while IFS= read -r file; do
+    [[ -z "$file" ]] && continue
+    # Escape backslashes and double quotes for JSON string value
+    file="${file//\\/\\\\}"
+    file="${file//\"/\\\"}"
+    if [[ -n "$files_json" ]]; then
+      files_json="${files_json},\"${file}\""
+    else
+      files_json="\"${file}\""
+    fi
+  done <<< "$changed_files"
+
+  [[ -n "$files_json" ]] || return 0
+
+  # JSON-escape string values (backslash and double-quote)
+  _json_str() {
+    local v="$1"
+    v="${v//\\/\\\\}"
+    v="${v//\"/\\\"}"
+    printf '%s' "$v"
+  }
+
+  repo_esc="$(_json_str "$repo")"
+  branch_esc="$(_json_str "$branch")"
+  subject_esc="$(_json_str "$cc_subject")"
+
+  # Build scope JSON value: null or quoted string
+  if [[ -n "$cc_scope" ]]; then
+    local scope_esc
+    scope_esc="$(_json_str "$cc_scope")"
+    cc_scope_json="\"${scope_esc}\""
+  else
+    cc_scope_json="null"
+  fi
+
+  # Append JSON line to log — one event per line (JSONL format)
+  printf '{"type":"track.commit","version":"1","timestamp":"%s","repo":"%s","branch":"%s","commit_sha":"%s","changed_files":[%s],"conventional_commit":{"type":"%s","scope":%s,"subject":"%s","breaking":%s}}\n' \
+    "$timestamp" \
+    "$repo_esc" \
+    "$branch_esc" \
+    "$commit_sha" \
+    "$files_json" \
+    "$cc_type" \
+    "$cc_scope_json" \
+    "$subject_esc" \
+    "$cc_breaking" >> "$log_file" || true
+}
+
+# Run emitter — never fail, never block the commit
+_track_post_commit 2>/dev/null || true
+exit 0
