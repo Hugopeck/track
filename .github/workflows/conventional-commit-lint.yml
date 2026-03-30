@@ -37,6 +37,7 @@ jobs:
             decompose
             validate
             todo
+            track
             release
             config
           requireScope: false
