@@ -1,37 +1,36 @@
-# Cross-Platform Expansion
+# Open-Standard Agent Support
 
 ## Goal
-Make Track work with the three launch-critical AI coding agents beyond Claude Code — Cursor, Codex CLI, and OpenCode. Each platform reduces single-vendor risk and opens a distinct distribution channel, but the launch scope stays narrow enough to ship quickly.
+Keep Track usable as a skill-first, vendor-neutral project through shared skills, shared docs, and repo-root instructions, without shipping vendor plugin packages from this repo.
 
 ## Why Now
-Claiming credible cross-platform support on launch day is critical to the narrative. Minimal viable support for Cursor, Codex CLI, and OpenCode gives us the strongest reach with the least fragmentation in the next 72 hours.
+The repo has already been rescoped to skills-first. Track metadata and docs must stop advertising plugin or marketplace work as core repo scope, or the project brief will keep sending agents toward the wrong implementation surface.
 
 ## In Scope
-- Cursor plugin (port skills to Cursor plugin spec)
-- Codex CLI support (AGENTS.md + docs)
-- OpenCode support (agent instructions + setup docs)
-- Platform-agnostic install documentation
-- "Works with" badges on README
+- Shared `AGENTS.md` / `CLAUDE.md` instruction model
+- Skill-first install and usage documentation
+- Vendor-neutral README and support messaging
+- Track/init behavior that scaffolds shared instructions instead of vendor wrappers
+- Compatibility framing for agents that consume installed skills or repo-root instructions
 
 ## Out Of Scope
-- Full feature parity across all platforms (Claude Code stays the primary)
-- Platform-specific UI integrations
-- Gemini CLI, Windsurf, and Aider support before launch
-- Paid/enterprise platform partnerships (that's project 5)
+- Vendor plugin repos and plugin package scaffolding
+- Marketplace submissions
+- `.cursor/rules/`
+- `.claude-plugin/`, `.codex-plugin/`, or similar repo-local wrappers
+- Vendor-specific launch and distribution work
 
 ## Shared Context
-Track's bash scripts are already platform-agnostic. The skills (SKILL.md files) are the Claude Code-specific part. Cross-platform means adapting the skill instructions to each agent's format.
+`skills-guide.md` is now the source of truth for the repo direction: skills are the content, plugins are a separate vendor-specific delivery layer. `PHASE2-PLUGIN-REPO.md` captures the deferred plugin-repo phase for any future marketplace or wrapper work.
 
 ## Dependency Notes
-Cursor plugin is highest priority (largest user base). Codex CLI is the fastest low-effort expansion into the OpenAI ecosystem. OpenCode gives us a third supported agent without reopening the entire platform matrix. Each completed platform unblocks a content piece in project 4.
+Completed work under this project that strengthened shared instructions or vendor-neutral docs remains valid history. Open plugin and marketplace work should be cancelled here and deferred to `PHASE2-PLUGIN-REPO.md` so project 4 and project 5 do not depend on repo-local vendor wrappers.
 
 ## Success Definition
-Track README shows Claude Code plus Cursor, Codex CLI, and OpenCode badges. Each of the three target platforms has a working install path and getting-started doc. At least 2 of the 3 target platforms are verified working.
+Track state no longer treats vendor or plugin work as active in this repo. README describes the repo as skill-first and vendor-neutral. No open task in this repo requires a vendor plugin, package, or marketplace artifact.
 
 ## Candidate Task Seeds
-- Refocus project scope on Codex, Cursor, and OpenCode
-- Research Cursor plugin spec and map Track skills
-- Build and submit Cursor plugin
-- Create AGENTS.md for Codex CLI
-- Create OpenCode getting-started guide and support file
-- Update README with platform status table
+- Audit README and support docs for vendor-specific claims
+- Keep init guidance centered on shared instructions
+- Clarify installed-skills versus repo-root `AGENTS.md` usage paths
+- Defer plugin wrapper work to the separate phase documented in `PHASE2-PLUGIN-REPO.md`

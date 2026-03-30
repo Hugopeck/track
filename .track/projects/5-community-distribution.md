@@ -1,22 +1,21 @@
 # Community & Distribution
 
 ## Goal
-Get Track into every relevant directory, marketplace, and community. Build the contributor and user community that makes growth self-sustaining.
+Get Track into every relevant directory and community. Build the contributor and user community that makes growth self-sustaining.
 
 ## Why Now
-The awesome-claude-code lists and plugin marketplaces are the primary discovery channels for Claude Code users. Being listed early means being found first.
+Curated lists, communities, and GitHub Discussions are the primary discovery channels for a skill-first project. Being present early means being found first.
 
 ## In Scope
-- Submit to awesome-claude-code lists (3+)
-- Submit to Claude Code marketplace
-- Submit to Cursor marketplace
-- Discord community presence (Claude Code, Cursor, AI agents, indie hackers)
+- Submit to relevant directories and curated lists (3+)
+- Discord community presence (AI agents, indie hackers, devtools)
 - GitHub Discussions setup and moderation
 - "Track Pioneers" early adopter program
-- Strategic partnership outreach (Conductor, YouTubers, awesome list maintainers)
+- Strategic partnership outreach (tooling hosts, YouTubers, awesome list maintainers)
 - Good First Issues for contributor flywheel
 
 ## Out Of Scope
+- Plugin marketplace submissions (deferred to `PHASE2-PLUGIN-REPO.md`)
 - Paid partnerships or sponsorships
 - Enterprise sales outreach
 - Conference talks (too early)
@@ -25,17 +24,15 @@ The awesome-claude-code lists and plugin marketplaces are the primary discovery 
 See `.track/plans/launch-1000-users.md` Phase 3 for community building details.
 
 ## Dependency Notes
-Needs launch-ready repo (project 2). Marketplace submissions need cross-platform support (project 3) for maximum impact.
+Needs launch-ready repo (project 2). Clear vendor-neutral install and support messaging (project 3) makes outreach and directory submissions easier.
 
 ## Success Definition
-Track listed on 3+ awesome lists. Present on Claude Code and Cursor marketplaces. 50+ GitHub Discussions members. 10+ external contributors.
+Track listed on 3+ relevant directories or awesome lists. 50+ GitHub Discussions members. 10+ external contributors. Repeatable outreach messages ready for reuse.
 
 ## Candidate Task Seeds
-- Research and PR to awesome-claude-code lists
-- Submit Claude Code marketplace listing
-- Submit Cursor marketplace listing
+- Research and PR to relevant directories and curated lists
 - Draft Discord introduction messages
 - Design Track Pioneers program
 - Create Good First Issues (10+)
 - Identify and reach out to AI agent YouTubers
-- Draft Conductor partnership pitch
+- Draft tooling-host partnership pitch

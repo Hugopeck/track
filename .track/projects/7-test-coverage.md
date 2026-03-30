@@ -15,7 +15,7 @@ Track has 7 test files but only 4 run in the main test command. No test exercise
 - Investigation of promptfoo and sub-agent testing patterns
 
 ## Out Of Scope
-- Testing on non-macOS platforms (project 3)
+- Testing vendor-specific plugin or package repos
 - Web UI or visual test dashboards
 - Performance benchmarks
 - GitHub API integration tests requiring live `gh` auth

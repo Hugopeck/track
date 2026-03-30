@@ -24,7 +24,7 @@ Done as of 2026-03-28. Project status is satisfied by completed task `6.1`; task
 - CRM or user tracking
 
 ## Shared Context
-The `growth/` directory is gitignored or kept on a separate branch if preferred. It's an operational tool, not part of the distributed plugin.
+The `growth/` directory is gitignored or kept on a separate branch if preferred. It's an operational tool, not part of the distributed skill project.
 
 ## Dependency Notes
 Should be set up before or in parallel with project 4 (content creation).

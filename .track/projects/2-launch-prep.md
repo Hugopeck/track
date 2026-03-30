@@ -1,7 +1,7 @@
 # Launch Prep
 
 ## Goal
-Polish the repo, assets, and cross-platform support so Track is launch-ready. Everything a visitor sees on Day 1 should communicate the narrative: "Project management tools are dead. A folder is all you need."
+Polish the repo, assets, and install/support story so Track is launch-ready. Everything a visitor sees on Day 1 should communicate the narrative: "Project management tools are dead. A folder is all you need."
 
 ## Why Now
 Linear launched Linear Agent on 2026-03-24, validating the thesis publicly. The window to ride this momentum is days, not weeks.
@@ -9,13 +9,13 @@ Linear launched Linear Agent on 2026-03-24, validating the thesis publicly. The 
 ## In Scope
 - README rewrite with narrative positioning (done)
 - Demo GIF / video creation
-- Cross-platform badges and claims
+- Portable install and support messaging
 - GitHub Discussions setup
 - Good First Issues for contributor flywheel
 - Roadmap section signaling open core
 
 ## Out Of Scope
-- Actual cross-platform ports (that's project 3)
+- Shared-instructions and skill-compatibility positioning beyond launch polish (that's project 3)
 - Content creation (that's project 4)
 - Community outreach (that's project 5)
 

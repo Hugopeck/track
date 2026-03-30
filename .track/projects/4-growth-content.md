@@ -26,7 +26,7 @@ Launch window is open. Linear Next validated the thesis. Content created this we
 See `.track/plans/launch-1000-users.md` for full content calendar and thread drafts. The `growth/` directory at repo root holds all content assets, drafts, and scripts.
 
 ## Dependency Notes
-README must be launch-ready (project 2) before posting. Cross-platform claims (project 3) strengthen content but aren't blocking.
+README must be launch-ready (project 2) before posting. The vendor-neutral install and support story from project 3 strengthens content, but it is not blocking.
 
 ## Success Definition
 Week 1: Launch thread posted, HN submitted, 3+ Reddit posts live. Week 4: 4+ threads posted, 1 article published, 1 video live. Week 12: Consistent cadence, "project management is dead" associated with Track.

@@ -17,7 +17,7 @@ Track is at v1.0.0 and actively dogfooding itself. Early improvements compound a
 - Config files or `.trackrc`
 
 ## Shared Context
-Track is a Claude Code plugin distributed as markdown skills + bash scripts. Adopting repos are self-contained.
+Track is a skill-first project distributed as markdown skills + bash scripts. Adopting repos are self-contained.
 
 ## Dependency Notes
 None.
