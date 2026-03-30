@@ -147,8 +147,8 @@ already set up here, and then I'll walk you through the rest."
 ### Phase 2: Create or repair `.track/` directory structure
 
 **Tell the user:** "Setting up your project structure — this is the `.track/`
-directory where your tasks, projects, and plans will live. Think of it as your
-coordination layer. Your source code stays exactly as it is."
+directory where your tasks, projects, plans, and specs will live. Think of it
+as your coordination layer. Your source code stays exactly as it is."
 
 This phase always ensures the required directory structure exists. The difference
 is whether you are creating it for the first time or repairing missing pieces.
@@ -174,10 +174,14 @@ Steps:
 10. Read the `repo_assets` entry whose `dest` is `.track/plans/README.md`
 11. If `.track/plans/README.md` does not exist, read that asset source and
     write it to `.track/plans/README.md`
-12. Try to detect the Track version: check if the skill repo has a version tag
+12. Ensure `.track/specs/` exists
+13. Read the `repo_assets` entry whose `dest` is `.track/specs/README.md`
+14. If `.track/specs/README.md` does not exist, read that asset source and
+    write it to `.track/specs/README.md`
+15. Try to detect the Track version: check if the skill repo has a version tag
     via `git describe --tags --abbrev=0 2>/dev/null` from the skill directory
-13. If a version is found, write it plus a trailing newline to `.track/.track-version`
-14. If no version can be determined, tell the user you skipped the version
+16. If a version is found, write it plus a trailing newline to `.track/.track-version`
+17. If no version can be determined, tell the user you skipped the version
     marker and continue — do not fail init over this
 
 ### Phase 2.5: Clean up legacy root scripts during upgrade

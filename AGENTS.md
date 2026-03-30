@@ -209,12 +209,13 @@ The agent interpolates from the example better than from abstract criteria.
 
 Track is a git-native coordination system. It is the source of truth for task state, task ownership, and task history. Follow its conventions and it keeps everything organized. The protocol below is both reference and guide.
 
-Projects and tasks live in `.track/`. `TODO.md` is the generated shared view of current work.
+Projects, tasks, plans, and specs live in `.track/`. `TODO.md` is the generated shared view of current work.
 
 ### Layout
 - `.track/projects/{project_id}-{slug}.md` — project briefs
 - `.track/tasks/{task_id}-{slug}.md` — flat task files
 - `.track/plans/{slug}.md` — short-lived plan documents (auto-expire after 7 days)
+- `.track/specs/{slug}.md` — durable architecture, design, and interface specs
 - `.track/scripts/` — bash enforcement scripts (managed by Track)
 - `TODO.md` — generated view; gitignored and never canonical
 
@@ -338,6 +339,13 @@ When any planning, investigation, or design work produces a plan, **automaticall
 - Add YAML frontmatter with `title`, `created` (today's date), and optionally `task_id`/`project_id`
 - The body is freeform — paste the plan content as-is, no reformatting needed
 - Plans auto-expire 7 days after `created`; update the date to keep one longer
+
+### Writing Specs
+Save durable architecture docs, design references, and interface contracts to `.track/specs/`.
+- Filename: `{slug}.md` in lowercase, hyphenated form
+- Add YAML frontmatter with `title`, `status`, `created`, `updated`, and optionally `task_id`/`project_id`
+- `status` should be `draft`, `approved`, or `superseded`
+- Specs do not auto-expire; if a newer spec replaces one, keep the old file and mark it `superseded`
 
 ### Regenerating `TODO.md`
 After creating, updating, cancelling, or completing tasks, regenerate the shared view:

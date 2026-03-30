@@ -52,6 +52,10 @@
     {
       "source": "skills/init/assets/plans-readme.md",
       "dest": ".track/plans/README.md"
+    },
+    {
+      "source": "skills/init/assets/specs-readme.md",
+      "dest": ".track/specs/README.md"
     }
   ]
 }
