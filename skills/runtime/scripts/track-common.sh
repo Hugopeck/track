@@ -214,6 +214,13 @@ track_reset_task_resolution() {
   TRACK_PARSE_TASK_ERROR=''
 }
 
+track_reset_file_match() {
+  TRACK_MATCHED_TASK_IDS=()
+  TRACK_MATCHED_TASK_IDS_SERIALIZED=''
+  TRACK_MATCH_CONFIDENCE=''
+  TRACK_MATCH_ERROR=''
+}
+
 track_task_id_from_pr_body() {
   local body="${1-}"
   local line raw_id
@@ -492,4 +499,67 @@ track_globs_overlap_serialized() {
   done
 
   return 1
+}
+
+track_match_files_to_task() {
+  local task_dir task_file changed_files_serialized task_files_serialized status match_count=0
+
+  track_reset_file_match
+
+  changed_files_serialized="$(track_serialize_items "$@")"
+  if [[ -z "$changed_files_serialized" ]]; then
+    TRACK_MATCH_CONFIDENCE='unmatched'
+    return 1
+  fi
+
+  task_dir="$(track_repo_root)/.track/tasks"
+  if [[ ! -d "$task_dir" ]]; then
+    TRACK_MATCH_ERROR="task directory not found: $task_dir"
+    return 2
+  fi
+
+  while IFS= read -r task_file; do
+    track_parse_task_file "$task_file"
+    if [[ $? -ne 0 ]]; then
+      TRACK_MATCH_ERROR="$task_file: $TRACK_parse_error"
+      return 2
+    fi
+
+    status="$TRACK_status"
+    case "$status" in
+      todo|active|review) ;;
+      done|cancelled) continue ;;
+      *)
+        TRACK_MATCH_ERROR="$task_file: unsupported task status '$status'"
+        return 2
+        ;;
+    esac
+
+    if [[ ${#TRACK_files[@]} -eq 0 ]]; then
+      continue
+    fi
+
+    task_files_serialized="$(track_serialize_items "${TRACK_files[@]}")"
+    if track_globs_overlap_serialized "$changed_files_serialized" "$task_files_serialized"; then
+      TRACK_MATCHED_TASK_IDS+=("$TRACK_id")
+    fi
+  done < <(find "$task_dir" -maxdepth 1 -type f -name '*.md' | sort)
+
+  match_count=${#TRACK_MATCHED_TASK_IDS[@]}
+
+  if [[ $match_count -eq 0 ]]; then
+    TRACK_MATCHED_TASK_IDS_SERIALIZED=''
+    TRACK_MATCH_CONFIDENCE='unmatched'
+    return 1
+  fi
+
+  TRACK_MATCHED_TASK_IDS_SERIALIZED="$(track_serialize_items "${TRACK_MATCHED_TASK_IDS[@]}")"
+
+  if [[ $match_count -eq 1 ]]; then
+    TRACK_MATCH_CONFIDENCE='deterministic'
+    return 0
+  fi
+
+  TRACK_MATCH_CONFIDENCE='ambiguous'
+  return 0
 }
