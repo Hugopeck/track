@@ -287,6 +287,16 @@ task_blocked_by_dependencies() {
   return 1
 }
 
+resolve_dep_blocked_statuses() {
+  local task_index
+  for ((task_index = 0; task_index < ${#TASK_IDS[@]}; task_index++)); do
+    [[ "${TASK_EFFECTIVE_STATUSES[$task_index]}" != 'todo' ]] && continue
+    if task_blocked_by_dependencies "$task_index"; then
+      TASK_EFFECTIVE_STATUSES[$task_index]='blocked'
+    fi
+  done
+}
+
 task_unmet_dependencies_csv() {
   local task_index="$1"
   local serialized_depends="${TASK_DEPENDS[$task_index]}"
@@ -638,8 +648,12 @@ render_todo_section_items() {
   case "$section" in
     immediate|up_next|blocked)
       for ((task_index = 0; task_index < ${#TASK_IDS[@]}; task_index++)); do
-        [[ "${TASK_EFFECTIVE_STATUSES[$task_index]}" != 'todo' ]] && continue
-        [[ "${TASK_EFFECTIVE_STATUSES[$task_index]}" == 'cancelled' ]] && continue
+        local _es="${TASK_EFFECTIVE_STATUSES[$task_index]}"
+        if [[ "$_es" == 'todo' || "$_es" == 'blocked' ]]; then
+          : # include
+        else
+          continue
+        fi
         task_sort_lines+="$(task_sort_key "$task_index")"$'\t'"$task_index"$'\n'
       done
 
@@ -669,17 +683,18 @@ render_todo_section_items() {
             fi
             ;;
           blocked)
-            if [[ -n "$unmet" || -n "$overlap" ]]; then
-              reasons=''
-              if [[ -n "$unmet" ]]; then
-                reasons="Depends on $unmet"
-              fi
-              if [[ -n "$overlap" ]]; then
-                if [[ -n "$reasons" ]]; then
-                  reasons+="; "
-                fi
-                reasons+="Blocked by active work in $overlap"
-              fi
+            reasons=''
+            if [[ -n "$unmet" ]]; then
+              reasons="Depends on $unmet"
+            fi
+            if [[ -n "$overlap" ]]; then
+              [[ -n "$reasons" ]] && reasons+="; "
+              reasons+="Blocked by active work in $overlap"
+            fi
+            if [[ -z "$reasons" && -n "${TASK_BLOCKED_REASONS[$task_index]}" ]]; then
+              reasons="${TASK_BLOCKED_REASONS[$task_index]}"
+            fi
+            if [[ -n "$reasons" ]]; then
               printf -- '- [ ] [%s] [%s](.track/tasks/%s) *(%s)*\n' \
                 "${TASK_IDS[$task_index]}" \
                 "$(markdown_link_text "${TASK_TITLES[$task_index]}")" \
@@ -690,18 +705,6 @@ render_todo_section_items() {
             ;;
         esac
       done < <(printf '%s' "$task_sort_lines" | sort)
-      ;;
-    explicitly_blocked)
-      for ((task_index = 0; task_index < ${#TASK_IDS[@]}; task_index++)); do
-        [[ "${TASK_EFFECTIVE_STATUSES[$task_index]}" == 'blocked' ]] || continue
-        local reason="${TASK_BLOCKED_REASONS[$task_index]}"
-        printf -- '- [ ] [%s] [%s](.track/tasks/%s) *(%s)*\n' \
-          "${TASK_IDS[$task_index]}" \
-          "$(markdown_link_text "${TASK_TITLES[$task_index]}")" \
-          "${TASK_PATHS[$task_index]}" \
-          "${reason:-blocked}"
-        found=1
-      done
       ;;
     completed)
       for ((task_index = 0; task_index < ${#TASK_IDS[@]}; task_index++)); do
@@ -735,10 +738,8 @@ render_todo() {
     render_todo_section_items immediate
     printf '## Up Next (Unblocked & Medium/Low Priority)\n\n'
     render_todo_section_items up_next
-    printf '## Blocked / Waiting on Dependencies\n\n'
+    printf '## Blocked\n\n'
     render_todo_section_items blocked
-    printf '## Explicitly Blocked\n\n'
-    render_todo_section_items explicitly_blocked
     printf '## Recently Completed\n\n'
     render_todo_section_items completed
     render_footer
@@ -833,6 +834,7 @@ main() {
   load_projects
   load_open_prs
   load_tasks
+  resolve_dep_blocked_statuses
   generate_views
   printf 'Wrote %s\n' "$BOARD_OUTPUT_PATH"
   printf 'Wrote %s\n' "$TODO_OUTPUT_PATH"
