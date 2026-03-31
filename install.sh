@@ -24,4 +24,13 @@ for skill in "$CLONE_DIR/skills"/*/; do
   echo "  Installed $name → $INSTALL_DIR/$name"
 done
 
+# Also symlink into Claude Code's native skills path
+CLAUDE_INSTALL_DIR="${HOME}/.claude/skills"
+mkdir -p "$CLAUDE_INSTALL_DIR"
+for skill in "$CLONE_DIR/skills"/*/; do
+  [ -f "$skill/SKILL.md" ] || continue
+  name="$(basename "$skill")"
+  ln -sfn "$skill" "$CLAUDE_INSTALL_DIR/$name"
+done
+
 echo "Done. Skills available on next agent session."
