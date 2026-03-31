@@ -40,6 +40,18 @@
       "dest": ".github/workflows/track-complete.yml"
     }
   ],
+  "hooks": [
+    {
+      "source": "skills/init/assets/hooks/commit-msg",
+      "dest": ".git/hooks/commit-msg",
+      "executable": true
+    },
+    {
+      "source": "skills/init/assets/hooks/post-commit",
+      "dest": ".git/hooks/post-commit",
+      "executable": true
+    }
+  ],
   "repo_assets": [
     {
       "source": "skills/init/assets/track-readme.md",

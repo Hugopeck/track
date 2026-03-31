@@ -243,6 +243,102 @@ the bookkeeping takes care of itself. You're one step closer to tracking."
    - Write to `{dest}`
 4. Workflows stay owned by `init` because they are universal bootstrap glue
 
+### Phase 4.5: Install git hooks
+
+**Tell the user:** "Setting up commit hooks — these enforce conventional commit
+messages and emit events so Track can see what's happening in your repo. They're
+lightweight and never block your work."
+
+1. Read `${CLAUDE_SKILL_DIR}/assets/install-manifest.json`
+2. Detect the hook target directory:
+   - If `.husky/` exists at the repo root, set hook target to `.husky/`
+   - Otherwise, set hook target to `.git/hooks/`
+   - If the target directory does not exist, create it
+3. For each entry in `hooks`:
+   - Resolve `{source}` relative to the skill repo root
+   - If the source file is missing, STOP:
+     "Hook source `{source}` listed in install-manifest.json was not found."
+   - Compute the final destination by replacing the `.git/hooks/` prefix in
+     `{dest}` with the detected hook target directory
+   - If the destination file does not exist, write it
+   - If the destination file already exists, read both the existing file and
+     the asset version and compare the full contents
+   - If the contents match exactly, overwrite or refresh without asking — this
+     is already the Track-managed version
+   - If the contents differ, ask before overwriting in both `fresh-init` and
+     `upgrade-continue`: "Your `{filename}` hook has been customized. Replace
+     it with the latest Track version?" If the user declines, skip that hook
+     and continue init
+   - Make executable with `chmod +x`
+4. Ensure `.track/events/` exists — create the directory if missing. This is
+   where the post-commit hook writes its event log.
+5. If the hook target is `.husky/`, tell the user: "Detected Husky — hooks
+   installed to `.husky/` instead of `.git/hooks/`."
+6. If one hook installs and another is skipped, report the partial result in
+   the Phase 7 checkpoint summary rather than claiming full hook installation
+
+---
+
+### Phase 4.75: Apply GitHub Ruleset
+
+**Tell the user:** "Now I'll set up branch protection — this ensures PRs go
+through validation before merging to main. This step needs repo admin access,
+so I'll check that first."
+
+This phase is entirely optional. If any step cannot proceed, skip with a clear
+message — never fail init over remote configuration.
+
+1. Check whether `gh` is available: run `gh --version 2>/dev/null`
+   - If `gh` is not installed, SKIP:
+     "GitHub CLI (`gh`) is not installed. Skipping branch protection setup.
+     You can apply it later by running:
+     `gh api -X POST /repos/OWNER/REPO/rulesets --input track-ruleset.json`
+     The ruleset enforces PR-based merges to main/master with track-validate and
+     track-pr-lint as required status checks."
+   - Continue to Phase 5
+2. Check whether `gh` is authenticated: run `gh auth status 2>/dev/null`
+   - If not authenticated, SKIP with the same message as step 1 (replacing
+     "not installed" with "not authenticated")
+   - Continue to Phase 5
+3. Detect the repo owner and name: run
+   `gh repo view --json owner,name --jq '.owner.login + "/" + .name'`
+   - If this fails (not a GitHub repo, no remote), SKIP:
+     "This repo doesn't appear to be hosted on GitHub. Skipping ruleset."
+   - Continue to Phase 5
+4. Check admin permissions: run
+   `gh api /repos/{owner}/{repo} --jq '.permissions.admin'`
+   - If the result is not `true`, SKIP:
+     "You don't have admin access to this repo. Skipping branch protection.
+     Ask a repo admin to apply the Track ruleset — it enforces PR-based merges
+     to main/master with track-validate and track-pr-lint as required checks.
+     The ruleset file is at `skills/init/assets/track-ruleset.json` in the
+     Track skill project."
+   - Continue to Phase 5
+5. Check for existing ruleset: run
+   `gh api /repos/{owner}/{repo}/rulesets --jq '.[].name'`
+   - If the output contains `Track Protection`, SKIP:
+     "Branch protection ruleset 'Track Protection' already exists. Skipping."
+   - Continue to Phase 5
+6. Read `${CLAUDE_SKILL_DIR}/assets/track-ruleset.json`
+7. Tell the user exactly what the Track Protection ruleset will do:
+   - protect `main` and `master`
+   - require PR-based merges
+   - require `track-validate` and `track-pr-lint`
+   - block deletion and force-pushes
+   - require linear history
+8. Ask: "Apply the Track Protection ruleset now?"
+   - If the user declines, SKIP: `Ruleset: skipped — user declined`
+   - Continue to Phase 5
+9. Apply the ruleset: resolve the path to the asset file, then run
+   `gh api -X POST /repos/{owner}/{repo}/rulesets --input {path-to-asset}`
+   - If the API call fails, tell the user what happened and continue — report
+     `Ruleset: skipped — API error`
+10. On success, tell the user: "Branch protection is active — PRs to
+    main/master now require track-validate and track-pr-lint to pass before
+    merging."
+
+---
+
 ### Phase 5: Explain the recommended branch/worktree workflow
 
 **Tell the user:** "One workflow tip before you start: Track works best when
@@ -261,7 +357,8 @@ worktree."
 ### Phase 6: Update `.gitignore`
 
 1. Read `.gitignore` (or create it if absent)
-2. If `BOARD.md`, `TODO.md`, or `PROJECTS.md` are not already listed, append them
+2. If `BOARD.md`, `TODO.md`, `PROJECTS.md`, or `.track/events/` are not already
+   listed, append them
 
 ### Phase 7: Update `CLAUDE.md` and `AGENTS.md`
 
@@ -301,8 +398,10 @@ Celebrate the milestone, then preview what's next:
 Everything you need to start tracking is in place:
   Scripts: {list}
   Workflows: {list}
+  Hooks: {installed to .git/hooks/ | installed to .husky/ | partial — details | skipped — reason}
+  Ruleset: {applied | skipped — gh missing | skipped — gh not authenticated | skipped — not a GitHub repo | skipped — no admin access | skipped — already exists | skipped — user declined | skipped — API error}
   Workflow: branch/worktree guidance shared
-  .gitignore: BOARD.md / TODO.md / PROJECTS.md {added|already present}
+  .gitignore: BOARD.md / TODO.md / PROJECTS.md / .track/events/ {added|already present}
   CLAUDE.md: Track section {appended|already present|replaced}
   AGENTS.md: Track section {written|appended|replaced}
 

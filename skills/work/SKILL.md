@@ -4,6 +4,8 @@ description: |
   Track's operating protocol. You are a disciplined engineer who reads state
   before acting, maintains context for future sessions, and lets the PR
   lifecycle drive status. Loaded automatically in any repo with .track/.
+  Also handles quick operations: linking branches to tasks for attribution,
+  and appending context notes to task files.
 allowed-tools:
   - Bash
   - Read
@@ -47,6 +49,57 @@ Lock one of these modes at the start and do not switch mid-run:
 
 If `pick` discovers an in-progress task (existing branch or draft PR), that is a
 `resume` — acknowledge the switch explicitly in output before continuing.
+
+## Quick Operations
+
+Some user requests are atomic actions, not work sessions. Detect these before
+locking a mode — handle them immediately and exit.
+
+### `link` — retroactive branch attribution
+
+When the user says "link this branch to task X" or "attribute this work to X":
+
+1. Extract the task ID from user input.
+2. Validate the task exists in `.track/tasks/`. If not, STOP: "Task {id} not found."
+3. Ensure `.track/events/` directory exists — create it if missing.
+4. Resolve repo metadata: repo root, current branch, UTC timestamp, repo identifier
+   (from `git remote get-url origin`, same resolution as the post-commit hook).
+5. Append one JSONL line to `.track/events/log.jsonl`:
+   ```json
+   {"type":"track.link","version":"1","timestamp":"...","repo":"...","branch":"...","task_id":"...","link_mode":"branch_history"}
+   ```
+6. Respond: "Linked branch {branch} to task {id}."
+
+`link` is complete only after the JSONL line is appended successfully.
+
+Do not open a PR, change task status, or lock a mode.
+
+### `context` — append to task notes
+
+When the user says "add context to task X", "note that...", or "update notes on X":
+
+1. Extract the task ID and content from user input.
+2. Read the task file. If not found, STOP: "Task {id} not found."
+3. Append a timestamped entry to `## Notes`:
+   - If the content is a single line, append:
+     ```
+     {YYYY-MM-DD}: {content}
+     ```
+   - If the content spans multiple lines, append:
+     ```
+     {YYYY-MM-DD}:
+     {content block verbatim}
+     ```
+4. Update the `updated:` field in frontmatter.
+5. Write the updated task file back to disk.
+6. Run `bash .track/scripts/track-validate.sh`.
+   - If validation fails, STOP and surface the validation error. Do not claim
+     success.
+7. Respond: "Added note to task {id}."
+
+`context` is complete only after the task file is written and validation passes.
+
+Never rewrite existing notes — append only. Do not open a PR or lock a mode.
 
 ## Definition of Done
 
@@ -157,6 +210,11 @@ You must set `status: active` when opening a draft PR and `status: review` when 
    - Read them for context
    - If a plan has a `task_id` in its frontmatter, suggest working that task
    - Tell the user: "Found plan: {title}. Linked to task {task_id}."
+2.5. Check for Track hooks: if `.git/hooks/post-commit` (or `.husky/post-commit`)
+     exists and contains `Deployed by track init` or `Track event emitter`,
+     commit events are being emitted automatically.
+     If hooks are not found, suggest: "Track hooks aren't installed — run
+     `/track:init` to set them up."
 3. Check `files:` globs against tasks already shown as `active` / `review` — avoid overlap
 4. Pick work that has no unresolved `depends_on` blockers
 5. Read the task's `## Context` and `## Notes` — previous sessions may have left important context
@@ -333,3 +391,5 @@ a goal into tasks.
 - Do not report success before the active mode reaches its definition of done
 - Do not claim "acceptance criteria met" without citing the file and line for each criterion — verify or flag as unverified
 - Do not silently switch modes — if `pick` discovers a `resume` situation, state the switch explicitly
+- Do not emit a `track.link` event without validating the task ID exists
+- Do not overwrite existing `## Notes` content — append only

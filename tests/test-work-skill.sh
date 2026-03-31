@@ -47,12 +47,26 @@ assert_not_contains() {
 
 printf 'Running work skill regression tests...\n\n'
 
+assert_contains 'quick operations section documented' '## Quick Operations'
+assert_contains 'link quick operation documented' '### `link` — retroactive branch attribution'
+assert_contains 'context quick operation documented' '### `context` — append to task notes'
+assert_contains 'link completion requirement documented' '`link` is complete only after the JSONL line is appended successfully.'
+assert_contains 'context writes task file back' 'Write the updated task file back to disk.'
+assert_contains 'context validates after edit' 'Run `bash .track/scripts/track-validate.sh`.'
+assert_contains 'context completion requirement documented' '`context` is complete only after the task file is written and validation passes.'
+assert_contains 'hook awareness checks explicit marker one' 'contains `Deployed by track init` or `Track event emitter`'
+assert_contains 'link task validation do not documented' 'Do not emit a `track.link` event without validating the task ID exists'
+assert_contains 'notes append-only do not documented' 'Do not overwrite existing `## Notes` content — append only'
 assert_contains 'PR body is primary linkage' 'Always include `Track-Task: {id}` on the first line of the PR body'
 assert_contains 'fallback Track-Task documented' 'Track-Task: {id}'
 assert_contains 'optional label fallback documented' 'track:{id}'
 assert_contains 'also-completed section documented' '## Also-Completed'
 assert_contains 'also-completed syntax documented' 'Also-Completed: {id}'
 assert_contains 'also-completed max documented' 'max 2'
+assert_not_contains 'link not added as session mode completion' 'If mode is `link`'
+assert_not_contains 'context not added as session mode completion' 'If mode is `context`'
+assert_not_contains 'link not added to definition of done as mode' '`link` is done when'
+assert_not_contains 'context not added to definition of done as mode' '`context` is done when'
 assert_not_contains 'no batch PR section' '## Explicit Batch PRs'
 
 printf '\nSummary: %d passed, %d failed\n' "$PASS" "$FAIL"

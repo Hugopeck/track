@@ -69,6 +69,36 @@ else
   fail 'init skill is missing branch and worktree guidance'
 fi
 
+if contains_literal '### Phase 4.5: Install git hooks' "$SKILL_FILE" &&    contains_literal 'If the destination file already exists, read both the existing file and' "$SKILL_FILE" &&    contains_literal 'the asset version and compare the full contents' "$SKILL_FILE"; then
+  pass 'init skill documents safe hook installation'
+else
+  fail 'init skill is missing safe hook installation guidance'
+fi
+
+if contains_literal 'ask before overwriting in both `fresh-init` and' "$SKILL_FILE" &&    contains_literal 'If one hook installs and another is skipped' "$SKILL_FILE"; then
+  pass 'init skill handles differing hooks safely in all modes'
+else
+  fail 'init skill does not handle differing hooks safely in all modes'
+fi
+
+if contains_literal '### Phase 4.75: Apply GitHub Ruleset' "$SKILL_FILE" &&    contains_literal 'Apply the Track Protection ruleset now?' "$SKILL_FILE"; then
+  pass 'init skill asks before applying ruleset'
+else
+  fail 'init skill does not ask before applying ruleset'
+fi
+
+if contains_literal 'block deletion and force-pushes' "$SKILL_FILE" &&    contains_literal 'require linear history' "$SKILL_FILE"; then
+  pass 'init skill explains ruleset impact before consent'
+else
+  fail 'init skill does not explain ruleset impact before consent'
+fi
+
+if contains_literal 'Hooks: {installed to .git/hooks/ | installed to .husky/ | partial — details | skipped — reason}' "$SKILL_FILE" &&    contains_literal 'Ruleset: {applied | skipped — gh missing | skipped — gh not authenticated | skipped — not a GitHub repo | skipped — no admin access | skipped — already exists | skipped — user declined | skipped — API error}' "$SKILL_FILE"; then
+  pass 'init checkpoint summary includes hook and ruleset outcomes'
+else
+  fail 'init checkpoint summary is missing hook and ruleset outcomes'
+fi
+
 if contains_literal 'Track marks tasks `active` and `review`' "$SKILL_FILE" &&    contains_literal 'Track-Task: {id}' "$SKILL_FILE"; then
   pass 'init skill ties PR lifecycle to task linkage'
 else
