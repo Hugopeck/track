@@ -287,6 +287,13 @@ Append-only log.
 - `post-commit` writes `track.commit` events to the JSONL activity log and never blocks the commit
 - GitHub workflows validate task linkage, lint PR commit history, complete merged tasks, cascade dependency unblocks, and regenerate Track views
 - `/track:init` can also apply a GitHub Ruleset that requires `track-validate`, `track-pr-lint`, and `conventional-commit-lint`
+- Default allowed commit types: `feat`, `fix`, `docs`, `refactor`, `test`, `ci`, `chore`, `perf`, `style`, `build`, `revert`. Override per-repo via `.track/config.yml`:
+  ```yaml
+  commit_types:
+    - feat
+    - fix
+    - custom-type
+  ```
 
 ### Agent Protocol (primary)
 
