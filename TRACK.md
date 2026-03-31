@@ -86,9 +86,9 @@ Append-only log.
 2. Check `files:` overlap against tasks already shown as `active` / `review` — do not touch files owned by another in-progress task.
 3. Create a branch or use the current one.
 4. Open a **draft PR** to start work. No PR = not started.
-5. Prefer a PR title that includes the task ID: `[{id}] Title` or `({id}) Title`.
-6. Always add `Track-Task: {id}` to the PR body. This is the primary linkage. Optional label: `track:{id}`.
-7. If the PR also completes another small task as a drive-by, add `Also-Completed: {id}` to the PR body. On merge, Track marks those tasks done too.
+5. Prefer a conventional-commit PR title that includes the task ID: `type(scope): [id] short description`.
+6. If the branch is not named `task/{id}-{slug}`, put `Track-Task: {id}` on line 1 of the PR body. On task branches, adding `Track-Task:` is still preferred. Optional label: `track:{id}`.
+7. Use `Also-Completed: {id}` only for fully resolved drive-by tasks (max 2). On merge, Track marks those tasks done too.
 8. If `gh` auth fails or PR creation fails, **stop and surface the error.**
 9. Implement. When ready, mark the PR ready for review.
 
@@ -109,8 +109,10 @@ Append-only log.
    - set raw `status: active`
    - update `updated:`
 3. Push and open a **draft PR** immediately
-   - Always include `Track-Task: {id}` on the first line of the PR body
-   - PR title must include the task ID: `[4.1] Title` or `feat(scope): (4.1) Title`
+   - If the branch is not `task/{id}-{slug}`, put `Track-Task: {id}` on the first line of the PR body
+   - On `task/{id}-{slug}` branches, Track can resolve from the branch name, but adding `Track-Task:` is still preferred
+   - Prefer PR titles like `feat(scope): [4.1] short description`
+   - Use at most one `Track-Task:` line
    - Optional label: `track:{id}`
    - CI resolves the task from body, labels, title, then branch name
 4. Do the implementation work with as many commits as needed
@@ -118,7 +120,7 @@ Append-only log.
    - set raw `status: review`
    - update `updated:`
    - mark the PR ready for review
-6. When the PR merges, the post-merge workflow writes `status: done`, `pr:`, and `updated:` on `main`, unblocks newly-cleared dependency tasks, and regenerates Track views
+6. When the PR merges, the post-merge workflow writes `status: done`, `pr:`, and `updated:` on `main`. If branch protections block direct writeback, it opens a follow-up writeback PR instead. Then it unblocks newly-cleared dependency tasks and regenerates Track views
 
 Example PR linkage:
 

@@ -29,6 +29,11 @@
       "source": "skills/work/scripts/track-complete.sh",
       "dest": ".track/scripts/track-complete.sh",
       "executable": true
+    },
+    {
+      "source": "skills/work/scripts/track-complete-writeback.sh",
+      "dest": ".track/scripts/track-complete-writeback.sh",
+      "executable": true
     }
   ],
   "workflows": [

@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: read
+      pull-requests: write
     env:
       TASK_BRANCH: ${{ github.event.pull_request.head.ref }}
       PR_URL: ${{ github.event.pull_request.html_url }}
@@ -31,18 +31,8 @@ jobs:
       - name: Regenerate Track views
         run: bash .track/scripts/track-todo.sh --local --offline >/dev/null
 
-      - name: Commit writeback
-        run: |
-          if git diff --quiet; then
-            echo "No completion writeback needed."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .track/tasks
-          git commit -m "fix(track): complete merged task"
-          for attempt in 1 2 3; do
-            git pull --rebase origin "$BASE_REF" && git push && break
-            echo "Push attempt $attempt failed; retrying..."
-            sleep 2
-          done
+      - name: Write back completion changes
+        env:
+          WRITEBACK_BRANCH: track/complete-${{ github.event.pull_request.number }}
+          WRITEBACK_TITLE: fix(track): complete merged task for #${{ github.event.pull_request.number }}
+        run: bash .track/scripts/track-complete-writeback.sh
