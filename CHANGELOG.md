@@ -1,5 +1,40 @@
 # Changelog
 
+## [2.5.0](https://github.com/Hugopeck/track/compare/v2.4.2...v2.5.0) (2026-03-31)
+
+
+### Features
+
+* **hooks:** [8.3] add commit-msg linter and post-commit emitter ([#56](https://github.com/Hugopeck/track/issues/56)) ([3bd91e6](https://github.com/Hugopeck/track/commit/3bd91e67b2c4eb18f805626f5c9dfc273f615cf0))
+* **init:** [1.2] add specs directory support ([#51](https://github.com/Hugopeck/track/issues/51)) ([529c84f](https://github.com/Hugopeck/track/commit/529c84fcf3078186095f574c267e1ebd0e8b833a))
+* **init:** [8.4] add GitHub ruleset template ([#50](https://github.com/Hugopeck/track/issues/50)) ([c1e0e91](https://github.com/Hugopeck/track/commit/c1e0e914b787c11f50cb5b5b4f8add35a01103b4))
+* **scripts:** [8.2] add deterministic scope matching to track-common.sh ([#53](https://github.com/Hugopeck/track/issues/53)) ([b79350e](https://github.com/Hugopeck/track/commit/b79350ea5c6d5557751e8da704fde02fdf00c09e))
+* **track:** [1.3] add project frontmatter and blocked status ([#55](https://github.com/Hugopeck/track/issues/55)) ([2761204](https://github.com/Hugopeck/track/commit/27612046fadca044102bd3fcf86b3aae5074ed5e))
+* **track:** Track-OSS alignment — project, plan, and tasks ([#48](https://github.com/Hugopeck/track/issues/48)) ([405e69a](https://github.com/Hugopeck/track/commit/405e69ab185bda4f89cd91a4b18853a5007d93f3))
+
+
+### Bug Fixes
+
+* **skills:** [8.6] deploy hooks and tighten work quick ops ([#59](https://github.com/Hugopeck/track/issues/59)) ([38f0aa2](https://github.com/Hugopeck/track/commit/38f0aa2773f2345ac837aa2967f9954bd3caebf5))
+* **track:** [8.10] finish OSS alignment follow-up ([#61](https://github.com/Hugopeck/track/issues/61)) ([99dbdc6](https://github.com/Hugopeck/track/commit/99dbdc62b20ce9830216fc2457b4d6ee37daba15))
+* **track:** complete merged task ([5ea242e](https://github.com/Hugopeck/track/commit/5ea242e51de6643d03415d9c6b1350a5f85fae1d))
+* **track:** complete merged task ([fbb58a5](https://github.com/Hugopeck/track/commit/fbb58a55c0c00a7616d29d8bf1ae586a047b5e51))
+* **track:** complete merged task ([55c3c8d](https://github.com/Hugopeck/track/commit/55c3c8dd6abfbbaa7ce59d89e962867fbd22929a))
+* **track:** complete merged task ([5b4203b](https://github.com/Hugopeck/track/commit/5b4203b5055b249ef8c5e815e22d44450d95dc13))
+* **track:** complete merged task ([cbfedf6](https://github.com/Hugopeck/track/commit/cbfedf68f545e6c01dc469ca8984c26b376c20d2))
+* **track:** complete merged task ([d39b794](https://github.com/Hugopeck/track/commit/d39b794bcd689b495313d205574abb3b685c682e))
+* **track:** complete merged task ([0ecbd9b](https://github.com/Hugopeck/track/commit/0ecbd9b6f1d22dce6d99c7613f385385588bff02))
+* **track:** complete merged task ([b42b097](https://github.com/Hugopeck/track/commit/b42b0978eab918435a4041441028b846ca857e85))
+* **track:** complete merged task ([6304c4c](https://github.com/Hugopeck/track/commit/6304c4c49cffce31406958dfaac572c55a82ff5f))
+* **track:** complete merged task ([96e001b](https://github.com/Hugopeck/track/commit/96e001b80abde0e66482a0ee9051030b650e82b9))
+
+
+### Documentation
+
+* **specs:** [8.9] write local Track server architecture spec ([#54](https://github.com/Hugopeck/track/issues/54)) ([9ba6e14](https://github.com/Hugopeck/track/commit/9ba6e14f9c328f6c4e9e4a7570680949c1786cf5))
+* **track:** [8.1] define event contract ([#52](https://github.com/Hugopeck/track/issues/52)) ([f0b1dc1](https://github.com/Hugopeck/track/commit/f0b1dc19d6bfc8bafdcab296ae9175b7943fa6c1))
+* **track:** [8.8] rewrite README for open-core OSS positioning ([#62](https://github.com/Hugopeck/track/issues/62)) ([70dd40c](https://github.com/Hugopeck/track/commit/70dd40cbbe55afe30bbfe256fa21866b7f741e2a))
+
 ## [2.4.2](https://github.com/Hugopeck/track/compare/v2.4.1...v2.4.2) (2026-03-30)
 
 
