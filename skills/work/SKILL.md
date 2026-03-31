@@ -250,7 +250,7 @@ Example PR linkage:
 
 ```text
 - Branch: any-branch-name
-- Title: feat(skills): [7.2] create /track:test skill
+- Title: feat(skills): [7.2] refine refresh-track skill
 - Body: Track-Task: 7.2
 ```
 

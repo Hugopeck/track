@@ -32,10 +32,8 @@ track-claude-plugin/
 │   ├── work/SKILL.md
 │   ├── create/SKILL.md
 │   ├── decompose/SKILL.md
-│   ├── validate/SKILL.md
-│   ├── todo/SKILL.md
-│   ├── test/SKILL.md
-│   └── update-track/SKILL.md
+│   ├── todo/SKILL.md          # skill name: refresh-track
+│   └── update-track/SKILL.md  # skill name: update-skills
 ├── TRACK.md                  # Copied from track/ root
 │                             # init references via relative path
 ├── .github/workflows/
@@ -206,7 +204,7 @@ Copy the LICENSE file from the track repo.
   track repo and flow downstream via sync.
 - **Version stays in sync.** The sync workflow reads from track's
   `.release-please-manifest.json` and writes to `plugin.json`.
-- **The `update-track` skill** in the plugin context pulls the plugin
+- **The `update-skills` skill** in the plugin context pulls the plugin
   repo itself (gets latest synced skills). For standalone installs via
   `install.sh`, it pulls the track repo directly.
 - **`TRACK.md` must be at root** of the plugin repo. The init skill's

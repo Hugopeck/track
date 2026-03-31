@@ -14,7 +14,7 @@ Track is a git-native coordination protocol: markdown skills, bash scripts, git 
 This repo is the protocol, skills, and scripts. Cloud (managed hosting for teams) is a separate future project with its own requirements.
 
 Key shifts from current state:
-- **Skill refinement**: extend `work` with link/context modes, optional thin `track` dispatcher
+- **Skill refinement**: extend `work` with link/context modes, no dispatcher, keep `work`/`create`/`decompose` standalone
 - **Untracked activity** is first-class: all git events logged to JSONL, attribution is nullable
 - **GitHub workflows** are the automation layer: cascade unblocks, PR lifecycle sync
 - **GitHub Rulesets** deployed by init to enforce CI checks
@@ -43,19 +43,15 @@ The server architecture spec (produced by task 8.9) is retained as `superseded` 
 | "Link this to task 4.1" | link — emit `track.link` event to JSONL for retroactive attribution |
 | "Add context: found that..." | context — append to task Notes section |
 
-**Optional thin dispatcher** (`skills/track/SKILL.md`):
-- Auto-discovers in `.track/` repos
-- Parses user intent, delegates to work/create/decompose
-- ~30 lines, no duplicated logic
-- Gives "single entry point" UX without merging content
-
 **Skills that stay standalone:**
 - `create` — distinct workflow, separate context
 - `decompose` — distinct workflow, separate context
-- `validate` → script only (already is). Runs in hooks + CI.
-- `todo` → script only. Generates views.
-- `test` → internal dev tool for this repo only.
-- `update-track` → becomes a script.
+- `refresh-track` — retained as a user-invocable skill for regenerating views.
+- `update-skills` — retained as an auto-loaded updater skill for refreshing installed Track skills.
+
+**Skills retired as installable skills:**
+- `validate` → script only. Runs in hooks + CI.
+- `test` → script only for this repo's internal development.
 - `runtime` → stays as shared bash library (not a skill).
 
 ### 1B. Event Contract — `.track/specs/event-contract.md`
@@ -189,18 +185,17 @@ GitHub workflows replace what a server would have done reactively:
 
 ### Phase 2: Skill Refinement + Automation (this repo)
 1. Add link/context modes to `skills/work/SKILL.md`
-2. (Optional) Create thin `skills/track/SKILL.md` dispatcher
-3. Update `skills/init/SKILL.md` (hooks + rulesets)
-4. Retire standalone skills that became scripts only
-5. Add cascade unblocks to post-merge workflow
-6. Update all documentation (TRACK.md, README.md, AGENTS.md)
+2. Update `skills/init/SKILL.md` (hooks + rulesets)
+3. Retire script-only skills and rename retained utility skills
+4. Add cascade unblocks to post-merge workflow
+5. Update all documentation (TRACK.md, README.md, AGENTS.md)
 
 ---
 
 ## Resolved Decisions
 
 1. **No server/runtime.** Track is skills + scripts + hooks + workflows. No binary, no SQLite, no HTTP server, no dashboard. Server architecture spec retained as `superseded` reference for Cloud.
-2. **Skill refinement, not monolith merge.** Extend work with link/context modes. Optional thin dispatcher for UX. Keep create/decompose as standalone skills.
+2. **Skill refinement, not monolith merge.** Extend work with link/context modes. No thin dispatcher — skill framework handles routing natively. work/create/decompose remain as standalone skills.
 3. **Untracked activity**: First-class. All events logged to JSONL, attribution nullable. `/track link` for retroactive.
 4. **JSONL is the activity log, not the database.** Task files remain source of truth. JSONL records git history. They stay separate.
 5. **GitHub workflows are the automation layer.** Cascade unblocks, PR lifecycle sync, validation — all via workflow triggers.

@@ -94,7 +94,7 @@ The agent reads `TODO.md`, picks a task that isn't blocked, opens a draft PR, an
 
 **See what's happening:**
 ```
-> /track:todo
+> /track:refresh-track
 ```
 
 Regenerates `BOARD.md`, `TODO.md`, and `PROJECTS.md` with live status from GitHub. Shows who's working on what, what's blocked, what's done, and how projects are progressing.
@@ -285,13 +285,7 @@ Presents the full breakdown as a table and waits for your confirmation before cr
 > /track:decompose Add real-time collaboration to the editor
 ```
 
-### `/track:validate` — Check for errors
-
-Runs the validation script against all task and project files. Checks required fields, valid statuses, project references, dependency chains, and required markdown sections. For each error, it reads the offending file and explains exactly what's wrong and how to fix it.
-
-This is a diagnostic-only command — it reads and reports but doesn't modify files.
-
-### `/track:todo` — Regenerate Track views
+### `/track:refresh-track` — Regenerate Track views
 
 Regenerates the Track coordination views: `BOARD.md`, `TODO.md`, and `PROJECTS.md`. Detects your environment (GitHub CLI availability, auth tokens, remote access) and picks the best mode:
 
@@ -300,13 +294,13 @@ Regenerates the Track coordination views: `BOARD.md`, `TODO.md`, and `PROJECTS.m
 - **Local mode** — uses only the local working tree (for offline work or worktrees)
 
 ```
-> /track:todo           # auto-detects best mode
-> /track:todo --local   # force local-only
+> /track:refresh-track           # auto-detects best mode
+> /track:refresh-track --local   # force local-only
 ```
 
-### `/track:test` — Run the test suite
+### `/update-skills` — Update installed Track skills
 
-Internal test orchestration for Track development. Runs script-level tests, headless skill smoke tests (in isolated git worktrees), or both. Classifies failures into semantic buckets (`environment`, `fixture-drift`, `protocol-regression`, `script-regression`, etc.) with concrete next-fix suggestions.
+Refreshes the installed Track skill clone on your machine. This skill also auto-runs at session start in Track repos so users silently pick up new releases when possible.
 
 ## GitHub Actions
 
@@ -348,9 +342,9 @@ Track's protocol is simple enough for any project: book writing, research, home 
 
 ## Troubleshooting
 
-**Validation fails?** Run `/track:validate` — it tells you exactly what's wrong and how to fix it.
+**Validation fails?** Run `bash .track/scripts/track-validate.sh` — it tells you exactly what's wrong and where to look.
 
-**Track views are stale?** Run `/track:todo` to regenerate. If you're offline: `bash .track/scripts/track-todo.sh --local --offline`
+**Track views are stale?** Run `/track:refresh-track` to regenerate. If you're offline: `bash .track/scripts/track-todo.sh --local --offline`
 
 **"gh not found" or PR status missing?** Install `gh` and run `gh auth login`, then retry.
 

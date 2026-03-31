@@ -1,6 +1,6 @@
 # Skills
 
-Skills are markdown protocols that teach AI agents the Track workflow. Each skill lives in its own directory with a `SKILL.md` file containing YAML frontmatter (name, description, allowed tools) and step-by-step instructions the agent follows at runtime.
+Skills are markdown protocols that teach AI agents the Track workflow. Each installable skill lives in a directory with a `SKILL.md` file containing YAML frontmatter (name, description, allowed tools) and step-by-step instructions the agent follows at runtime.
 
 Skills are the instruction layer. Scripts (in `.track/scripts/`) are the enforcement layer. Together they form the coordination system — skills tell agents what to do, scripts verify they did it right.
 
@@ -12,10 +12,16 @@ Skills are the instruction layer. Scripts (in `.track/scripts/`) are the enforce
 | [work](work/) | `/track:work` | Pick a task, open a draft PR, implement, hand off to merge | Yes |
 | [create](create/) | `/track:create` | Create tasks and projects from natural language | No |
 | [decompose](decompose/) | `/track:decompose` | Break a goal into parallelizable tasks with non-overlapping file scopes | No |
-| [validate](validate/) | `/track:validate` | Run validation, explain errors, suggest fixes | No |
-| [todo](todo/) | `/track:todo` | Regenerate `BOARD.md`, `TODO.md`, and `PROJECTS.md` | No |
-| [test](test/) | `/track:test` | Run Track's internal test suite and classify failures | No |
-| [update-track](update-track/) | `/update-track` | Refresh the installed Track skill clone on this machine | No |
+| [refresh-track](todo/) | `/track:refresh-track` | Regenerate `BOARD.md`, `TODO.md`, and `PROJECTS.md` | No |
+| [update-skills](update-track/) | `/update-skills` | Refresh the installed Track skill clone on this machine | Yes |
+
+## Script-only directories
+
+These directories still ship runtime assets, but they are not user-invocable skills because they no longer contain `SKILL.md`:
+
+- `skills/validate/` — owns `track-validate.sh`
+- `skills/test/` — owns internal repo test assets only
+- `skills/runtime/` — shared runtime helpers such as `track-common.sh`
 
 ## Directory conventions
 
@@ -25,10 +31,6 @@ directories are added only when they carry real content:
 - `scripts/` — executable helpers owned by that skill
 - `references/` — read-on-demand supporting documentation
 - `assets/` — static files, templates, or install-time resources
-
-Track also uses `skills/runtime/` as an internal shared support area for
-repo-local runtime helpers such as `track-common.sh`. It is not an installable
-skill because it intentionally has no `SKILL.md`.
 
 Discovery and installation must key off `SKILL.md`, not raw directory
 enumeration. That keeps internal support directories out of the user's skill
@@ -54,15 +56,14 @@ Each skill declares its allowed tools in the YAML frontmatter. This controls wha
 | work | x | x | x | x | x | x | |
 | create | x | x | x | x | x | x | |
 | decompose | x | x | x | x | x | x | |
-| validate | x | x | x | x | | | |
-| todo | x | x | | | | | |
-| test | x | x | x | x | | | x |
+| refresh-track | x | x | | | | | |
+| update-skills | x | x | | | | | |
 
-Notable: `validate` and `todo` cannot write files — they are read-only diagnostic skills. `test` can spawn sub-agents for isolated skill smoke tests.
+Notable: `refresh-track` and `update-skills` are narrow bash-first utility skills. `validate` and `test` remain available through scripts, not slash commands.
 
 ### Auto-loading
 
-The `work` skill is auto-loaded in any repo that contains a `.track/` directory. This means the agent always knows the Track protocol without the user needing to invoke a command. All other skills are invoked explicitly via `/track:<name>`.
+The `work` skill is auto-loaded in any repo that contains a `.track/` directory. `update-skills` is also auto-loaded so it can check for Track updates at session start. Other skills are invoked explicitly.
 
 ## Adding a new skill
 
@@ -71,4 +72,4 @@ The `work` skill is auto-loaded in any repo that contains a `.track/` directory.
 3. Add `scripts/`, `references/`, or `assets/` only when the skill actually needs them.
 4. Follow the protocol structure: scope, modes, definition of done, closing messages, do-not rules.
 5. Keep internal support directories under `skills/` free of `SKILL.md` so install/discovery skips them.
-6. Add a smoke test recipe in the `test` skill if the skill should be covered by `/track:test`.
+6. Add or update a repo test under `tests/` when the skill contract changes.

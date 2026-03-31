@@ -87,7 +87,7 @@ When working on skills in this repo, follow the Agent Skills spec:
 
 ## Updating installed skills
 
-If you have Track skills installed, run `/update-track` or:
+If you have Track skills installed, run `/update-skills` or:
 ```bash
 cd <track-repo> && git pull --ff-only
 ```
@@ -263,11 +263,11 @@ Claude Code also scans `~/.claude/skills/`. Use `.agents/skills/` for maximum co
 
 ### The self-updating skill (primary mechanism)
 
-Every project should include an update skill. The user invokes `/update-track` and the agent pulls the latest:
+Every project should include an update skill. The user invokes `/update-skills` and the agent pulls the latest:
 
 ````markdown
 ---
-name: update-track
+name: update-skills
 description: Update Track skills to latest version. Use when asked to update Track or check for updates.
 disable-model-invocation: true
 ---
@@ -677,7 +677,7 @@ Development repos:
 Distribution (skills only, no plugin):
 
   User runs install.sh → sparse checkout → symlinks in ~/.agents/skills/
-  User updates via /update-track or cron
+  User updates via /update-skills or cron
 
 Distribution (plugins, when hooks are needed):
 
