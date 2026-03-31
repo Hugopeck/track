@@ -84,6 +84,10 @@ type(scope): description
 | `test` | Adding or updating tests | — |
 | `ci` | CI/workflow changes | — |
 | `chore` | Maintenance (deps, config) | — |
+| `perf` | Performance improvement | patch |
+| `style` | Formatting, whitespace (no logic change) | — |
+| `build` | Build system or external dependency changes | — |
+| `revert` | Reverts a previous commit | patch |
 
 Common scopes: `track`, `init`, `skills`, `scripts`, `tests`, `docs`, `ci`
 

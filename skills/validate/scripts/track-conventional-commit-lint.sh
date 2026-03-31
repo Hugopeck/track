@@ -30,7 +30,7 @@ if [[ -f "$CONFIG_FILE" ]]; then
   fi
 fi
 
-PATTERN="^(${ALLOWED_TYPES})(\([^) \t][^)]*\))?!?: .+"
+PATTERN="^(${ALLOWED_TYPES})(\([^) ][^)]*\))?!?: .+"
 
 print_info() {
   printf '%s\n' "$1"

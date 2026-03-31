@@ -25,7 +25,31 @@ case "$FIRST_LINE" in
     ;;
 esac
 
-PATTERN='^(feat|fix|docs|refactor|test|ci|chore)(\([^) \t][^)]*\))?!?: .+'
+# Default allowed types (full Conventional Commits spec)
+DEFAULT_TYPES='feat|fix|docs|refactor|test|ci|chore|perf|style|build|revert'
+ALLOWED_TYPES="$DEFAULT_TYPES"
+
+# Allow adopting repos to override via .track/config.yml
+# Format:
+#   commit_types:
+#     - feat
+#     - fix
+#     - custom-type
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+CONFIG_FILE="${REPO_ROOT}/.track/config.yml"
+
+if [[ -f "$CONFIG_FILE" ]]; then
+  CUSTOM_TYPES=$(awk '
+    /^commit_types:/ { in_list=1; next }
+    in_list && /^[[:space:]]*-[[:space:]]/ { val=$0; sub(/^[[:space:]]*-[[:space:]]*/, "", val); printf "%s|", val }
+    in_list && /^[^[:space:]]/ { in_list=0 }
+  ' "$CONFIG_FILE" | sed 's/|$//')
+  if [[ -n "$CUSTOM_TYPES" ]]; then
+    ALLOWED_TYPES="$CUSTOM_TYPES"
+  fi
+fi
+
+PATTERN="^(${ALLOWED_TYPES})(\([^) ][^)]*\))?!?: .+"
 
 if [[ "$FIRST_LINE" =~ $PATTERN ]]; then
   exit 0
@@ -34,7 +58,7 @@ fi
 printf 'ERROR: Commit message does not follow conventional commits format.\n' >&2
 printf '\n' >&2
 printf 'Required format:  type(scope): description\n' >&2
-printf '  Allowed types:  feat fix docs refactor test ci chore\n' >&2
+printf '  Allowed types:  %s\n' "${ALLOWED_TYPES//|/ }" >&2
 printf '  scope:          optional, must be non-empty if provided\n' >&2
 printf '  breaking:       add ! before the colon for breaking changes\n' >&2
 printf '\n' >&2
