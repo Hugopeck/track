@@ -20,7 +20,7 @@ The current skill set needs targeted extensions (link/context modes) and the pro
 - Deterministic scope matching in track-common.sh
 - Git hook templates (commit-msg linter + post-commit event emitter)
 - GitHub Ruleset template for init
-- Skill refinement: extend work with link/context, optional thin dispatcher
+- Skill refinement: extend work with link/context; keep work/create/decompose as separate skills; retire script-only skills and rename retained utility skills for clarity
 - Cascade unblocks via post-merge GitHub workflow
 - Documentation updates (TRACK.md, README.md, AGENTS.md)
 

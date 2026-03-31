@@ -36,7 +36,7 @@ Track has two layers:
 This repo is a **skill project** (not a plugin). Skills are the content; plugins are a separate delivery mechanism.
 
 - `TRACK.md` — canonical Track documentation (single source of truth, embedded into adopting repos)
-- `skills/` — installable agent skills (each subdirectory is a standalone skill)
+- `skills/` — installable agent skills and support directories (only directories with `SKILL.md` are standalone skills)
 - `skills/init/assets/` — everything the init skill deploys to adopting repos (scripts, workflows, config)
 - `.track/` — Track dogfooding itself (scripts are symlinks to the owned runtime sources under `skills/`)
 - `tests/` — test suite
@@ -58,10 +58,8 @@ This repo is a **skill project** (not a plugin). Skills are the content; plugins
 | `init` | Deploy `.track/`, scripts, workflows, and Track sections into a new repo |
 | `create` | Create tasks and projects |
 | `decompose` | Break a goal into tasks with dependencies |
-| `validate` | Run validation and interpret errors |
-| `todo` | Regenerate `BOARD.md`, `TODO.md`, and `PROJECTS.md` |
-| `test` | Run the test suite |
-| `update-track` | Self-update Track skills to latest version |
+| `refresh-track` | Regenerate `BOARD.md`, `TODO.md`, and `PROJECTS.md` |
+| `update-skills` | Self-update Track skills to latest version |
 
 ## Working Rules
 
@@ -317,7 +315,7 @@ Example PR linkage:
 
 ```text
 Branch: any-branch-name
-Title: feat(skills): [7.2] create /track:test skill
+Title: feat(skills): [7.2] refine refresh-track skill
 Body: Track-Task: 7.2
 ```
 
