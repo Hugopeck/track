@@ -3,9 +3,34 @@ set -euo pipefail
 
 BASE_SHA="${BASE_SHA:-}"
 HEAD_SHA="${HEAD_SHA:-}"
-PATTERN='^(feat|fix|docs|refactor|test|ci|chore)(\([^) \t][^)]*\))?!?: .+'
 EXIT_CODE=0
 INVALID_COUNT=0
+
+# Default allowed types (full Conventional Commits spec)
+DEFAULT_TYPES='feat|fix|docs|refactor|test|ci|chore|perf|style|build|revert'
+
+# Allow adopting repos to override via .track/config.yml
+# Format:
+#   commit_types:
+#     - feat
+#     - fix
+#     - custom-type
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+CONFIG_FILE="${REPO_ROOT}/.track/config.yml"
+ALLOWED_TYPES="$DEFAULT_TYPES"
+
+if [[ -f "$CONFIG_FILE" ]]; then
+  CUSTOM_TYPES=$(awk '
+    /^commit_types:/ { in_list=1; next }
+    in_list && /^[[:space:]]*-[[:space:]]/ { val=$0; sub(/^[[:space:]]*-[[:space:]]*/, "", val); printf "%s|", val }
+    in_list && /^[^[:space:]]/ { in_list=0 }
+  ' "$CONFIG_FILE" | sed 's/|$//')
+  if [[ -n "$CUSTOM_TYPES" ]]; then
+    ALLOWED_TYPES="$CUSTOM_TYPES"
+  fi
+fi
+
+PATTERN="^(${ALLOWED_TYPES})(\([^) \t][^)]*\))?!?: .+"
 
 print_info() {
   printf '%s\n' "$1"
@@ -47,7 +72,8 @@ while IFS=$'\037' read -r commit_sha subject || [[ -n "$commit_sha$subject" ]]; 
 done < <(git log --format='%H%x1f%s' "$BASE_SHA..$HEAD_SHA")
 
 if [[ $INVALID_COUNT -gt 0 ]]; then
-  print_error 'commit messages must follow conventional commits: type(scope): description'
+  print_error "commit messages must follow conventional commits: type(scope): description"
+  print_error "allowed types: ${ALLOWED_TYPES//|/, }"
   exit "$EXIT_CODE"
 fi
 
