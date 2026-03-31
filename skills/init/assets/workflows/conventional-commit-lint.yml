@@ -1,0 +1,22 @@
+name: conventional-commit-lint
+
+on:
+  pull_request:
+
+jobs:
+  conventional-commit-lint:
+    name: conventional-commit-lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lint PR commit messages
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: bash .track/scripts/track-conventional-commit-lint.sh

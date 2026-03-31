@@ -212,15 +212,16 @@ The agent interpolates from the example better than from abstract criteria.
 <!-- TRACK:START -->
 ## Track — Task Coordination
 
-Track is a git-native coordination system. It is the source of truth for task state, task ownership, and task history. Follow its conventions and it keeps everything organized. The protocol below is both reference and guide.
+Track is a git-native coordination protocol. It is the source of truth for task state, task ownership, and task history. Track runs as markdown task files, bash scripts, git hooks, and GitHub workflows — no server, no binary, no always-on runtime.
 
-Projects, tasks, plans, and specs live in `.track/`. `TODO.md` is the generated shared view of current work.
+Projects, tasks, plans, specs, and activity logs live in `.track/`. `TODO.md` is the generated shared view of current work.
 
 ### Layout
 - `.track/projects/{project_id}-{slug}.md` — project briefs
 - `.track/tasks/{task_id}-{slug}.md` — flat task files
 - `.track/plans/{slug}.md` — short-lived plan documents (auto-expire after 7 days)
 - `.track/specs/{slug}.md` — durable architecture, design, and interface specs
+- `.track/events/log.jsonl` — append-only activity log written by hooks and lifecycle actions
 - `.track/scripts/` — bash enforcement scripts (managed by Track)
 - `TODO.md` — generated view; gitignored and never canonical
 
@@ -271,6 +272,19 @@ Append-only log.
 - Otherwise, an open ready-for-review PR linked by `Track-Task`, `track:{id}`, title ID, or `task/{id}-{slug}` makes the task effectively `review`
 - Otherwise, effective status is `todo`
 
+### Event Log and Attribution
+- Track writes append-only activity events to `.track/events/log.jsonl`
+- The wire format is defined in `.track/specs/event-contract.md`
+- Core event types are `track.commit`, `track.pr.opened`, `track.pr.ready`, `track.pr.merged`, `track.task.started`, and `track.link`
+- Untracked activity is first-class: an event may exist before it has a task attribution
+- If work happened outside the normal task branch flow, ask `/track:work` to link the current branch to a task; this appends a `track.link` event for retroactive attribution
+
+### Hooks and Automation
+- `commit-msg` enforces conventional commit format locally
+- `post-commit` writes `track.commit` events to the JSONL activity log and never blocks the commit
+- GitHub workflows validate task linkage, lint PR commit history, complete merged tasks, cascade dependency unblocks, and regenerate Track views
+- `/track:init` can also apply a GitHub Ruleset that requires `track-validate`, `track-pr-lint`, and `conventional-commit-lint`
+
 ### Agent Protocol (primary)
 
 1. Read `TODO.md` for the execution queue and `BOARD.md` for project context. Pick a `todo` task or resume an `active` one.
@@ -309,7 +323,7 @@ Append-only log.
    - set raw `status: review`
    - update `updated:`
    - mark the PR ready for review
-6. When the PR merges, the post-merge workflow writes `status: done`, `pr:`, and `updated:` on `main`
+6. When the PR merges, the post-merge workflow writes `status: done`, `pr:`, and `updated:` on `main`, unblocks newly-cleared dependency tasks, and regenerates Track views
 
 Example PR linkage:
 
