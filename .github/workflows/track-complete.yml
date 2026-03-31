@@ -28,6 +28,9 @@ jobs:
       - name: Complete merged Track task
         run: bash .track/scripts/track-complete.sh "$TASK_BRANCH" "$PR_URL"
 
+      - name: Regenerate Track views
+        run: bash .track/scripts/track-todo.sh --local --offline >/dev/null
+
       - name: Commit writeback
         run: |
           if git diff --quiet; then

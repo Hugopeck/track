@@ -208,7 +208,6 @@ The agent interpolates from the example better than from abstract criteria.
 - Adopting repos are self-contained — they never depend on this skill project at runtime
 - The skills teach agents the Track protocol; the scripts enforce it
 - bash 3.2+ compatibility required (macOS default)
-
 <!-- TRACK:START -->
 ## Track — Task Coordination
 
@@ -423,3 +422,4 @@ bash .track/scripts/track-validate.sh
 
 **Commands not showing up?** Re-run `~/.local/share/agent-skills/track/install.sh` to refresh the skill symlinks, then restart the agent session.
 <!-- TRACK:END -->
+
