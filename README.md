@@ -8,7 +8,7 @@
 [![AGENTS.md](https://img.shields.io/badge/repo_instructions-AGENTS.md-black)](#shared-repo-instructions)
 [![Bash](https://img.shields.io/badge/shell-bash_3.2%2B-orange)](https://www.gnu.org/software/bash/)
 
-Track is a git-native coordination protocol for AI agents. A `.track/` folder in your repo replaces your PM tool — markdown task files, bash enforcement scripts, PR-driven status. No server, no accounts, no vendor lock-in.
+Track is a git-native coordination protocol for AI agents. A `.track/` folder in your repo replaces your PM tool with markdown task files, bash enforcement scripts, git hooks, and GitHub workflow automation. No server, no accounts, no vendor lock-in.
 
 <!-- TODO: Add demo GIF here -->
 
@@ -57,7 +57,7 @@ If the install prompt above didn't already run init:
 > /track:init
 ```
 
-This creates `.track/`, adds bash scripts, installs GitHub Actions workflows, updates your `CLAUDE.md` to point at `AGENTS.md`, and installs a Track-managed block in `AGENTS.md` as the shared repo instruction surface. If it finds existing markdown TODOs or roadmaps, you can import them as Track tasks. If you initialized before v2.0.0, re-run `/track:init` to migrate legacy root `scripts/` into `.track/scripts/` and add `.track/plans/`.
+This creates `.track/`, adds bash scripts, installs commit hooks, installs GitHub Actions workflows, optionally applies the Track Protection ruleset, updates your `CLAUDE.md` to point at `AGENTS.md`, and installs a Track-managed block in `AGENTS.md` as the shared repo instruction surface. If it finds existing markdown TODOs or roadmaps, you can import them as Track tasks. If you initialized before v2.0.0, re-run `/track:init` to migrate legacy root `scripts/` into `.track/scripts/` and add `.track/plans/`.
 
 That's it — you're tracking.
 
@@ -101,7 +101,7 @@ Regenerates `BOARD.md`, `TODO.md`, and `PROJECTS.md` with live status from GitHu
 
 ## How it works
 
-Track has two layers: **skills** (markdown protocols that teach AI agents the workflow) and **scripts** (bash enforcement that validates state and automates lifecycle events). Together they form a self-enforcing coordination system — agents follow the protocol, scripts verify they did it right.
+Track has two core layers: **skills** (markdown protocols that teach AI agents the workflow) and **scripts** (bash enforcement that validates state and automates lifecycle events). Git hooks and GitHub workflows are the automation surfaces those scripts power in adopting repos. Together they form a self-enforcing coordination system — agents follow the protocol, scripts verify it, and hooks/workflows keep Git state in sync.
 
 ### The `.track/` folder
 
@@ -109,10 +109,12 @@ Everything lives in a `.track/` folder at the root of your repo:
 
 ```
 .track/
-  projects/       # one file per project (groups related tasks)
+  projects/        # one file per project (groups related tasks)
   tasks/           # one file per task (the actual units of work)
-  plans/           # plan files produced during investigation tasks
-  scripts/         # bash enforcement scripts (validation, TODO generation, PR lint)
+  plans/           # short-lived investigation and planning notes
+  specs/           # durable design and interface docs
+  events/          # local JSONL activity log written by hooks
+  scripts/         # bash enforcement scripts (validation, views, PR lifecycle)
 ```
 
 ### Task files
@@ -147,12 +149,13 @@ Any additional context, decisions, or references.
 
 **Key fields:**
 - **`id`** — dotted format (`"1.3"` = project 1, task 3). Links task to its project.
-- **`status`** — `todo`, `active`, `review`, `done`, or `cancelled`. Agents don't set `done` manually — the post-merge workflow handles it.
+- **`status`** — `todo`, `active`, `review`, `blocked`, `done`, or `cancelled`. Agents don't set `done` manually — the post-merge workflow handles it.
 - **`mode`** — `investigate` (research/decide), `plan` (design/architect), or `implement` (write code). Tells the agent what kind of work to do.
 - **`priority`** — `urgent`, `high`, `medium`, or `low`. Agents pick higher-priority tasks first.
 - **`depends_on`** — list of task IDs that must be `done` before this task can start. Agents skip blocked tasks automatically.
 - **`files`** — glob patterns for file ownership. This is what prevents multi-agent conflicts — no two active tasks should claim the same files.
 - **`pr`** — populated automatically when the task's PR is merged.
+- **`blocked_reason` / `cancelled_reason`** — required when `status` is `blocked` or `cancelled`.
 
 ### Project files
 
@@ -161,16 +164,21 @@ Projects group related tasks and provide shared context:
 ```yaml
 ---
 id: "1"
-name: API v2 Migration
-slug: api-v2-migration
+title: "API v2 Migration"
+priority: high
 status: active
+created: 2026-03-15
+updated: 2026-03-15
 ---
 
 ## Goal
 What this project aims to achieve.
 
-## In Scope / Out Of Scope
+## In Scope
 Clear boundaries so agents don't over-build.
+
+## Out Of Scope
+Work that belongs elsewhere.
 
 ## Candidate Task Seeds
 Ideas for tasks that haven't been created yet.
@@ -180,6 +188,12 @@ Ideas for tasks that haven't been created yet.
 
 When an agent runs an `investigate` or `plan` mode task, it saves findings to `.track/plans/`. Plans have a 7-day auto-expiry — they capture decisions and context for the current work, not permanent documentation.
 
+### Specs, hooks, and event logs
+
+Track keeps durable protocol and design docs in `.track/specs/`. The canonical activity wire format lives in `.track/specs/event-contract.md`.
+
+Track also keeps an append-only local activity log at `.track/events/log.jsonl`. The `commit-msg` hook enforces conventional commits, and the `post-commit` hook writes `track.commit` events. Untracked activity is still recorded — attribution can be added later by linking a branch back to a task.
+
 ### Status lifecycle
 
 Status is driven by Git and GitHub, not manual updates:
@@ -188,9 +202,9 @@ Status is driven by Git and GitHub, not manual updates:
 todo ──→ active (draft PR opened) ──→ review (PR marked ready) ──→ done (PR merged)
 ```
 
-Track distinguishes between **raw status** (the `status:` field in the task file) and **effective status** (derived from raw status + GitHub PR state). An agent sets `status: active` and opens a draft PR. When it marks the PR ready for review, the effective status becomes `review`. When the PR merges, a GitHub Action automatically sets `status: done` and records the PR URL.
+Track distinguishes between **raw status** (the `status:` field in the task file) and **effective status** (derived from raw status + GitHub PR state). An agent sets `status: active` and opens a draft PR. When it marks the PR ready for review, the effective status becomes `review`. When the PR merges, a GitHub Action automatically sets `status: done`, records the PR URL, unblocks dependency-cleared tasks, and refreshes the generated views.
 
-This means status is always accurate — it reflects what actually happened in Git, not what someone remembered to update.
+This means status is always accurate — it reflects what actually happened in Git, not what someone remembered to update. Explicit `blocked` tasks remain blocked until the blocking condition is cleared. Untracked activity still lands in the event log even before it is attributed to a task.
 
 ### File scope enforcement
 
@@ -245,7 +259,7 @@ skip the extra worktree.
 
 ### `/track:init` — Set up Track in your repo
 
-Scaffolds the entire Track system into your repo: creates `.track/` with all subdirectories, copies enforcement scripts, installs three GitHub Actions workflows (validation, PR lint, post-merge completion), updates your `CLAUDE.md` and `AGENTS.md` with the Track-managed protocol block, and adds `BOARD.md`, `TODO.md`, and `PROJECTS.md` to `.gitignore`.
+Scaffolds the entire Track system into your repo: creates `.track/` with all subdirectories, copies enforcement scripts, installs commit hooks, installs four GitHub Actions workflows (validation, PR lint, conventional-commit lint, post-merge completion), updates your `CLAUDE.md` and `AGENTS.md` with the Track-managed protocol block, and adds `BOARD.md`, `TODO.md`, and `PROJECTS.md` to `.gitignore`.
 
 If it finds existing markdown files with TODO lists, roadmaps, or task-like content, it offers to import them as Track tasks — extracting structure, inferring priority and mode, and letting you pick which items to keep. If there's nothing to import, it creates a starter onboarding project to help you migrate from your current tool (Linear, Jira, Notion, or plain notes).
 
@@ -304,15 +318,16 @@ Refreshes the installed Track skill clone on your machine. This skill also auto-
 
 ## GitHub Actions
 
-Track installs three workflows that automate the lifecycle:
+Track installs four workflows that automate the lifecycle:
 
 | Workflow | Trigger | What it does |
 |----------|---------|-------------|
 | `track-validate.yml` | Every push | Runs validation against all `.track/` files |
 | `track-pr-lint.yml` | Pull request | Validates task linkage (PR body, labels, title) and task file existence |
-| `track-complete.yml` | PR merged | Sets `status: done`, records the PR URL, updates the date |
+| `conventional-commit-lint.yml` | Pull request | Validates all commits in the PR range against conventional commit format |
+| `track-complete.yml` | PR merged | Sets `status: done`, records the PR URL, cascades dependency unblocks, and regenerates Track views |
 
-These workflows close the loop — status stays accurate without anyone remembering to update it.
+These workflows close the loop — status stays accurate without anyone remembering to update it. `/track:init` can also apply a GitHub Ruleset that requires `track-validate`, `track-pr-lint`, and `conventional-commit-lint` before merges to `main` or `master`.
 
 ## Works everywhere
 
@@ -356,9 +371,7 @@ Track's protocol is simple enough for any project: book writing, research, home 
 
 **Free forever:** Single-repo coordination, all agent platforms, bash scripts, the full protocol.
 
-**Coming (Track Pro):** Cross-repo dashboards, team analytics, Slack notifications, audit trails.
-
-**Coming (Track for Teams):** Approval workflows, permissions, compliance reporting.
+**Future (Cloud):** Cross-repo dashboards, team analytics, notifications, and multi-repo coordination live in a separate future Cloud product. The OSS repo stays focused on the local protocol: markdown, bash, hooks, and workflows.
 
 ## License
 

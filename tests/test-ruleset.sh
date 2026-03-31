@@ -109,11 +109,11 @@ assert_contains 'last push approval is not required' '"require_last_push_approva
 assert_contains 'review thread resolution is not required' '"required_review_thread_resolution": false'
 
 assert_contains 'strict status check policy is enabled' '"strict_required_status_checks_policy": true'
-assert_count 'contains exactly two status check contexts' '"context": ' 2
+assert_count 'contains exactly three status check contexts' '"context": ' 3
 assert_contains 'requires track-validate status check' '"context": "track-validate"'
 assert_contains 'requires track-pr-lint status check' '"context": "track-pr-lint"'
+assert_contains 'requires conventional commit lint status check' '"context": "conventional-commit-lint"'
 
-assert_not_contains 'does not require conventional commit lint' 'conventional-commit-lint'
 assert_not_contains 'does not pin integration id' 'integration_id'
 assert_not_contains 'does not restrict merge methods' 'allowed_merge_methods'
 assert_not_contains 'does not require specific reviewers' 'required_reviewers'

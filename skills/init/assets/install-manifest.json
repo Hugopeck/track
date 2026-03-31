@@ -11,6 +11,11 @@
       "executable": true
     },
     {
+      "source": "skills/validate/scripts/track-conventional-commit-lint.sh",
+      "dest": ".track/scripts/track-conventional-commit-lint.sh",
+      "executable": true
+    },
+    {
       "source": "skills/todo/scripts/track-todo.sh",
       "dest": ".track/scripts/track-todo.sh",
       "executable": true
@@ -34,6 +39,10 @@
     {
       "source": "skills/init/assets/workflows/track-pr-lint.yml",
       "dest": ".github/workflows/track-pr-lint.yml"
+    },
+    {
+      "source": "skills/init/assets/workflows/conventional-commit-lint.yml",
+      "dest": ".github/workflows/conventional-commit-lint.yml"
     },
     {
       "source": "skills/init/assets/workflows/track-complete.yml",

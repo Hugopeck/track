@@ -123,18 +123,17 @@ track/                              # repo root
 │   │       ├── track-pr-lint.sh
 │   │       └── track-complete.sh
 │   ├── validate/
-│   │   ├── SKILL.md
 │   │   └── scripts/
-│   │       └── track-validate.sh
+│   │       ├── track-validate.sh
+│   │       └── track-conventional-commit-lint.sh
 │   ├── todo/
-│   │   ├── SKILL.md
+│   │   ├── SKILL.md                 # ships /track:refresh-track
 │   │   └── scripts/
 │   │       └── track-todo.sh
 │   ├── create/SKILL.md
 │   ├── decompose/SKILL.md
-│   ├── test/SKILL.md
-│   ├── update-track/SKILL.md
-│   └── runtime/                    # internal shared support, not a skill
+│   ├── update-track/SKILL.md        # ships /update-skills
+│   └── runtime/                     # internal shared support, not a skill
 │       └── scripts/
 │           └── track-common.sh
 │
@@ -151,7 +150,7 @@ track/                              # repo root
 ### Naming conventions
 
 - Repo name usually matches the project/domain (`track`, `archeia`).
-- Skills are peers named for capabilities or workflows (`init`, `work`, `validate`, `todo`).
+- Skills are peers named for capabilities or workflows (`init`, `work`, `create`, `decompose`). Utility skills may keep implementation-oriented directory names (`todo/` ships `/track:refresh-track`, `update-track/` ships `/update-skills`).
 - Project prefixes are optional; use them only when they improve clarity or prevent collisions.
 
 Auto-loading is not hierarchy. In Track, `work` auto-loads in repos with `.track/`,
@@ -236,9 +235,12 @@ track/
 └── skills/
     ├── init/
     ├── work/
-    ├── validate/
-    ├── todo/
-    └── update-track/
+    ├── create/
+    ├── decompose/
+    ├── todo/          # ships /track:refresh-track
+    ├── update-track/  # ships /update-skills
+    ├── validate/      # script-only runtime owner
+    └── runtime/       # internal shared support
 ```
 
 No tests, no CI, no AGENTS.md, no dev docs. Just the skills. And symlinks in `~/.agents/skills/` point to each one.

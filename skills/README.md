@@ -19,8 +19,7 @@ Skills are the instruction layer. Scripts (in `.track/scripts/`) are the enforce
 
 These directories still ship runtime assets, but they are not user-invocable skills because they no longer contain `SKILL.md`:
 
-- `skills/validate/` — owns `track-validate.sh`
-- `skills/test/` — owns internal repo test assets only
+- `skills/validate/` — owns `track-validate.sh` and `track-conventional-commit-lint.sh`
 - `skills/runtime/` — shared runtime helpers such as `track-common.sh`
 
 ## Directory conventions
@@ -59,7 +58,7 @@ Each skill declares its allowed tools in the YAML frontmatter. This controls wha
 | refresh-track | x | x | | | | | |
 | update-skills | x | x | | | | | |
 
-Notable: `refresh-track` and `update-skills` are narrow bash-first utility skills. `validate` and `test` remain available through scripts, not slash commands.
+Notable: `refresh-track` and `update-skills` are narrow bash-first utility skills. Validation remains available through scripts and workflows, not slash commands.
 
 ### Auto-loading
 
