@@ -69,12 +69,6 @@ make_commit() {
   git -C "$repo" commit -q -m "$msg"
 }
 
-# Run the post-commit hook in a given repo with TRACK_BIN forced to absent path
-run_fallback() {
-  local repo="$1"
-  TRACK_BIN="/nonexistent/track" bash "$HOOK" 2>/dev/null
-}
-
 printf 'Running post-commit event contract tests...\n\n'
 
 # ── Hook is executable ──────────────────────────────────────────────────────
@@ -95,13 +89,13 @@ fi
 
 # ── Fallback: fires only when .track/events/ exists ─────────────────────────
 
-printf '\n── Fallback path: directory guard ──\n'
+printf '\n── Directory guard ──\n'
 
 repo="$(setup_git_repo)"
 make_commit "$repo" "feat: initial commit" "src/main.sh"
 # Remove .track/events/ — hook should not create the log
 rm -rf "$repo/.track"
-(cd "$repo" && TRACK_BIN="/nonexistent/track" bash "$HOOK" 2>/dev/null) || true
+(cd "$repo" && bash "$HOOK" 2>/dev/null) || true
 if [[ ! -f "$repo/.track/events/log.jsonl" ]]; then
   pass 'no log written when .track/events/ absent'
 else
@@ -111,11 +105,11 @@ rm -rf "$repo"
 
 # ── Fallback: valid JSON event for conventional commit ───────────────────────
 
-printf '\n── Fallback path: JSON output ──\n'
+printf '\n── JSON output ──\n'
 
 repo="$(setup_git_repo)"
 make_commit "$repo" "feat(auth): add JWT validation" "src/auth.sh" "tests/auth.sh"
-(cd "$repo" && TRACK_BIN="/nonexistent/track" bash "$HOOK" 2>/dev/null) || true
+(cd "$repo" && bash "$HOOK" 2>/dev/null) || true
 
 LOG="$repo/.track/events/log.jsonl"
 
@@ -146,7 +140,7 @@ assert_contains 'cc.scope is auth'               '"scope":"auth"'               
 assert_contains 'cc.subject correct'             '"subject":"add JWT validation"' "$LINE"
 assert_contains 'cc.breaking is false'           '"breaking":false'              "$LINE"
 
-# Should NOT contain attribution fields (those are server-enriched)
+# Should NOT contain attribution fields (those are added by future consumers)
 assert_not_contains 'no task_id field'           '"task_id"'                     "$LINE"
 assert_not_contains 'no attribution_source'      '"attribution_source"'          "$LINE"
 
@@ -175,11 +169,11 @@ rm -rf "$repo"
 
 # ── Fallback: breaking change ────────────────────────────────────────────────
 
-printf '\n── Fallback path: breaking change ──\n'
+printf '\n── Breaking change ──\n'
 
 repo="$(setup_git_repo)"
 make_commit "$repo" "feat(api)!: remove legacy endpoint" "src/api.sh"
-(cd "$repo" && TRACK_BIN="/nonexistent/track" bash "$HOOK" 2>/dev/null) || true
+(cd "$repo" && bash "$HOOK" 2>/dev/null) || true
 
 LINE="$(tail -1 "$repo/.track/events/log.jsonl")"
 assert_contains 'breaking is true'  '"breaking":true'  "$LINE"
@@ -188,11 +182,11 @@ rm -rf "$repo"
 
 # ── Fallback: no scope (null) ────────────────────────────────────────────────
 
-printf '\n── Fallback path: no scope ──\n'
+printf '\n── No scope (null) ──\n'
 
 repo="$(setup_git_repo)"
 make_commit "$repo" "fix: correct off-by-one error" "src/util.sh"
-(cd "$repo" && TRACK_BIN="/nonexistent/track" bash "$HOOK" 2>/dev/null) || true
+(cd "$repo" && bash "$HOOK" 2>/dev/null) || true
 
 LINE="$(tail -1 "$repo/.track/events/log.jsonl")"
 assert_contains 'scope is null when absent' '"scope":null' "$LINE"
@@ -201,11 +195,11 @@ rm -rf "$repo"
 
 # ── Fallback: non-conventional commit skipped ────────────────────────────────
 
-printf '\n── Fallback path: non-conventional commit ──\n'
+printf '\n── Non-conventional commit ──\n'
 
 repo="$(setup_git_repo)"
 make_commit "$repo" "Update the readme file" "README.md"
-(cd "$repo" && TRACK_BIN="/nonexistent/track" bash "$HOOK" 2>/dev/null) || true
+(cd "$repo" && bash "$HOOK" 2>/dev/null) || true
 
 LOG="$repo/.track/events/log.jsonl"
 if [[ ! -f "$LOG" ]] || [[ ! -s "$LOG" ]]; then
@@ -216,54 +210,6 @@ else
 fi
 rm -rf "$repo"
 
-# ── Binary path: delegates when binary is present ───────────────────────────
-#
-# Strategy: when the binary is present, the fallback log must NOT be written.
-# We also verify the binary receives "emit post-commit" as arguments by
-# having the mock write a flag file synchronously (foreground wait via wait $!).
-
-printf '\n── Binary path: delegation ──\n'
-
-repo="$(setup_git_repo)"
-make_commit "$repo" "feat: test binary delegation" "src/test.sh"
-
-# Mock track binary: writes arguments to a flag file and exits
-mock_bin="$(mktemp)"
-mock_record="$(mktemp)"
-cat > "$mock_bin" << 'MOCK'
-#!/usr/bin/env bash
-printf 'called: %s\n' "$*" > "${MOCK_RECORD_PATH}"
-MOCK
-chmod +x "$mock_bin"
-
-(cd "$repo" && MOCK_RECORD_PATH="$mock_record" TRACK_BIN="$mock_bin" bash "$HOOK" 2>/dev/null) || true
-
-# Background job: poll briefly for the flag file to be written (max ~1s)
-i=0
-while [[ $i -lt 10 ]] && ! grep -q 'called' "$mock_record" 2>/dev/null; do
-  sleep 0.1
-  i=$((i + 1))
-done
-
-MOCK_OUTPUT="$(cat "$mock_record" 2>/dev/null || true)"
-if [[ "$MOCK_OUTPUT" == "called: emit post-commit" ]]; then
-  pass 'binary called with emit post-commit'
-else
-  fail 'binary called with emit post-commit'
-  printf '    got: [%s]\n' "$MOCK_OUTPUT"
-fi
-
-# Fallback log must NOT be written when binary path is taken
-LOG="$repo/.track/events/log.jsonl"
-if [[ ! -f "$LOG" ]] || [[ ! -s "$LOG" ]]; then
-  pass 'fallback log not written when binary is present'
-else
-  fail 'fallback log not written when binary is present'
-fi
-
-rm -f "$mock_bin" "$mock_record"
-rm -rf "$repo"
-
 # ── Hook always exits 0 ──────────────────────────────────────────────────────
 
 printf '\n── Hook exit code ──\n'
@@ -271,7 +217,7 @@ printf '\n── Hook exit code ──\n'
 repo="$(setup_git_repo)"
 make_commit "$repo" "feat: exit code test" "src/x.sh"
 exit_code=0
-(cd "$repo" && TRACK_BIN="/nonexistent/track" bash "$HOOK" 2>/dev/null) || exit_code=$?
+(cd "$repo" && bash "$HOOK" 2>/dev/null) || exit_code=$?
 assert_eq 'hook exits 0 (never blocks commit)' "0" "$exit_code"
 rm -rf "$repo"
 
@@ -281,7 +227,7 @@ printf '\n── JSON line format ──\n'
 
 repo="$(setup_git_repo)"
 make_commit "$repo" "docs(readme): update install instructions" "README.md"
-(cd "$repo" && TRACK_BIN="/nonexistent/track" bash "$HOOK" 2>/dev/null) || true
+(cd "$repo" && bash "$HOOK" 2>/dev/null) || true
 
 LOG="$repo/.track/events/log.jsonl"
 LINE_COUNT="$(wc -l < "$LOG" | tr -d ' ')"

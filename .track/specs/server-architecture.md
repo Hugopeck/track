@@ -1,6 +1,6 @@
 ---
 title: "Local Track Server Architecture"
-status: draft
+status: superseded
 created: 2026-03-30
 updated: 2026-03-30
 task_id: "8.9"
@@ -9,7 +9,9 @@ project_id: "8"
 
 # Local Track Server Architecture
 
-This spec defines the architecture of the Track local runtime server — a Bun/TypeScript HTTP server that ingests activity events, attributes them to tasks, and serves a dashboard. It is the centerpiece of Track OSS.
+> **Status: Superseded.** This spec was produced as task 8.9 and is retained as reference for a future Cloud product. It is not actively planned for implementation. See `.track/plans/track-oss-alignment.md` for the decision rationale.
+
+This spec defines the architecture of a Bun/TypeScript HTTP server that would ingest activity events, attribute them to tasks, and serve a dashboard.
 
 For wire event payloads consumed by this server, see [event-contract.md](event-contract.md).
 

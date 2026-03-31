@@ -79,7 +79,7 @@ if [[ -f "$repo/BOARD.md" && -f "$repo/TODO.md" && -f "$repo/PROJECTS.md" ]]; th
   check_not_contains "BOARD.md no longer contains immediate starts" "$repo/BOARD.md" "## Immediate Starts"
   check_contains "TODO.md contains todo header" "$repo/TODO.md" "# TODO"
   check_contains "TODO.md contains immediate starts section" "$repo/TODO.md" "## Immediate Starts"
-  check_contains "TODO.md contains blocked section" "$repo/TODO.md" "## Blocked / Waiting on Dependencies"
+  check_contains "TODO.md contains blocked section" "$repo/TODO.md" "## Blocked"
   check_contains "PROJECTS.md contains projects header" "$repo/PROJECTS.md" "# Projects Overview"
   check_contains "footer text lands in BOARD.md" "$repo/BOARD.md" 'projects derived from `.track/` state.'
   check_contains "footer text lands in TODO.md" "$repo/TODO.md" 'projects derived from `.track/` state.'

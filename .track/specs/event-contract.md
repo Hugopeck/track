@@ -1,24 +1,22 @@
 # Event Contract
 
-This document defines the event contract used by Track components in this repository. Emitters produce wire events; the local runtime enriches them with attribution.
+This document defines the event contract used by Track components in this repository. Emitters produce wire events to the JSONL activity log. Future consumers (batch scripts, Cloud) may enrich them with attribution.
 
 ## Scope
 
-This spec defines the v1 event interface between Track's local emitters and the future local runtime described by project 8.
+This spec defines the v1 event interface between Track's local emitters and the JSONL activity log. Future consumers (batch attribution scripts, Cloud services) may also read this format.
 
 ### In scope
 
 - Wire event payloads emitted by hooks, skills, and scripts
 - Shared envelope fields across all event types
-- Runtime-enriched attribution results stored alongside ingested events
-- LLM attribution interface for ambiguous or unmatched events
+- Attribution result model for enriched events
 - Versioning and compatibility rules for future extensions
 
 ### Non-goals
 
 - Hook implementation details
-- Server implementation details beyond the public ingestion contract
-- Response body semantics for `POST /events`
+- Server or runtime implementation details
 - Executable event contract tests
 
 ## Contract Role
@@ -27,18 +25,16 @@ Use this document as the canonical contract between:
 
 - Git hooks that emit activity
 - Skills and scripts that emit lifecycle events
-- The future local Track runtime that ingests and enriches those events
+- Batch attribution scripts and future Cloud services that consume the log
 
 This is an internal interface for this repository. It is not a cross-repository boundary.
 
-## Transport Contract
+## Storage Contract
 
-- Endpoint: `POST /events`
-- Content type: `application/json`
-- Request body: a JSON object matching one of the six wire-event schemas in this document
-- Success contract for emitters: any `2xx` response means the event was accepted
-- Failure contract for emitters: any non-`2xx` response or network failure allows emitter-specific local fallback behavior
-- Response body: intentionally unspecified in v1
+- Format: JSONL (one JSON object per line)
+- Location: `.track/events/log.jsonl` (gitignored)
+- Append-only: emitters append; consumers read
+- Each line matches one of the six wire-event schemas in this document
 
 ## Common Wire Event Envelope
 
@@ -111,7 +107,7 @@ All v1 wire events share the same required top-level fields:
 
 ## `track.commit`
 
-Purpose: record a repository commit with enough context for deterministic or LLM-based attribution.
+Purpose: record a repository commit with enough context for deterministic attribution.
 
 ### Example
 
@@ -485,7 +481,7 @@ Semantics: v1 supports retroactive linking for current branch history only. This
 
 ## Attribution Result Model
 
-The local runtime enriches ingested events with attribution after receipt. This attribution model is separate from the wire payloads above.
+Future consumers (batch scripts, Cloud) may enrich events with attribution after ingestion. This attribution model is separate from the wire payloads above.
 
 ### Attribution semantics
 
@@ -525,40 +521,6 @@ The local runtime enriches ingested events with attribution after receipt. This 
 }
 ```
 
-## LLM Interface
-
-The future local runtime uses an OpenAI-compatible attribution endpoint for ambiguous or unmatched events.
-
-### Required configuration
-
-- `base_url`
-- `api_key`
-- `model`
-
-### Request contract
-
-- Endpoint: `POST {base_url}/v1/chat/completions`
-- Transport: raw HTTP request semantics
-- Compatibility target: OpenAI-compatible chat completions API
-- Provider-specific SDKs and provider-specific request shapes are out of scope for this contract
-
-### Logical input
-
-- The current event payload
-- The active task list
-- Task metadata required for matching
-- The deterministic matching result, when present
-
-### Logical output
-
-- `task_id` — string or `null`
-- `confidence` — number in `[0, 1]`
-- `reasoning` — short string
-
-### Attribution threshold
-
-Attribute an event only when `confidence > 0.8`. Otherwise, store the event as untracked.
-
 ## Versioning and Compatibility
 
 - `version` is a string and begins at `"1"`
@@ -571,4 +533,4 @@ Attribute an event only when `confidence > 0.8`. Otherwise, store the event as u
 
 - Task `8.3` implements hook emitters against the wire event schemas in this document
 - Task `8.5` emits `track.task.started` and `track.link`
-- Task `8.9` defines the local runtime and storage model that consume these payloads and enrich them with attribution
+- Server architecture spec (`.track/specs/server-architecture.md`, superseded) describes a future runtime that would consume these payloads

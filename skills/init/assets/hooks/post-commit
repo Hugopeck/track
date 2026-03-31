@@ -4,25 +4,11 @@
 # Requires bash 3.2+
 #
 # Behavior:
-#   1. If ~/.track/bin/track is installed: delegate to `track emit post-commit` (fire-and-forget)
-#   2. Otherwise: append a minimal JSON event to .track/events/log.jsonl as offline fallback
+#   Appends a JSON event to .track/events/log.jsonl for every conventional commit.
 #
 # Never blocks the commit. All errors are silently swallowed.
 
 _track_post_commit() {
-  local TRACK_BIN="${TRACK_BIN:-${HOME}/.track/bin/track}"
-
-  # Primary path: delegate to installed track binary
-  if [[ -x "$TRACK_BIN" ]]; then
-    "$TRACK_BIN" emit post-commit &
-    return 0
-  fi
-
-  # Fallback path: write minimal JSON event to local log
-  _track_post_commit_fallback
-}
-
-_track_post_commit_fallback() {
   local repo_root branch commit_sha timestamp repo
   local commit_msg cc_type cc_scope cc_scope_json cc_subject cc_breaking
   local changed_files files_json file log_file log_dir
@@ -85,11 +71,11 @@ _track_post_commit_fallback() {
     if [[ "$rest" == ': '* ]]; then
       cc_subject="${rest#': '}"
     else
-      # Not a valid conventional commit — skip fallback emit
+      # Not a valid conventional commit — skip emit
       return 0
     fi
   else
-    # Not a conventional commit — skip fallback emit
+    # Not a conventional commit — skip emit
     return 0
   fi
 
