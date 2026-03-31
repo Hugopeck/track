@@ -61,6 +61,11 @@ assert_accept 'test with scope'                'test(auth): add integration test
 assert_accept 'ci with scope'                  'ci(github): add release workflow'
 assert_accept 'chore with scope'               'chore(deps): bump lodash to 4.17.21'
 
+assert_accept 'perf with description'          'perf: reduce startup time'
+assert_accept 'build with description'         'build: update webpack config'
+assert_accept 'style with description'         'style: fix indentation'
+assert_accept 'revert with description'        'revert: undo broken deploy'
+
 assert_accept 'feat breaking no scope'         'feat!: remove legacy API'
 assert_accept 'feat breaking with scope'       'feat(api)!: breaking change to response'
 assert_accept 'fix breaking with scope'        'fix(auth)!: change token format'
@@ -83,8 +88,8 @@ printf '\n── Reject cases ──\n'
 assert_reject 'no type prefix'                 'add new feature'
 assert_reject 'invalid type feature'           'feature: add new feature'
 assert_reject 'invalid type update'            'update: change something'
-assert_reject 'invalid type build'             'build: compile assets'
-assert_reject 'invalid type perf'              'perf: speed improvement'
+assert_reject 'invalid type wip'               'wip: work in progress'
+assert_reject 'invalid type security'          'security: patch vulnerability'
 
 assert_reject 'missing colon'                  'feat add new feature'
 assert_reject 'missing space after colon'      'feat:add new feature'

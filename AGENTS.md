@@ -84,6 +84,10 @@ type(scope): description
 | `test` | Adding or updating tests | — |
 | `ci` | CI/workflow changes | — |
 | `chore` | Maintenance (deps, config) | — |
+| `perf` | Performance improvement | patch |
+| `style` | Formatting, whitespace (no logic change) | — |
+| `build` | Build system or external dependency changes | — |
+| `revert` | Reverts a previous commit | patch |
 
 Common scopes: `track`, `init`, `skills`, `scripts`, `tests`, `docs`, `ci`
 
@@ -208,7 +212,6 @@ The agent interpolates from the example better than from abstract criteria.
 - Adopting repos are self-contained — they never depend on this skill project at runtime
 - The skills teach agents the Track protocol; the scripts enforce it
 - bash 3.2+ compatibility required (macOS default)
-
 <!-- TRACK:START -->
 ## Track — Task Coordination
 
@@ -284,6 +287,13 @@ Append-only log.
 - `post-commit` writes `track.commit` events to the JSONL activity log and never blocks the commit
 - GitHub workflows validate task linkage, lint PR commit history, complete merged tasks, cascade dependency unblocks, and regenerate Track views
 - `/track:init` can also apply a GitHub Ruleset that requires `track-validate`, `track-pr-lint`, and `conventional-commit-lint`
+- Default allowed commit types: `feat`, `fix`, `docs`, `refactor`, `test`, `ci`, `chore`, `perf`, `style`, `build`, `revert`. Override per-repo via `.track/config.yml`:
+  ```yaml
+  commit_types:
+    - feat
+    - fix
+    - custom-type
+  ```
 
 ### Agent Protocol (primary)
 
@@ -423,3 +433,4 @@ bash .track/scripts/track-validate.sh
 
 **Commands not showing up?** Re-run `~/.local/share/agent-skills/track/install.sh` to refresh the skill symlinks, then restart the agent session.
 <!-- TRACK:END -->
+
