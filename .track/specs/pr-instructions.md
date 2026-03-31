@@ -7,121 +7,146 @@ updated: 2026-03-31
 
 ## Track PR Instructions
 
-**Read before writing anything:**
-1. Run `bash .track/scripts/track-validate.sh` — fix any errors before continuing.
-2. Run `git diff HEAD` and `mcp__conductor__GetWorkspaceDiff` — understand all changes.
-3. Scan `.track/tasks/*.md` for tasks whose `files:` globs overlap the changed files.
+Use this when opening or updating a PR in a repo with `.track/`.
+Goal: link the PR to the right task, keep task status in sync, and avoid overlapping work.
 
 ---
 
-**Step 1 — Classify the PR. Pick exactly one:**
+## 1. Preflight
 
-- **TRACKED** — at least one `.track/` task directly covers these changes
-- **UNTRACKED** — no task covers this work (dogfooding, hotfix, infra chore)
+1. Run `bash .track/scripts/track-validate.sh`.
+2. Review the current diff with `git diff HEAD`.
+3. Check `.track/tasks/*.md` for tasks whose `files:` globs overlap the changed files.
 
-Do not proceed without committing to one of these. No "maybe" bucket.
-
----
-
-**Step 2 — If TRACKED: identify the primary task**
-
-- The primary task is the one whose `files:` scope best matches the bulk of changes.
-- If multiple tasks qualify, pick the one with the highest priority. Note the others as `Also-Completed` candidates (max 2, only if fully resolved).
-- Read `## Context` and `## Acceptance Criteria` in the task file. Verify every criterion is met — cite the file and line, or flag as unverified. Do not claim "criteria met" without evidence.
+If validation fails, stop and fix it before continuing.
 
 ---
 
-**Step 3 — Set task status before committing**
+## 2. Classify the PR
 
-- Opening a **draft PR** → set `status: active` in the task file
-- Opening a **ready-for-review PR** → set `status: review` in the task file
-- CI enforces this match. Wrong status = failing check.
-- Update `updated:` to today's date.
-- Commit the task file update as the first commit, or include it in the final commit.
+Pick exactly one:
+
+- **TRACKED** — at least one task covers this work
+- **UNTRACKED** — no task covers this work
+
+Do not use a third category.
 
 ---
 
-**Step 4 — Write the commit message(s)**
+## 3. If TRACKED: choose the task
 
-Required format (CI enforces):
-```
+1. Pick one **primary task** whose `files:` scope best matches most of the diff.
+2. Optional: add up to 2 `Also-Completed` tasks, but only if they are fully resolved.
+3. Read the task's `## Context` and `## Acceptance Criteria`.
+4. Verify each acceptance criterion with evidence. If you cannot verify one, leave it unresolved.
+
+Do not mark partially addressed work as `Also-Completed`.
+
+---
+
+## 4. Sync task status with PR state
+
+Before opening or updating the PR:
+
+- Draft PR → set task `status: active`
+- Ready-for-review PR → set task `status: review`
+- Update `updated:` to today's date
+
+Track's generated views use the open PR plus the task file together. If they drift, status will look wrong.
+
+---
+
+## 5. Write commit messages
+
+Use conventional commits:
+
+```text
 type(scope): description
-
-Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 ```
 
-| type | when |
-|------|------|
-| `feat` | new user-facing capability |
-| `fix` | bug fix |
-| `docs` | documentation only |
-| `ci` | CI/workflow changes |
-| `chore` | maintenance, deps, config |
-| `test` | tests only |
-| `refactor` | no behavior change |
-| `perf` | performance improvement |
-| `style` | formatting, whitespace (no logic change) |
-| `build` | build system or dependency changes |
-| `revert` | reverts a previous commit |
+Default allowed types:
 
-Override per-repo via `.track/config.yml` `commit_types` list.
+- `feat`
+- `fix`
+- `docs`
+- `refactor`
+- `test`
+- `ci`
+- `chore`
+- `perf`
+- `style`
+- `build`
+- `revert`
 
-Scope = directory or subsystem (`init`, `scripts`, `skills`, `tests`, `ci`).
+Repo-local overrides may exist in `.track/config.yml` under `commit_types:`.
 
-BAD: `"Update stuff"` — missing type prefix, CI rejects it
-BAD: `"feat: add task support"` — vague, no scope
-GOOD: `"feat(scripts): [7.4] support explicit multi-task PR batching"`
+Use a real subsystem for `scope`, such as `init`, `skills`, `scripts`, `tests`, `docs`, or `ci`.
+
+BAD: `Update stuff`
+BAD: `feat: add task support`
+GOOD: `feat(validate): [1.4] configurable commit types in conventional-commit-lint`
+
+`Co-Authored-By` lines are optional. Track does not require them.
 
 ---
 
-**Step 5 — Push and create the PR**
+## 6. Create the PR
 
-Push the branch, then run `gh pr create --base main`.
+Push the branch, then create the PR.
 
-**Title format** (under 80 chars, CI-enforced conventional commit):
-```
+Prefer a conventional-commit PR title that includes the task ID:
+
+```text
 type(scope): [task-id] short description
 ```
 
-BAD: `"Add thing"` — no type, no task ID
-GOOD: `"fix(validate): [8.2] correct scope matching for nested globs"`
+Example:
 
-**Body format:**
-
-If branch is named `task/{id}-{slug}` — CI resolves the task from branch name, no header needed. Still recommended to add `Track-Task:` for clarity.
-
-If branch is NOT a task branch — `Track-Task: {id}` MUST be on line 1 of the body.
-
+```text
+fix(validate): [8.2] correct scope matching for nested globs
 ```
+
+### Body rules
+
+- If the branch is **not** named `task/{id}-{slug}`, line 1 of the body must be `Track-Task: {id}`.
+- If the branch **is** named `task/{id}-{slug}`, Track can resolve from the branch name, but adding `Track-Task:` is still preferred.
+- Use at most one `Track-Task:` line.
+- Add `Also-Completed:` only for tasks that are fully complete.
+
+Tracked template:
+
+```text
 Track-Task: 8.2
 Also-Completed: 8.1
 
 ## Summary
-One paragraph. What changed and why. All changes in the workspace diff, not just this session.
+One short paragraph covering the full PR diff.
 
 ## Test plan
-- [ ] Specific thing to verify
-- [ ] Another thing
+- [ ] Specific verification step
+- [ ] Another verification step
 ```
 
-If UNTRACKED:
-```
+Untracked template:
+
+```text
 untracked task
 
 ## Summary
-...
+One short paragraph covering the full PR diff.
 
 ## Test plan
-...
+- [ ] Specific verification step
 ```
-
-**Never:**
-- Multiple `Track-Task:` lines
-- `Also-Completed` for partially addressed work
-- Claiming task complete without verifying acceptance criteria
 
 ---
 
-**Step 6 — After PR is created**
+## 7. After PR creation
 
-Run `bash .track/scripts/track-todo.sh --local --offline` and confirm the task shows the correct effective status in the output.
+Run:
+
+```bash
+bash .track/scripts/track-todo.sh --local --offline
+```
+
+Confirm the task shows the expected effective status.

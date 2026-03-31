@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 FIXTURE_DIR="$SCRIPT_DIR/fixtures"
 COMMON_SCRIPT="$SCRIPT_DIR/../skills/runtime/scripts/track-common.sh"
 COMPLETE_SCRIPT="$SCRIPT_DIR/../skills/work/scripts/track-complete.sh"
+WRITEBACK_SCRIPT="$SCRIPT_DIR/../skills/work/scripts/track-complete-writeback.sh"
 COMPLETE_WORKFLOW="$SCRIPT_DIR/../skills/init/assets/workflows/track-complete.yml"
 PASS=0
 FAIL=0
@@ -154,6 +155,18 @@ if grep -Fq -- 'bash .track/scripts/track-todo.sh --local --offline >/dev/null' 
   pass 'complete workflow regenerates Track views'
 else
   fail 'complete workflow regenerates Track views'
+fi
+
+if grep -Fq -- 'bash .track/scripts/track-complete-writeback.sh' "$COMPLETE_WORKFLOW"; then
+  pass 'complete workflow delegates writeback to helper'
+else
+  fail 'complete workflow delegates writeback to helper'
+fi
+
+if [[ -f "$WRITEBACK_SCRIPT" ]]; then
+  pass 'writeback helper script exists'
+else
+  fail 'writeback helper script exists'
 fi
 
 repo="$(setup_repo)"
