@@ -49,22 +49,36 @@ assert_not_contains() {
 
 printf 'Running README install regression tests...\n\n'
 
+# Install path and method
 assert_contains 'README uses shared clone path' "$README_FILE" '~/.local/share/agent-skills/track'
 assert_contains 'README uses install.sh' "$README_FILE" '~/.local/share/agent-skills/track/install.sh'
-assert_contains 'README mentions shared skill symlink dir' "$README_FILE" '~/.agents/skills/'
-assert_contains 'README install prompt is agent-agnostic' "$README_FILE" 'Paste this prompt into your coding agent'
-assert_contains 'README explains worktree workflow' "$README_FILE" 'each active task gets its own branch'
-assert_contains 'README explains parallel agents use git worktrees' "$README_FILE" 'give each one its own git worktree'
-assert_contains 'README includes worktree example' "$README_FILE" 'git worktree add ../repo-7.4 -b task/7.4-pr-lint main'
-assert_contains 'README documents shared repo instructions' "$README_FILE" '## Shared repo instructions'
-assert_contains 'README points CLAUDE.md to AGENTS.md' "$README_FILE" '`CLAUDE.md` stays as a thin pointer to `AGENTS.md`'
-assert_contains 'platform table uses installed skills wording' "$README_FILE" '| Installed skills | Full support via installed skills |'
-assert_contains 'platform table uses AGENTS-aware wording' "$README_FILE" '| `AGENTS.md`-aware agents | Works via repo-root `AGENTS.md` |'
+assert_contains 'README install prompt is agent-agnostic' "$README_FILE" 'Paste this into your coding agent'
+
+# Core sections exist
+assert_contains 'README has features section' "$README_FILE" '## Features'
+assert_contains 'README has quick start section' "$README_FILE" '## Quick Start'
+assert_contains 'README has how it works section' "$README_FILE" '## How It Works'
+assert_contains 'README has commands section' "$README_FILE" '## Commands'
+assert_contains 'README has requirements section' "$README_FILE" '## Requirements'
+assert_contains 'README has community section' "$README_FILE" '## Community'
+assert_contains 'README links to TRACK.md' "$README_FILE" '[TRACK.md](TRACK.md)'
+
+# Key content
+assert_contains 'README mentions file scope coordination' "$README_FILE" 'files:'
+assert_contains 'README mentions draft PR lifecycle' "$README_FILE" 'draft PR'
+assert_contains 'README mentions slash commands' "$README_FILE" '/track:work'
+assert_contains 'README mentions GitHub Actions' "$README_FILE" 'GitHub Actions'
+assert_contains 'README mentions MIT license' "$README_FILE" '[MIT](LICENSE)'
+
+# Track Cloud / open-core framing
+assert_contains 'README has Track Cloud section' "$README_FILE" '## Track Cloud'
+assert_contains 'README states free forever' "$README_FILE" 'free forever'
+
+# Removed content stays removed
 assert_not_contains 'README no longer references opencode.json' "$README_FILE" 'opencode.json'
 assert_not_contains 'README no longer references Conductor' "$README_FILE" 'Conductor'
 assert_not_contains 'README no longer lists Cursor in support table language' "$README_FILE" '| Cursor |'
 assert_not_contains 'README no longer lists OpenCode in support table language' "$README_FILE" '| OpenCode |'
-assert_contains 'troubleshooting uses install.sh refresh' "$README_FILE" 'Re-run `~/.local/share/agent-skills/track/install.sh` to refresh the skill symlinks'
 assert_not_contains 'README no longer references old claude skill path' "$README_FILE" '~/.claude/skills/track'
 assert_not_contains 'README no longer references local setup script' "$README_FILE" '`./setup`'
 assert_not_contains 'README no longer references plugin-dir testing' "$README_FILE" 'claude --plugin-dir ./path/to/track'
