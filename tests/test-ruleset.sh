@@ -110,8 +110,8 @@ assert_contains 'review thread resolution is not required' '"required_review_thr
 
 assert_contains 'strict status check policy is enabled' '"strict_required_status_checks_policy": true'
 assert_count 'contains exactly three status check contexts' '"context": ' 3
-assert_contains 'requires track-validate status check' '"context": "track-validate"'
-assert_contains 'requires track-pr-lint status check' '"context": "track-pr-lint"'
+assert_contains 'requires Track Validate status check' '"context": "Track Validate"'
+assert_contains 'requires Track PR Lint status check' '"context": "Track PR Lint"'
 assert_contains 'requires conventional commit lint status check' '"context": "conventional-commit-lint"'
 
 assert_not_contains 'does not pin integration id' 'integration_id'
