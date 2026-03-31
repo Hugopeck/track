@@ -74,6 +74,15 @@ Commit to one mode at the start. Do not drift.
    ```bash
    cd "$REPO" && git pull --ff-only
    ```
+5.5. Refresh symlinks so any newly added skills become discoverable:
+   ```bash
+   for skill in "$REPO/skills"/*/; do
+     [ -f "$skill/SKILL.md" ] || continue
+     name="$(basename "$skill")"
+     ln -sfn "$skill" "${HOME}/.agents/skills/$name"
+     ln -sfn "$skill" "${HOME}/.claude/skills/$name"
+   done
+   ```
 6. Report the result with one line:
    ```bash
    cd "$REPO" && git describe --tags --always 2>/dev/null || git rev-parse --short HEAD

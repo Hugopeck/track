@@ -173,34 +173,29 @@ into `.track/scripts/` so local commands and GitHub workflows keep stable repo-l
 
 ---
 
-## Installing skills: sparse checkout
+## Installing skills
 
-Your teammates don't need to clone your entire repo. Git sparse checkout lets them pull only the `skills/` directory:
+The install script clones the repo once into a stable location and creates symlinks so every agent client can discover the skills.
 
 ### Install script (include in your repo as `install.sh`)
 
 ```bash
 #!/bin/bash
-# install.sh — Install Track skills via sparse checkout
+# install.sh — Install Track skills via full clone
 set -e
 
 REPO_URL="${1:-https://github.com/hugo/track.git}"
-INSTALL_DIR="${HOME}/.agents/skills"
 CLONE_DIR="${HOME}/.local/share/agent-skills/track"
+INSTALL_DIR="${HOME}/.agents/skills"
 
-mkdir -p "$INSTALL_DIR" "$CLONE_DIR"
+mkdir -p "$INSTALL_DIR"
 
-# Sparse clone: only fetch skills/ directory
 if [ -d "$CLONE_DIR/.git" ]; then
   echo "Updating existing installation..."
   cd "$CLONE_DIR" && git pull --ff-only
 else
   echo "Installing Track skills..."
-  git clone --no-checkout --depth 1 --filter=blob:none "$REPO_URL" "$CLONE_DIR"
-  cd "$CLONE_DIR"
-  git sparse-checkout init --cone
-  git sparse-checkout set skills
-  git checkout
+  git clone "$REPO_URL" "$CLONE_DIR"
 fi
 
 # Symlink each installable skill into the cross-platform discovery path
@@ -209,6 +204,15 @@ for skill in "$CLONE_DIR/skills"/*/; do
   name="$(basename "$skill")"
   ln -sfn "$skill" "$INSTALL_DIR/$name"
   echo "  Installed $name → $INSTALL_DIR/$name"
+done
+
+# Also symlink into Claude Code's native skills path
+CLAUDE_INSTALL_DIR="${HOME}/.claude/skills"
+mkdir -p "$CLAUDE_INSTALL_DIR"
+for skill in "$CLONE_DIR/skills"/*/; do
+  [ -f "$skill/SKILL.md" ] || continue
+  name="$(basename "$skill")"
+  ln -sfn "$skill" "$CLAUDE_INSTALL_DIR/$name"
 done
 
 echo "Done. Skills available on next agent session."
@@ -225,39 +229,25 @@ git clone https://github.com/hugo/track.git /tmp/track
 bash /tmp/track/install.sh
 ```
 
-### What sparse checkout gives you
+### How it works
 
-The teammate's disk at `~/.local/share/agent-skills/track/` contains only:
+The full repo clones once to `~/.local/share/agent-skills/track/`. Symlinks in the discovery paths point into it — lightweight pointers, nothing duplicated. When the `update-skills` skill runs `git pull` in the clone, all symlinks immediately reflect the updated content.
 
 ```text
-track/
-├── .git/              # Minimal git metadata
-└── skills/
-    ├── init/
-    ├── work/
-    ├── create/
-    ├── decompose/
-    ├── todo/          # ships /track:refresh-track
-    ├── update-track/  # ships /update-skills
-    ├── validate/      # script-only runtime owner
-    └── runtime/       # internal shared support
+~/.local/share/agent-skills/track/   ← one real clone (git pull updates this)
+~/.agents/skills/work → ...track/skills/work/    ← cross-client discovery
+~/.claude/skills/work → ...track/skills/work/    ← Claude Code native path
 ```
 
-No tests, no CI, no AGENTS.md, no dev docs. Just the skills. And symlinks in `~/.agents/skills/` point to each one.
-
-Internal support directories can also exist under `skills/`, but only folders
-with `SKILL.md` are installable skills.
+Internal support directories can exist under `skills/`, but only folders with `SKILL.md` are installable skills.
 
 ### Where skills get installed
 
-The `.agents/skills/` path is the cross-client convention:
-
-| Scope         | Path                       | Effect                    |
-| ------------- | -------------------------- | ------------------------- |
-| User-level    | `~/.agents/skills/`        | Available in all projects |
-| Project-level | `<project>/.agents/skills/` | Available in one project  |
-
-Claude Code also scans `~/.claude/skills/`. Use `.agents/skills/` for maximum compatibility.
+| Scope         | Path                        | Effect                   |
+| ------------- | --------------------------- | ------------------------ |
+| User-level    | `~/.agents/skills/`         | Available in all projects (cross-client) |
+| User-level    | `~/.claude/skills/`         | Available in all projects (Claude Code native) |
+| Project-level | `<project>/.agents/skills/` | Available in one project |
 
 ---
 
@@ -678,7 +668,7 @@ Development repos:
 
 Distribution (skills only, no plugin):
 
-  User runs install.sh → sparse checkout → symlinks in ~/.agents/skills/
+  User runs install.sh → full clone → symlinks in ~/.agents/skills/ + ~/.claude/skills/
   User updates via /update-skills or cron
 
 Distribution (plugins, when hooks are needed):
@@ -700,7 +690,7 @@ Distribution (plugins, when hooks are needed):
 3. Create one `SKILL.md` per capability or workflow.
 4. Use `scripts/`, `references/`, and `assets/` only when they carry real content.
 5. If you keep internal support directories under `skills/`, omit `SKILL.md` so discovery skips them.
-6. Include `install.sh` (sparse checkout + symlink) and an `update-<project>` skill.
+6. Include `install.sh` (full clone + symlinks into `~/.agents/skills/` and `~/.claude/skills/`) and an `update-<project>` skill.
 7. Add eval queries in `tests/`.
 8. Tag releases with semver when skills stabilize.
 9. Create plugin repos only when you need hooks, agents, or marketplace distribution.
