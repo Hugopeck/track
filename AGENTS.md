@@ -343,6 +343,19 @@ Track-Task: 7.1
 Also-Completed: 7.2
 ```
 
+### Worktree Workflow
+
+Track works best when each active task gets its own branch. For parallel agents, give each one its own git worktree:
+
+```bash
+git worktree add ../repo-7.4 -b task/7.4-pr-lint main
+cd ../repo-7.4
+```
+
+Track assigns non-overlapping `files:` scopes to each task. Separate worktrees give each agent isolated filesystem state. Together: parallel agents, fewer conflicts, clearer PR ownership.
+
+A single working tree is fine for serial work. The worktree pattern is recommended when running multiple agents simultaneously.
+
 ### Creating a Task
 - Every task belongs to a project and uses `project_id`
 - Open work must use dotted IDs like `1.1`
@@ -397,4 +410,16 @@ bash .track/scripts/track-validate.sh
 - **Scope aggressively.** If a task grows beyond its acceptance criteria, split the new work into a separate task rather than expanding the current one.
 - **Let the PR lifecycle drive status.** Open a draft PR — and set `status: active` in the task file. Mark it ready for review — and set `status: review`. The post-merge workflow handles `status: done` automatically. CI enforces these match.
 - **Validate early and often.** Run `bash .track/scripts/track-validate.sh` after every task file change. Errors caught locally are cheap; errors caught in CI block the team.
+
+### Troubleshooting
+
+**Validation fails?** Run `bash .track/scripts/track-validate.sh` — it tells you exactly what's wrong and where to look.
+
+**Track views are stale?** Run `bash .track/scripts/track-todo.sh` to regenerate. If you're offline: `bash .track/scripts/track-todo.sh --local --offline`
+
+**"gh not found" or PR status missing?** Install `gh` and run `gh auth login`, then retry.
+
+**An agent is not following Track?** Re-run `/track:init` to refresh the Track-managed block in `AGENTS.md`, then start a fresh agent session.
+
+**Commands not showing up?** Re-run `~/.local/share/agent-skills/track/install.sh` to refresh the skill symlinks, then restart the agent session.
 <!-- TRACK:END -->
