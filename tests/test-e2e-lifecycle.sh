@@ -6,6 +6,7 @@ COMMON_SCRIPT="$SCRIPT_DIR/../skills/runtime/scripts/track-common.sh"
 VALIDATE_SCRIPT="$SCRIPT_DIR/../skills/validate/scripts/track-validate.sh"
 TODO_SCRIPT="$SCRIPT_DIR/../skills/todo/scripts/track-todo.sh"
 COMPLETE_SCRIPT="$SCRIPT_DIR/../skills/work/scripts/track-complete.sh"
+TASK_STATUS_SCRIPT="$SCRIPT_DIR/../skills/work/scripts/track-task-status.sh"
 PASS=0
 FAIL=0
 
@@ -92,6 +93,7 @@ setup_repo() {
   cp "$COMMON_SCRIPT" "$tmp/.track/scripts/"
   cp "$VALIDATE_SCRIPT" "$tmp/.track/scripts/"
   cp "$TODO_SCRIPT" "$tmp/.track/scripts/"
+  cp "$TASK_STATUS_SCRIPT" "$tmp/.track/scripts/"
   cp "$COMPLETE_SCRIPT" "$tmp/.track/scripts/"
 
   cat > "$tmp/.track/projects/1-api-foundations.md" <<'EOF'

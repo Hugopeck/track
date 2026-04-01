@@ -4,6 +4,12 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 # shellcheck source=./track-common.sh
 source "$ROOT_DIR/.track/scripts/track-common.sh"
+TASK_STATUS_HELPER="$ROOT_DIR/.track/scripts/track-task-status.sh"
+if [[ ! -f "$TASK_STATUS_HELPER" ]]; then
+  TASK_STATUS_HELPER="$ROOT_DIR/skills/work/scripts/track-task-status.sh"
+fi
+# shellcheck source=./track-task-status.sh
+source "$TASK_STATUS_HELPER"
 
 TASK_BRANCH="${1:-}"
 PR_URL="${2:-}"
@@ -26,62 +32,11 @@ find_task_file_by_id() {
 }
 
 write_task_done() {
-  local task_file="$1"
-  local tmp_file
-
-  tmp_file="$(mktemp)"
-  TRACK_PR_URL="$PR_URL" TRACK_TODAY="$TODAY" awk '
-  BEGIN { pr_url = ENVIRON["TRACK_PR_URL"]; today = ENVIRON["TRACK_TODAY"] }
-  { gsub(/\r$/, "") }
-  NR == 1 && $0 == "---" { in_frontmatter = 1; print; next }
-  in_frontmatter && $0 == "---" {
-    in_frontmatter = 0
-    if (!saw_pr) print "pr: \"" pr_url "\""
-    print
-    next
-  }
-  in_frontmatter && /^status:[[:space:]]*/ { print "status: done"; next }
-  in_frontmatter && /^updated:[[:space:]]*/ { print "updated: " today; next }
-  in_frontmatter && /^pr:[[:space:]]*/ { print "pr: \"" pr_url "\""; saw_pr = 1; next }
-  { print }
-' "$task_file" > "$tmp_file"
-
-  if cmp -s "$task_file" "$tmp_file"; then
-    rm -f "$tmp_file"
-    return 1
-  fi
-
-  mv "$tmp_file" "$task_file"
-  return 0
+  track_mark_task_done "$1" "$TODAY" "$PR_URL"
 }
 
 write_task_unblocked() {
-  local task_file="$1"
-  local tmp_file
-
-  tmp_file="$(mktemp)"
-  TRACK_TODAY="$TODAY" awk '
-  BEGIN { today = ENVIRON["TRACK_TODAY"] }
-  { gsub(/\r$/, "") }
-  NR == 1 && $0 == "---" { in_frontmatter = 1; print; next }
-  in_frontmatter && $0 == "---" {
-    in_frontmatter = 0
-    print
-    next
-  }
-  in_frontmatter && /^status:[[:space:]]*/ { print "status: todo"; next }
-  in_frontmatter && /^updated:[[:space:]]*/ { print "updated: " today; next }
-  in_frontmatter && /^blocked_reason:[[:space:]]*/ { next }
-  { print }
-' "$task_file" > "$tmp_file"
-
-  if cmp -s "$task_file" "$tmp_file"; then
-    rm -f "$tmp_file"
-    return 1
-  fi
-
-  mv "$tmp_file" "$task_file"
-  return 0
+  track_mark_task_todo "$1" "$TODAY" 1
 }
 
 task_depends_on_completed_ids() {
