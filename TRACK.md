@@ -47,17 +47,19 @@ Append-only log.
 - `project_id`: filename-derived project identifier from `.track/projects/`
 - `depends_on`: blocking task IDs
 - `files`: glob patterns for files the task expects to modify
-- `pr`: optional on raw task files; populated on `done` for historical traceability
+- `pr`: optional on task files; populated on `done` for historical traceability
 - `cancelled_reason`: required when `status: cancelled`
 - `blocked_reason`: required when `status: blocked`
 
 ### Canonical Task Status
 - `status:` in the task file is the canonical task status
-- PR-driven lifecycle writes are owned by Track scripts and workflows, not manual frontmatter edits
+- Track scripts and workflows own lifecycle writes; do not hand-edit in-progress status as a substitute for lifecycle automation
 - `bash .track/scripts/track-start.sh {id}` writes `status: active` and updates `updated:`
 - `bash .track/scripts/track-ready.sh {id}` writes `status: review` and updates `updated:`
+- `track-status-sync` applies same-repo PR lifecycle changes before `Track Validate` and `Track PR Lint` run
+- `bash .track/scripts/track-reconcile.sh` repairs safe canonical-status drift when a lifecycle event was missed
 - The merged-PR completion flow writes `status: done`, `pr:`, and `updated:` on `main`
-- `TODO.md` and related views use task state plus linked PR metadata to show current in-progress work; if task state and PR state drift, treat that as a sync bug and repair it with Track automation rather than hand edits
+- `TODO.md` and related views render canonical task status and warn when GitHub-derived PR context is unavailable or stale; if task state and PR state drift, treat it as a sync bug and repair it with Track automation rather than hand edits
 
 ### Event Log and Attribution
 - Track writes append-only activity events to `.track/events/log.jsonl`
@@ -71,6 +73,7 @@ Append-only log.
 - `post-commit` writes `track.commit` events to the JSONL activity log and never blocks the commit
 - `track-status-sync` maps same-repo PR lifecycle events to canonical task status updates before downstream checks run
 - `Track Validate` and `Track PR Lint` run on PR updates and can also be called from the ordered status-sync workflow
+- `track-reconcile` repairs safe canonical-status drift and reports unresolved conflicts for manual follow-up
 - `track-complete` writes merged completion state, cascades dependency unblocks, and regenerates Track views
 - `/track:setup-track` can also apply a GitHub Ruleset that requires `Track Validate`, `Track PR Lint`, and `conventional-commit-lint`
 - For the exact PR preparation, update, rebase, and mergeability procedure, use `.track/specs/pr-instructions.md`
@@ -185,14 +188,17 @@ bash .track/scripts/track-validate.sh
 - **Update task files as you work, not after.** When you discover new context, constraints, or dead ends, append to the task's `## Notes` immediately. Future sessions depend on this context.
 - **Check for conflicts before starting.** Scan active and review tasks for overlapping `files:` globs. Starting work on contested files creates merge conflicts.
 - **Scope aggressively.** If a task grows beyond its acceptance criteria, split the new work into a separate task rather than expanding the current one.
-- **Let Track scripts drive status.** Use `bash .track/scripts/track-start.sh {id}` for draft state and `bash .track/scripts/track-ready.sh {id}` for review state. The post-merge workflow handles `status: done` automatically. Do not hand-edit in-progress status when a lifecycle script or workflow owns that transition.
-- **Validate early and often.** Run `bash .track/scripts/track-validate.sh` after every task file change. Errors caught locally are cheap; errors caught in CI block the team.
+- **Let Track scripts drive status.** Use `bash .track/scripts/track-start.sh {id}` for draft state and `bash .track/scripts/track-ready.sh {id}` for review state. `track-status-sync` keeps PR lifecycle events aligned before validation and linting. The post-merge workflow handles `status: done` automatically.
+- **Repair drift with automation, not hand edits.** If a task is stuck in `active` or `review` after PR state changed, run `bash .track/scripts/track-reconcile.sh` and then regenerate views.
+- **Validate early and often.** Run `bash .track/scripts/track-validate.sh` after every task file change. On PR events, let status sync run first, then validate the resulting canonical state.
 
 ### Troubleshooting
 
 **Validation fails?** Run `bash .track/scripts/track-validate.sh` — it tells you exactly what's wrong and where to look.
 
 **Track views are stale?** Run `bash .track/scripts/track-todo.sh` to regenerate. If you're offline: `bash .track/scripts/track-todo.sh --local --offline`
+
+**Task still shows `active` or `review` after PR state changed?** Run `bash .track/scripts/track-reconcile.sh`, then `bash .track/scripts/track-todo.sh` to repair safe drift and refresh warnings.
 
 **"gh not found" or PR status missing?** Install `gh` and run `gh auth login`, then retry.
 
