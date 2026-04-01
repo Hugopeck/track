@@ -3,8 +3,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SCRIPT_FILE="$SCRIPT_DIR/../skills/validate/scripts/track-conventional-commit-lint.sh"
-WORKFLOW_FILE="$SCRIPT_DIR/../skills/init/assets/workflows/conventional-commit-lint.yml"
-MANIFEST_FILE="$SCRIPT_DIR/../skills/init/assets/install-manifest.json"
+WORKFLOW_FILE="$SCRIPT_DIR/../skills/setup-track/assets/workflows/conventional-commit-lint.yml"
+MANIFEST_FILE="$SCRIPT_DIR/../skills/setup-track/assets/install-manifest.json"
 PASS=0
 FAIL=0
 
@@ -99,7 +99,7 @@ else
   fail 'manifest installs conventional commit lint script'
 fi
 
-if grep -Fq -- 'skills/init/assets/workflows/conventional-commit-lint.yml' "$MANIFEST_FILE"; then
+if grep -Fq -- 'skills/setup-track/assets/workflows/conventional-commit-lint.yml' "$MANIFEST_FILE"; then
   pass 'manifest installs conventional commit lint workflow'
 else
   fail 'manifest installs conventional commit lint workflow'

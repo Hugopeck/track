@@ -8,7 +8,7 @@ Skills are the instruction layer. Scripts (in `.track/scripts/`) are the enforce
 
 | Skill | Command | Purpose | Auto-loaded? |
 |-------|---------|---------|:------------:|
-| [init](init/) | `/track:init` | Scaffold Track into a repo, import existing markdown, onboard new users | No |
+| [setup-track](setup-track/) | `/track:setup-track` | Scaffold Track into a repo, import existing markdown, onboard new users | No |
 | [work](work/) | `/track:work` | Pick a task, open a draft PR, implement, hand off to merge | Yes |
 | [create](create/) | `/track:create` | Create tasks and projects from natural language | No |
 | [decompose](decompose/) | `/track:decompose` | Break a goal into parallelizable tasks with non-overlapping file scopes | No |
@@ -51,7 +51,7 @@ Each skill declares its allowed tools in the YAML frontmatter. This controls wha
 
 | Skill | Bash | Read | Glob | Grep | Edit | Write | Agent |
 |-------|:----:|:----:|:----:|:----:|:----:|:-----:|:-----:|
-| init | x | x | x | x | x | x | |
+| setup-track | x | x | x | x | x | x | |
 | work | x | x | x | x | x | x | |
 | create | x | x | x | x | x | x | |
 | decompose | x | x | x | x | x | x | |

@@ -9,7 +9,7 @@ Git-native task coordination for AI agents.
 
 A `.track/` folder in your repo replaces your PM tool. Markdown task files, bash enforcement scripts, git hooks, and GitHub Actions handle the full lifecycle — from task creation to PR merge. No server, no accounts, no vendor lock-in. Free and open source.
 
-<!-- TODO: Add terminal recording (VHS/asciinema) showing /track:init → /track:decompose → /track:work → PR merged → auto-completion -->
+<!-- TODO: Add terminal recording (VHS/asciinema) showing /track:setup-track → /track:decompose → /track:work → PR merged → auto-completion -->
 
 ## Features
 
@@ -27,7 +27,7 @@ A `.track/` folder in your repo replaces your PM tool. Markdown task files, bash
 
 - **Works without agents** — The `.track/` folder, bash scripts, and GitHub Actions work standalone. Layer AI agents on top for automation, or manage tasks by hand.
 
-- **GitHub Actions included** — Four workflows for validation, PR lint, commit lint, and post-merge completion. Installed automatically by `/track:init`.
+- **GitHub Actions included** — Four workflows for validation, PR lint, commit lint, and post-merge completion. Installed automatically by `/track:setup-track`.
 
 ## Quick Start
 
@@ -35,7 +35,7 @@ A `.track/` folder in your repo replaces your PM tool. Markdown task files, bash
 
 Paste this into your coding agent:
 
-> Install Track on this machine: clone `https://github.com/Hugopeck/track.git` to `~/.local/share/agent-skills/track`, run `~/.local/share/agent-skills/track/install.sh`, then run `/track:init` in this repo.
+> Install Track on this machine: clone `https://github.com/Hugopeck/track.git` to `~/.local/share/agent-skills/track`, run `~/.local/share/agent-skills/track/install.sh`, then run `/track:setup-track` in this repo.
 
 Or install manually:
 
@@ -46,8 +46,10 @@ git clone https://github.com/Hugopeck/track.git ~/.local/share/agent-skills/trac
 
 ### Initialize a repo
 
+Migration note: `/track:init` is now `/track:setup-track` to avoid colliding with Claude's built-in `init` command.
+
 ```
-/track:init
+/track:setup-track
 ```
 
 Creates `.track/`, installs scripts, hooks, and GitHub Actions. If it finds existing markdown TODOs or roadmaps, it offers to import them as tasks.
@@ -97,7 +99,7 @@ See [TRACK.md](TRACK.md) for the full protocol, task format, and field reference
 
 | Command | What it does |
 |---|---|
-| `/track:init` | Set up Track in a repo — `.track/`, scripts, hooks, workflows |
+| `/track:setup-track` | Set up Track in a repo — `.track/`, scripts, hooks, workflows |
 | `/track:work` | Pick a task, open a draft PR, start working |
 | `/track:create` | Create tasks and projects from plain English |
 | `/track:decompose` | Break a goal into tasks with non-overlapping file scopes |

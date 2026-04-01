@@ -6,7 +6,7 @@ FIXTURE_DIR="$SCRIPT_DIR/fixtures"
 COMMON_SCRIPT="$SCRIPT_DIR/../skills/runtime/scripts/track-common.sh"
 COMPLETE_SCRIPT="$SCRIPT_DIR/../skills/work/scripts/track-complete.sh"
 WRITEBACK_SCRIPT="$SCRIPT_DIR/../skills/work/scripts/track-complete-writeback.sh"
-COMPLETE_WORKFLOW="$SCRIPT_DIR/../skills/init/assets/workflows/track-complete.yml"
+COMPLETE_WORKFLOW="$SCRIPT_DIR/../skills/setup-track/assets/workflows/track-complete.yml"
 PASS=0
 FAIL=0
 

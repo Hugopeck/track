@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-HOOK="$SCRIPT_DIR/../skills/init/assets/hooks/commit-msg"
+HOOK="$SCRIPT_DIR/../skills/setup-track/assets/hooks/commit-msg"
 PASS=0
 FAIL=0
 

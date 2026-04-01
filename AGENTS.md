@@ -37,7 +37,7 @@ This repo is a **skill project** (not a plugin). Skills are the content; plugins
 
 - `TRACK.md` — canonical Track documentation (single source of truth, embedded into adopting repos)
 - `skills/` — installable agent skills and support directories (only directories with `SKILL.md` are standalone skills)
-- `skills/init/assets/` — everything the init skill deploys to adopting repos (scripts, workflows, config)
+- `skills/setup-track/assets/` — everything the setup-track skill deploys to adopting repos (scripts, workflows, config)
 - `.track/` — Track dogfooding itself (scripts are symlinks to the owned runtime sources under `skills/`)
 - `tests/` — test suite
 - `tools/` — dev utility scripts
@@ -55,7 +55,7 @@ This repo is a **skill project** (not a plugin). Skills are the content; plugins
 | Skill | Purpose |
 |-------|---------|
 | `work` | Core workflow protocol — reading state, picking work, PR lifecycle |
-| `init` | Deploy `.track/`, scripts, workflows, and Track sections into a new repo |
+| `setup-track` | Deploy `.track/`, scripts, workflows, and Track sections into a new repo |
 | `create` | Create tasks and projects |
 | `decompose` | Break a goal into tasks with dependencies |
 | `refresh-track` | Regenerate `BOARD.md`, `TODO.md`, and `PROJECTS.md` |
@@ -89,7 +89,7 @@ type(scope): description
 | `build` | Build system or external dependency changes | — |
 | `revert` | Reverts a previous commit | patch |
 
-Common scopes: `track`, `init`, `skills`, `scripts`, `tests`, `docs`, `ci`
+Common scopes: `track`, `setup-track`, `skills`, `scripts`, `tests`, `docs`, `ci`
 
 Scope should match a directory name or subsystem. Omitting scope is fine for cross-cutting changes.
 
@@ -286,7 +286,7 @@ Append-only log.
 - `commit-msg` enforces conventional commit format locally
 - `post-commit` writes `track.commit` events to the JSONL activity log and never blocks the commit
 - GitHub workflows validate task linkage, lint PR commit history, complete merged tasks, cascade dependency unblocks, and regenerate Track views
-- `/track:init` can also apply a GitHub Ruleset that requires `track-validate`, `track-pr-lint`, and `conventional-commit-lint`
+- `/track:setup-track` can also apply a GitHub Ruleset that requires `track-validate`, `track-pr-lint`, and `conventional-commit-lint`
 - Default allowed commit types: `feat`, `fix`, `docs`, `refactor`, `test`, `ci`, `chore`, `perf`, `style`, `build`, `revert`. Override per-repo via `.track/config.yml`:
   ```yaml
   commit_types:
@@ -431,7 +431,7 @@ bash .track/scripts/track-validate.sh
 
 **"gh not found" or PR status missing?** Install `gh` and run `gh auth login`, then retry.
 
-**An agent is not following Track?** Re-run `/track:init` to refresh the Track-managed block in `AGENTS.md`, then start a fresh agent session.
+**An agent is not following Track?** Re-run `/track:setup-track` to refresh the Track-managed block in `AGENTS.md`, then start a fresh agent session.
 
 **Commands not showing up?** Re-run `~/.local/share/agent-skills/track/install.sh` to refresh the skill symlinks, then restart the agent session.
 <!-- TRACK:END -->

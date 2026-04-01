@@ -141,7 +141,7 @@ Track coordinates work across sessions and agents. These principles make coordin
 
 `TODO.md`, `BOARD.md`, and `PROJECTS.md` are generated and gitignored. They are never canonical state.
 
-The PR lifecycle runtime installed by `/track:init` comes from
+The PR lifecycle runtime installed by `/track:setup-track` comes from
 `skills/work/scripts/track-pr-lint.sh` and
 `skills/work/scripts/track-complete.sh`. Those sources install into the
 adopting repo at `.track/scripts/track-pr-lint.sh` and
@@ -211,10 +211,10 @@ You must set `status: active` when opening a draft PR and `status: review` when 
    - If a plan has a `task_id` in its frontmatter, suggest working that task
    - Tell the user: "Found plan: {title}. Linked to task {task_id}."
 2.5. Check for Track hooks: if `.git/hooks/post-commit` (or `.husky/post-commit`)
-     exists and contains `Deployed by track init` or `Track event emitter`,
+     exists and contains `Deployed by track setup-track` or `Track event emitter`,
      commit events are being emitted automatically.
      If hooks are not found, suggest: "Track hooks aren't installed — run
-     `/track:init` to set them up."
+     `/track:setup-track` to set them up."
 3. Check `files:` globs against tasks already shown as `active` / `review` — avoid overlap
 4. Pick work that has no unresolved `depends_on` blockers
 5. Read the task's `## Context` and `## Notes` — previous sessions may have left important context
@@ -325,7 +325,7 @@ bash .track/scripts/track-validate.sh
 Always validate after creating or modifying tasks. Fix any errors before committing.
 
 If `track-validate.sh` is not found, STOP: "Validation script missing. Run
-`/track:init` to install it."
+`/track:setup-track` to install it."
 If it exits non-zero, fix every error before continuing. Do not commit invalid state.
 
 ## Persisting Plans

@@ -29,7 +29,7 @@
 **Screen:**
 - Fresh terminal in a real repo
 - Type: `claude` to open Claude Code
-- Type: `/track:init`
+- Type: `/track:setup-track`
 - Show the `.track/` folder being created
 - Show CLAUDE.md being updated
 

@@ -320,7 +320,7 @@ Created from: {brief summary of the user's request}
    If it exits non-zero, fix every error before continuing. Do not show the
    closing message until validation passes.
    If `track-validate.sh` is not found, STOP: "Validation script missing. Run
-   `/track:init` to install it."
+   `/track:setup-track` to install it."
 2. Run `bash .track/scripts/track-todo.sh --local --offline` — regenerate Track views
 3. Show the closing message
 

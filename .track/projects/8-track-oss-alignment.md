@@ -4,7 +4,7 @@ title: "Track-OSS Alignment"
 priority: high
 status: active
 created: 2026-03-30
-updated: 2026-03-31
+updated: 2026-04-01
 ---
 
 # Track-OSS Alignment
@@ -19,7 +19,7 @@ The current skill set needs targeted extensions (link/context modes) and the pro
 - Event contract specification for Track components in this repo
 - Deterministic scope matching in track-common.sh
 - Git hook templates (commit-msg linter + post-commit event emitter)
-- GitHub Ruleset template for init
+- GitHub Ruleset template for setup-track
 - Skill refinement: extend work with link/context; keep work/create/decompose as separate skills; retire script-only skills and rename retained utility skills for clarity
 - Cascade unblocks via post-merge GitHub workflow
 - Documentation updates (TRACK.md, README.md, AGENTS.md)
@@ -32,6 +32,6 @@ The current skill set needs targeted extensions (link/context modes) and the pro
 - `.track/specs/event-contract.md` defines all event types and payloads
 - Hook templates produce valid JSON events to JSONL log
 - Work skill handles link and context modes
-- Init skill deploys hooks + rulesets
+- Setup-track skill deploys hooks + rulesets
 - Post-merge workflow cascades unblocks automatically
 - All existing tests still pass

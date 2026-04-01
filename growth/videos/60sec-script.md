@@ -14,7 +14,7 @@
 
 ### 0:05-0:10
 **Text:** "A folder is all you need."
-**Screen:** Type `/track:init` → `.track/` folder appears
+**Screen:** Type `/track:setup-track` → `.track/` folder appears
 
 ### 0:10-0:20
 **Text:** "Create tasks with file scopes"

@@ -824,7 +824,7 @@ main() {
   load_source_tree
 
   if [[ ! -d "$SOURCE_ROOT/.track/tasks" || ! -d "$SOURCE_ROOT/.track/projects" ]]; then
-    printf 'track: .track/ not found — run /track:init to set up this repo\n' >&2
+    printf 'track: .track/ not found — run /track:setup-track to set up this repo\n' >&2
     exit 1
   fi
 

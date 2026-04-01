@@ -3,8 +3,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 WRITEBACK_SCRIPT="$SCRIPT_DIR/../skills/work/scripts/track-complete-writeback.sh"
-MANIFEST_FILE="$SCRIPT_DIR/../skills/init/assets/install-manifest.json"
-COMPLETE_WORKFLOW="$SCRIPT_DIR/../skills/init/assets/workflows/track-complete.yml"
+MANIFEST_FILE="$SCRIPT_DIR/../skills/setup-track/assets/install-manifest.json"
+COMPLETE_WORKFLOW="$SCRIPT_DIR/../skills/setup-track/assets/workflows/track-complete.yml"
 PASS=0
 FAIL=0
 

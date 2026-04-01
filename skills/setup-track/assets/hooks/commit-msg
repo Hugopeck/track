@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # commit-msg: conventional commit linter
-# Deployed by track init to .git/hooks/commit-msg (or .husky/commit-msg)
+# Deployed by track setup-track to .git/hooks/commit-msg (or .husky/commit-msg)
 # Requires bash 3.2+, zero external dependencies
 
 COMMIT_MSG_FILE="$1"

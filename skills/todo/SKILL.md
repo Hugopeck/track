@@ -15,7 +15,7 @@ allowed-tools:
 `/track:refresh-track` owns Track view regeneration — detecting the environment,
 choosing the right mode, running `track-todo.sh`, and reporting the result. The
 canonical runtime source lives at `skills/todo/scripts/track-todo.sh`;
-`/track:init` installs it into the adopting repo at
+`/track:setup-track` installs it into the adopting repo at
 `.track/scripts/track-todo.sh`.
 
 ## What This Skill Owns
@@ -56,7 +56,7 @@ Lock one mode at the start. Do not silently drift.
    - If the remote is reachable without GitHub API access, lock `offline`
    - Otherwise, lock `local`
 3. Run `bash .track/scripts/track-todo.sh {flags}`.
-   - If the script is missing, STOP: `TODO script missing at .track/scripts/track-todo.sh. Run /track:init to install it.`
+   - If the script is missing, STOP: `TODO script missing at .track/scripts/track-todo.sh. Run /track:setup-track to install it.`
    - If it exits non-zero, surface the error and say: `Run bash .track/scripts/track-validate.sh to check for task file errors that may be blocking view generation.`
 4. Verify `BOARD.md`, `TODO.md`, and `PROJECTS.md` exist.
    - If `TODO.md` is empty or missing, warn: `TODO.md is empty — this usually means no tasks exist yet.`

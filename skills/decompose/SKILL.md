@@ -244,7 +244,7 @@ Save to `.track/plans/{project_id}-decomposition.md` with frontmatter
 1. Run `bash .track/scripts/track-validate.sh` — fix any errors.
    If it exits non-zero, fix every error before continuing.
    If `track-validate.sh` is not found, STOP: "Validation script missing. Run
-   `/track:init` to install it."
+   `/track:setup-track` to install it."
 2. Run `bash .track/scripts/track-todo.sh --local --offline`
 
 ---

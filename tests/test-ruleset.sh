@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-RULESET_FILE="$SCRIPT_DIR/../skills/init/assets/track-ruleset.json"
+RULESET_FILE="$SCRIPT_DIR/../skills/setup-track/assets/track-ruleset.json"
 PASS=0
 FAIL=0
 
