@@ -1,6 +1,8 @@
 name: Track PR Lint
 
 on:
+  pull_request:
+    types: [synchronize, edited, labeled, unlabeled]
   workflow_call:
     inputs:
       checkout_repository:

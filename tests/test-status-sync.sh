@@ -217,6 +217,8 @@ assert_literal_in_file 'status-sync workflow delegates writeback' 'bash .track/s
 assert_literal_in_file 'status-sync workflow calls validate workflow' 'uses: ./.github/workflows/track-validate.yml' "$STATUS_WORKFLOW"
 assert_literal_in_file 'status-sync workflow calls pr-lint workflow' 'uses: ./.github/workflows/track-pr-lint.yml' "$STATUS_WORKFLOW"
 assert_literal_in_file 'validate workflow supports workflow_call' 'workflow_call:' "$VALIDATE_WORKFLOW"
+assert_literal_in_file 'validate workflow runs on pull_request synchronize' 'types: [synchronize, edited, labeled, unlabeled]' "$VALIDATE_WORKFLOW"
+assert_literal_in_file 'pr-lint workflow runs on pull_request synchronize' 'types: [synchronize, edited, labeled, unlabeled]' "$PR_LINT_WORKFLOW"
 assert_literal_in_file 'validate workflow accepts checkout_repository input' 'checkout_repository:' "$VALIDATE_WORKFLOW"
 assert_literal_in_file 'pr-lint workflow supports workflow_call' 'workflow_call:' "$PR_LINT_WORKFLOW"
 assert_literal_in_file 'pr-lint workflow accepts checkout_repository input' 'checkout_repository:' "$PR_LINT_WORKFLOW"
