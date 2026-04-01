@@ -1,7 +1,29 @@
 name: Track PR Lint
 
 on:
-  pull_request:
+  workflow_call:
+    inputs:
+      checkout_repository:
+        required: false
+        type: string
+      checkout_ref:
+        required: false
+        type: string
+      head_ref:
+        required: false
+        type: string
+      pr_title:
+        required: false
+        type: string
+      pr_body:
+        required: false
+        type: string
+      pr_labels:
+        required: false
+        type: string
+      pr_number:
+        required: false
+        type: string
 
 jobs:
   pr-lint:
@@ -12,12 +34,15 @@ jobs:
       pull-requests: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.checkout_repository || github.repository }}
+          ref: ${{ inputs.checkout_ref || github.ref }}
 
       - name: Lint PR branch and title
         env:
-          GITHUB_HEAD_REF: ${{ github.head_ref }}
-          PR_TITLE: ${{ github.event.pull_request.title }}
-          PR_BODY: ${{ github.event.pull_request.body }}
-          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GITHUB_HEAD_REF: ${{ inputs.head_ref || github.head_ref || '' }}
+          PR_TITLE: ${{ inputs.pr_title || github.event.pull_request.title || '' }}
+          PR_BODY: ${{ inputs.pr_body || github.event.pull_request.body || '' }}
+          PR_LABELS: ${{ inputs.pr_labels || join(github.event.pull_request.labels.*.name, ',') || '' }}
+          PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number || '' }}
         run: bash .track/scripts/track-pr-lint.sh

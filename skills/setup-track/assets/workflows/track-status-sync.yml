@@ -1,0 +1,81 @@
+name: Track Status Sync
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, converted_to_draft, closed]
+
+jobs:
+  sync-status:
+    name: Track Status Sync
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      TRACK_SYNC_EVENT: ${{ github.event.action }}
+      TRACK_PR_DRAFT: ${{ github.event.pull_request.draft }}
+      TRACK_PR_MERGED: ${{ github.event.pull_request.merged }}
+      TRACK_STATUS_SYNCED_AT: ${{ github.event.pull_request.updated_at || github.event.pull_request.created_at || '' }}
+      TASK_BRANCH: ${{ github.event.pull_request.head.ref }}
+      PR_URL: ${{ github.event.pull_request.html_url }}
+      PR_TITLE: ${{ github.event.pull_request.title }}
+      PR_BODY: ${{ github.event.pull_request.body || '' }}
+      PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      BASE_REF: ${{ github.event.pull_request.head.ref }}
+      PR_HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+      REPO_NAME: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Sync Track task status
+        env:
+          WRITEBACK_BRANCH: track/status-sync-${{ github.event.pull_request.number }}
+          WRITEBACK_TITLE: "fix(track): sync task status for #${{ github.event.pull_request.number }}"
+        run: |
+          set -euo pipefail
+
+          if [[ "$PR_HEAD_REPO" != "$REPO_NAME" ]]; then
+            echo 'Fork PR detected; status sync skipped.'
+            exit 0
+          fi
+
+          if [[ "$TRACK_SYNC_EVENT" == 'closed' && "$TRACK_PR_MERGED" == 'true' ]]; then
+            echo 'Merged close is handled by Track Complete; status sync skipped.'
+            exit 0
+          fi
+
+          bash .track/scripts/track-sync-pr-status.sh "$TRACK_SYNC_EVENT"
+          bash .track/scripts/track-todo.sh --local --offline >/dev/null
+          bash .track/scripts/track-complete-writeback.sh
+
+  validate:
+    needs: sync-status
+    if: github.event.action != 'closed' && needs.sync-status.result == 'success'
+    uses: ./.github/workflows/track-validate.yml
+    secrets: inherit
+    with:
+      checkout_repository: ${{ github.event.pull_request.head.repo.full_name }}
+      checkout_ref: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref || github.event.pull_request.head.sha }}
+      head_ref: ${{ github.event.pull_request.head.ref }}
+      pr_title: ${{ github.event.pull_request.title || '' }}
+      pr_body: ${{ github.event.pull_request.body || '' }}
+      pr_labels: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+
+  pr-lint:
+    needs: validate
+    if: github.event.action != 'closed' && needs.validate.result == 'success'
+    uses: ./.github/workflows/track-pr-lint.yml
+    secrets: inherit
+    with:
+      checkout_repository: ${{ github.event.pull_request.head.repo.full_name }}
+      checkout_ref: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref || github.event.pull_request.head.sha }}
+      head_ref: ${{ github.event.pull_request.head.ref }}
+      pr_title: ${{ github.event.pull_request.title || '' }}
+      pr_body: ${{ github.event.pull_request.body || '' }}
+      pr_labels: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+      pr_number: ${{ github.event.pull_request.number }}

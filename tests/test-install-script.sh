@@ -58,7 +58,7 @@ else
   fail 'todo does not own track-todo.sh'
 fi
 
-if [[ -f skills/work/scripts/track-pr-lint.sh ]] && [[ -f skills/work/scripts/track-complete.sh ]]; then
+if [[ -f skills/work/scripts/track-pr-lint.sh ]] && [[ -f skills/work/scripts/track-complete.sh ]] && [[ -f skills/work/scripts/track-sync-pr-status.sh ]] && [[ -f skills/work/scripts/track-start.sh ]] && [[ -f skills/work/scripts/track-ready.sh ]]; then
   pass 'work owns PR lifecycle scripts'
 else
   fail 'work is missing PR lifecycle scripts'
