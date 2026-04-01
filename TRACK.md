@@ -72,7 +72,8 @@ Append-only log.
 - `track-status-sync` maps same-repo PR lifecycle events to canonical task status updates before downstream checks run
 - `Track Validate` and `Track PR Lint` run on PR updates and can also be called from the ordered status-sync workflow
 - `track-complete` writes merged completion state, cascades dependency unblocks, and regenerates Track views
-- `/track:setup-track` can also apply a GitHub Ruleset that requires `Track Validate`, `Track PR Lint`, and `conventional-commit-lint`; if strict required checks are enabled, the PR head must be up to date with `main` and the latest head commit must carry those exact check names
+- `/track:setup-track` can also apply a GitHub Ruleset that requires `Track Validate`, `Track PR Lint`, and `conventional-commit-lint`
+- For the exact PR preparation, update, rebase, and mergeability procedure, use `.track/specs/pr-instructions.md`
 - Default allowed commit types: `feat`, `fix`, `docs`, `refactor`, `test`, `ci`, `chore`, `perf`, `style`, `build`, `revert`. Override per-repo via `.track/config.yml`:
   ```yaml
   commit_types:
@@ -86,13 +87,10 @@ Append-only log.
 1. Read `TODO.md` for the execution queue and `BOARD.md` for project context. Pick a `todo` task or resume an `active` one.
 2. Check `files:` overlap against tasks already shown as `active` / `review` — do not touch files owned by another in-progress task.
 3. Create a branch or use the current one.
-4. Run `bash .track/scripts/track-start.sh {id}` before opening a draft PR so Track, validation, and the task file stay aligned.
-5. Open a **draft PR** to start work. No PR = not started.
-6. Prefer a conventional-commit PR title that includes the task ID: `type(scope): [id] short description`.
-7. If the branch is not named `task/{id}-{slug}`, put `Track-Task: {id}` on line 1 of the PR body. On task branches, adding `Track-Task:` is still preferred. Optional label: `track:{id}`.
-8. Use `Also-Completed: {id}` only for fully resolved drive-by tasks (max 2). On merge, Track marks those tasks done too.
-9. If `gh` auth fails or PR creation fails, **stop and surface the error.**
-10. Implement. When ready, run `bash .track/scripts/track-ready.sh {id}` and then mark the PR ready for review.
+4. Use `bash .track/scripts/track-start.sh {id}` before opening a draft PR, and `bash .track/scripts/track-ready.sh {id}` before marking the PR ready.
+5. Keep one primary task per PR. Use `Track-Task: {id}` for linkage, and use `Also-Completed: {id}` only for fully resolved extras.
+6. Use `.track/specs/pr-instructions.md` for the exact PR title, body, mergeability, and post-push check procedure.
+7. If `gh` auth fails or PR creation/update fails, **stop and surface the error.**
 
 `BOARD.md`, `TODO.md`, and `PROJECTS.md` are generated — edit task files in `.track/tasks/`, not the generated views directly.
 
@@ -107,42 +105,19 @@ Append-only log.
 
 ### Working a Task (Provisional PR lifecycle)
 1. Create a branch from `main` (or use the current branch)
-2. Start the lifecycle through Track:
-   - run `bash .track/scripts/track-start.sh {id}`
-   - this writes `status: active`, updates `updated:`, and validates before the PR opens
+2. Start the lifecycle through Track with `bash .track/scripts/track-start.sh {id}`
 3. Push and open a **draft PR** immediately
-   - If the branch is not `task/{id}-{slug}`, put `Track-Task: {id}` on the first line of the PR body
-   - On `task/{id}-{slug}` branches, Track can resolve from the branch name, but adding `Track-Task:` is still preferred
-   - Prefer PR titles like `feat(scope): [4.1] short description`
-   - Use at most one `Track-Task:` line
-   - Optional label: `track:{id}`
-   - CI resolves the task from body, labels, title, then branch name
-4. Do the implementation work with as many commits as needed
-5. When ready for review:
-   - run `bash .track/scripts/track-ready.sh {id}`
-   - this writes `status: review`, updates `updated:`, and validates before the PR leaves draft
-   - mark the PR ready for review
-6. After each push, inspect mergeability if the PR matters right now:
-   - `mergeStateStatus: BEHIND` means rebase or merge `origin/main` and push again
-   - `mergeStateStatus: BLOCKED` with missing required checks means wait for or fix the required workflows on the latest head commit
+4. Follow `.track/specs/pr-instructions.md` for the exact PR title, body, required checks, rebasing, and mergeability handling
+5. Do the implementation work with as many commits as needed
+6. When ready for review, run `bash .track/scripts/track-ready.sh {id}` and then mark the PR ready for review
 7. When the PR merges, the post-merge workflow writes `status: done`, `pr:`, and `updated:` on `main`. If branch protections block direct writeback, it opens a follow-up writeback PR instead. Then it unblocks newly-cleared dependency tasks and regenerates Track views
 
-Example PR linkage:
+PR linkage details live in `.track/specs/pr-instructions.md`.
+Minimum body examples:
 
 ```text
-Branch: any-branch-name
-Title: feat(skills): [7.2] refine refresh-track skill
-Body: Track-Task: 7.2
-```
-
-Example drive-by completion (primary task 7.1, also resolved 7.2):
-
-```text
-Branch: task/7.1-test-runner
-Title: feat(tests): [7.1] unified test runner
-Body:
-Track-Task: 7.1
-Also-Completed: 7.2
+Track-Task: {id}
+Also-Completed: {id}
 ```
 
 ### Worktree Workflow
@@ -221,7 +196,7 @@ bash .track/scripts/track-validate.sh
 
 **"gh not found" or PR status missing?** Install `gh` and run `gh auth login`, then retry.
 
-**PR says `BEHIND` or stays blocked even though old checks passed?** Fetch `origin/main`, rebase or merge it into your branch, push again, and confirm the latest head commit reruns `Track Validate`, `Track PR Lint`, and `conventional-commit-lint`. Repos with strict required checks only count the latest head commit.
+**PR says `BEHIND` or stays blocked?** Follow `.track/specs/pr-instructions.md` for the exact rebase, required-check, and mergeability procedure.
 
 **An agent is not following Track?** Re-run `/track:setup-track` to refresh the Track-managed block in `AGENTS.md`, then start a fresh agent session.
 
