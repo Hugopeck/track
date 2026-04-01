@@ -17,11 +17,11 @@ A `.track/` folder in your repo replaces your PM tool. Markdown task files, bash
 
 - **Parallel-safe** — Every task declares which files it owns via `files:` glob patterns. No two active tasks can claim the same files. Multiple agents work the same repo without conflicts.
 
-- **Git-native status** — Status is driven by your PR lifecycle, not manual updates. Draft PR = active. Ready for review = review. Merged = done. Always accurate.
+- **Canonical task status** — The task file holds the single status value. `track-start` writes `active`, `track-ready` writes `review`, and merged PR completion writes `done`.
 
 - **Slash commands** — Six commands cover the full workflow: decompose goals, create tasks, pick work, open PRs, and regenerate views. Or skip the agent and use the bash scripts directly.
 
-- **Self-enforcing** — Conventional commit hooks, PR lint, task validation, and post-merge automation. The system catches mistakes before they reach CI.
+- **Self-enforcing** — Conventional commit hooks, ordered PR status sync, validation, reconciliation, and post-merge automation. The system catches drift before it spreads.
 
 - **Dependency cascading** — When a blocking task's PR merges, downstream tasks auto-unblock. No one has to remember to update the board.
 
@@ -88,10 +88,12 @@ Everything lives in a `.track/` folder at the root of your repo:
 Each task is a markdown file with YAML frontmatter — id, status, priority, dependencies, and file ownership. Tasks belong to projects. Dependencies are explicit.
 
 ```
-todo → active (draft PR) → review (PR ready) → done (PR merged)
+todo → active (`track-start` / draft PR) → review (`track-ready` / PR ready) → done (PR merged)
 ```
 
 The `files:` field is the coordination mechanism. No two active tasks can claim the same files, so parallel agents never collide. `/track:decompose` creates tasks with non-overlapping scopes by default.
+
+On same-repo PRs, Track syncs lifecycle events into the canonical task status before validation and PR lint run. If GitHub data is unavailable or a lifecycle event was missed, generated views warn about stale state and `bash .track/scripts/track-reconcile.sh` repairs safe mismatches.
 
 See [TRACK.md](TRACK.md) for the full protocol, task format, and field reference.
 

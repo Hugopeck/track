@@ -65,7 +65,7 @@ Append-only log of decisions and updates.
 |-------|--------|---------|
 | `id` | `{project}.{task}` (e.g. `4.1`) | Unique identifier. The number before the dot must match `project_id`. |
 | `title` | Free text | One-line objective. |
-| `status` | `todo`, `active`, `review`, `done`, `cancelled` | Where the task is in its lifecycle. |
+| `status` | `todo`, `active`, `review`, `blocked`, `done`, `cancelled` | Where the task is in its lifecycle. |
 | `mode` | `investigate`, `plan`, `implement` | What kind of work this is. |
 | `priority` | `urgent`, `high`, `medium`, `low` | Relative importance. |
 | `project_id` | Number string (e.g. `"4"`) | Which project this belongs to. Must match a brief in `projects/`. |
@@ -74,18 +74,19 @@ Append-only log of decisions and updates.
 | `depends_on` | List of task IDs | Tasks that must be `done` before this one can start. |
 | `files` | List of glob patterns | Files this task expects to touch. Used for overlap detection. |
 | `pr` | URL string | Populated when the task is completed via a merged PR. |
+| `blocked_reason` | Free text | Required when `status: blocked`. |
 | `cancelled_reason` | Free text | Required when `status: cancelled`. |
 
-### Raw Status vs Effective Status
+### Canonical Task Status
 
-The `status` field in the file is the **raw status**. What shows up in the generated Track views is the **effective status**, which layers GitHub PR state on top:
+The `status` field in the task file is the single task status Track owns.
 
-1. If raw status is `done` or `cancelled` → effective status matches it (terminal, nothing overrides)
-2. If there's an open **draft** PR on branch `task/{id}-{slug}` → effective status is `active`
-3. If there's an open **ready-for-review** PR on that branch → effective status is `review`
-4. Otherwise → effective status is `todo`
-
-You must set `status: active` when opening a draft PR and `status: review` when marking it ready. CI enforces this. The post-merge workflow handles `status: done`.
+1. `bash .track/scripts/track-start.sh {id}` writes `status: active` before opening a draft PR.
+2. `bash .track/scripts/track-ready.sh {id}` writes `status: review` before marking the PR ready.
+3. Same-repo PR lifecycle events are synced into canonical task status before validation and PR lint run.
+4. The merged-PR completion flow writes `status: done`, `pr:`, and `updated:`.
+5. `track-todo.sh` renders canonical status and warns when GitHub-derived PR context is unavailable or stale.
+6. `bash .track/scripts/track-reconcile.sh` repairs safe canonical-status drift when a lifecycle event was missed.
 
 ## Project Briefs
 
@@ -154,7 +155,7 @@ Checks every task file for structural correctness:
 - No self-referencing `depends_on`
 - Active/review tasks don't depend on incomplete tasks
 - Open PRs point to real, non-terminal tasks
-- In CI pull request context: validates branch name matches task, draft state matches raw status
+- In CI pull request context: validates branch linkage and canonical task status after status sync runs
 
 ```bash
 bash .track/scripts/track-validate.sh
@@ -187,6 +188,8 @@ Called by the GitHub Actions workflow after a task branch merges into `main`. It
 2. Finds the matching task file
 3. Sets `status: done`, updates `updated:`, and writes the `pr:` URL
 
+If branch protections block the writeback push, Track opens a follow-up completion PR instead of leaving merged tasks stuck in `review`.
+
 ```bash
 bash .track/scripts/track-complete.sh "task/4.1-rewrite-skills" "https://github.com/org/repo/pull/42"
 ```
@@ -196,9 +199,9 @@ You never run this manually — the `.github/workflows/track-complete.yml` workf
 ## Workflow Summary
 
 ```
-  Create task file         Open draft PR           Mark ready for review      PR merges
-  in .track/tasks/    →    on task/{id}-{slug}  →  (undraft the PR)       →  track-complete.sh
-  status: todo             effective: active        effective: review          status: done
+  Create task file        Run track-start        Run track-ready            PR merges
+  in .track/tasks/   →    + open draft PR    →   + mark PR ready       →   track-complete.sh
+  status: todo            status: active          status: review             status: done
 ```
 
 ## Requirements

@@ -112,8 +112,7 @@ success before the mode reaches its definition of done.
 
 ## Glossary
 
-- **Raw Status** — the `status:` field stored in a Track task file
-- **Effective Status** — derived from raw status plus live open PR state; what the generated Track views show
+- **Canonical Status** — the `status:` field stored in the task file; this is the single task status Track owns
 - **Provisional PR** — an implementation PR opened as soon as work starts on a task; draft = active, ready-for-review = review
 - **Project Brief** — a markdown scope contract in `.track/projects/{project_id}-{slug}.md`
 - **Task** — a Track work item at `.track/tasks/{task_id}-{slug}.md` with YAML frontmatter and required body sections
@@ -190,15 +189,15 @@ Append-only log.
 | `cancelled_reason` | Free text | Required when `status: cancelled`. |
 | `blocked_reason` | Free text | Required when `status: blocked`. |
 
-## Raw vs Effective Status
+## Canonical Task Status
 
-1. If raw status is `done` or `cancelled` → effective status matches (terminal)
-2. If raw status is `blocked` → effective = `blocked` (not terminal, but skips PR overlay)
-3. If there's an open **draft** PR on `task/{id}-{slug}` → effective = `active`
-4. If there's an open **ready-for-review** PR → effective = `review`
-5. Otherwise → effective = `todo`
-
-You must set `status: active` when opening a draft PR and `status: review` when marking it ready. CI enforces this. The post-merge workflow handles `status: done`.
+1. `status:` in the task file is the single task status. Do not teach or invent a second user-facing status model.
+2. Use `bash .track/scripts/track-start.sh {id}` to write `status: active` before opening a draft PR.
+3. Use `bash .track/scripts/track-ready.sh {id}` to write `status: review` before marking the PR ready.
+4. Same-repo PR lifecycle events are synced into canonical task status before validation and PR lint run.
+5. The merged-PR completion flow writes `status: done`, `pr:`, and `updated:` on the default branch.
+6. If a lifecycle event was missed, run `bash .track/scripts/track-reconcile.sh` to repair safe drift and report conflicts that still need manual follow-up.
+7. `TODO.md`, `BOARD.md`, and `PROJECTS.md` render canonical status and warn when GitHub-derived PR context is unavailable or stale.
 
 ## Before Starting Work
 
@@ -226,9 +225,9 @@ You must set `status: active` when opening a draft PR and `status: review` when 
 ## Working a Task (Provisional PR Lifecycle)
 
 1. Create a branch from the default branch (or use the current branch)
-2. First commit updates the task file only:
-   - set raw `status: active`
-   - update `updated:` to today
+2. Start the lifecycle through Track:
+   - run `bash .track/scripts/track-start.sh {id}`
+   - this writes `status: active` and updates `updated:`
 3. Push and open a **draft PR** immediately
    - Always include `Track-Task: {id}` on the first line of the PR body
    - Include the task ID in the title: `[{id}] Title` or `({id}) Title`
@@ -241,8 +240,7 @@ You must set `status: active` when opening a draft PR and `status: review` when 
 5. When ready for review:
    - Verify each acceptance criterion is met — cite the file and line that
      satisfies it, or flag as unverified. Do not claim "criteria met" without evidence.
-   - set raw `status: review`
-   - update `updated:`
+   - run `bash .track/scripts/track-ready.sh {id}`
    - mark the PR ready for review
 6. When the PR merges, the post-merge workflow writes `status: done`, `pr:`, and `updated:` on the default branch
 
@@ -322,7 +320,7 @@ After changing task files, project briefs, or scripts:
 bash .track/scripts/track-validate.sh
 ```
 
-Always validate after creating or modifying tasks. Fix any errors before committing.
+Always validate after creating or modifying tasks. Fix any errors before committing. On PR events, Track syncs status first and then validates the resulting canonical state.
 
 If `track-validate.sh` is not found, STOP: "Validation script missing. Run
 `/track:setup-track` to install it."
