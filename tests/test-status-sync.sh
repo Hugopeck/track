@@ -3,8 +3,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 FIXTURE_DIR="$SCRIPT_DIR/fixtures"
-COMMON_SCRIPT="$SCRIPT_DIR/../skills/runtime/scripts/track-common.sh"
-VALIDATE_SCRIPT="$SCRIPT_DIR/../skills/validate/scripts/track-validate.sh"
+COMMON_SCRIPT="$SCRIPT_DIR/../scripts/lib/track-common.sh"
+VALIDATE_SCRIPT="$SCRIPT_DIR/../scripts/validate/track-validate.sh"
 TASK_STATUS_SCRIPT="$SCRIPT_DIR/../skills/work/scripts/track-task-status.sh"
 SYNC_SCRIPT="$SCRIPT_DIR/../skills/work/scripts/track-sync-pr-status.sh"
 START_SCRIPT="$SCRIPT_DIR/../skills/work/scripts/track-start.sh"

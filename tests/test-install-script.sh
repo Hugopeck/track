@@ -40,16 +40,16 @@ else
   fail 'install.sh still symlinks every directory under skills/'
 fi
 
-if [[ -f skills/runtime/scripts/track-common.sh ]]; then
-  pass 'shared runtime helper moved to skills/runtime/scripts'
+if [[ -f scripts/lib/track-common.sh ]]; then
+  pass 'shared runtime helper moved to scripts/lib'
 else
-  fail 'shared runtime helper missing from skills/runtime/scripts'
+  fail 'shared runtime helper missing from scripts/lib'
 fi
 
-if [[ -f skills/validate/scripts/track-validate.sh ]]; then
-  pass 'validate owns track-validate.sh'
+if [[ -f scripts/validate/track-validate.sh ]]; then
+  pass 'validate support script moved to scripts/validate'
 else
-  fail 'validate does not own track-validate.sh'
+  fail 'validate support script missing from scripts/validate'
 fi
 
 if [[ -f skills/todo/scripts/track-todo.sh ]]; then

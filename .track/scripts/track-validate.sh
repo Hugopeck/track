@@ -1,1 +1,1 @@
-../../skills/validate/scripts/track-validate.sh
+../../scripts/validate/track-validate.sh

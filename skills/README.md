@@ -15,12 +15,13 @@ Skills are the instruction layer. Scripts (in `.track/scripts/`) are the enforce
 | [refresh-track](todo/) | `/track:refresh-track` | Regenerate `BOARD.md`, `TODO.md`, and `PROJECTS.md` | No |
 | [update-skills](update-track/) | `/update-skills` | Refresh the installed Track skill clone on this machine | Yes |
 
-## Script-only directories
+## Shared support scripts
 
-These directories still ship runtime assets, but they are not user-invocable skills because they no longer contain `SKILL.md`:
+Every directory under `skills/` is now a real installable skill with a `SKILL.md`.
+Shared bash support lives at the repo root instead:
 
-- `skills/validate/` — owns `track-validate.sh` and `track-conventional-commit-lint.sh`
-- `skills/runtime/` — shared runtime helpers such as `track-common.sh`
+- `scripts/validate/` — owns `track-validate.sh` and `track-conventional-commit-lint.sh`
+- `scripts/lib/` — shared runtime helpers such as `track-common.sh`
 
 ## Directory conventions
 
