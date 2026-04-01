@@ -34,6 +34,16 @@
       "source": "skills/work/scripts/track-complete-writeback.sh",
       "dest": ".track/scripts/track-complete-writeback.sh",
       "executable": true
+    },
+    {
+      "source": "skills/work/scripts/track-task-status.sh",
+      "dest": ".track/scripts/track-task-status.sh",
+      "executable": true
+    },
+    {
+      "source": "skills/work/scripts/track-reconcile.sh",
+      "dest": ".track/scripts/track-reconcile.sh",
+      "executable": true
     }
   ],
   "workflows": [

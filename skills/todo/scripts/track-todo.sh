@@ -16,12 +16,14 @@ TRACK_TODO_TEMP_DIR=''
 WARNINGS=()
 FOOTER_SOURCE_LABEL=''
 FOOTER_UPDATED_AT=''
+PR_LOOKUP_STATE='available'
 
 TASK_FILES=()
 TASK_IDS=()
 TASK_TITLES=()
 TASK_RAW_STATUSES=()
 TASK_EFFECTIVE_STATUSES=()
+TASK_OBSERVED_PR_STATUSES=()
 TASK_MODES=()
 TASK_PRIORITIES=()
 TASK_PROJECT_IDS=()
@@ -31,6 +33,7 @@ TASK_PATHS=()
 TASK_PRS=()
 TASK_UPDATED=()
 TASK_BLOCKED_REASONS=()
+TASK_STALE_REASONS=()
 
 PROJECT_FILES=()
 PROJECT_IDS=()
@@ -58,6 +61,20 @@ warn() {
 warn_loud() {
   WARNINGS+=("$1")
   printf 'Warning: %s\n' "$1" >&2
+}
+
+set_pr_lookup_unavailable() {
+  local reason="$1"
+  PR_LOOKUP_STATE='unavailable'
+  warn "GitHub PR lookup unavailable ($reason); task status may be stale"
+}
+
+note_pr_lookup_partial() {
+  local reason="$1"
+  if [[ "$PR_LOOKUP_STATE" != 'unavailable' ]]; then
+    PR_LOOKUP_STATE='partial'
+  fi
+  warn "GitHub PR lookup partial: $reason"
 }
 
 find_task_index_by_id() {
@@ -150,6 +167,7 @@ find_open_pr_index_by_task_id() {
   local id="$1"
   local i match_count=0
   OPEN_PR_MATCH_INDEX=''
+  OPEN_PR_MATCH_COUNT=0
   for ((i = 0; i < ${#OPEN_PR_TASK_IDS[@]}; i++)); do
     if [[ "${OPEN_PR_TASK_IDS[$i]}" == "$id" ]]; then
       match_count=$((match_count + 1))
@@ -157,10 +175,7 @@ find_open_pr_index_by_task_id() {
     fi
   done
 
-  if [[ $match_count -gt 1 ]]; then
-    warn "multiple open PRs map to task '$id'"
-    return 1
-  fi
+  OPEN_PR_MATCH_COUNT="$match_count"
 
   [[ $match_count -eq 1 ]]
 }
@@ -169,17 +184,17 @@ load_open_prs() {
   local lines number url is_draft head_ref title pr_body pr_labels resolver_code
 
   if [[ $OFFLINE -eq 1 ]]; then
-    warn 'offline mode enabled; skipping GitHub PR lookup'
+    set_pr_lookup_unavailable 'offline mode enabled'
     return 0
   fi
 
   if ! command -v gh >/dev/null 2>&1; then
-    warn 'gh not found; falling back to offline mode'
+    set_pr_lookup_unavailable 'gh not found'
     return 0
   fi
 
   if ! lines="$(gh pr list --state open --base "$DEFAULT_BRANCH" --json number,url,isDraft,headRefName,title --template '{{range .}}{{printf "%v\t%s\t%t\t%s\t%s\n" .number .url .isDraft .headRefName .title}}{{end}}' 2>/dev/null)"; then
-    warn 'gh PR lookup failed; falling back to offline mode'
+    set_pr_lookup_unavailable 'gh PR lookup failed'
     return 0
   fi
 
@@ -189,11 +204,11 @@ load_open_prs() {
     pr_body=''
     pr_labels=''
     if ! pr_body="$(fetch_pr_body "$number")"; then
-      warn "open PR '$url': could not fetch PR body; falling back to labels/title/branch only"
+      note_pr_lookup_partial "open PR '$url' body unavailable; falling back to labels/title/branch only"
       pr_body=''
     fi
     if ! pr_labels="$(fetch_pr_labels "$number")"; then
-      warn "open PR '$url': could not fetch PR labels; falling back to body/title/branch only"
+      note_pr_lookup_partial "open PR '$url' labels unavailable; falling back to body/title/branch only"
       pr_labels=''
     fi
 
@@ -227,7 +242,7 @@ load_open_prs() {
 }
 
 load_tasks() {
-  local file effective_status pr_url depends_serialized files_serialized
+  local file effective_status observed_status pr_url depends_serialized files_serialized
   while IFS= read -r file; do
     if ! track_parse_task_file "$file"; then
       warn "$file: $TRACK_parse_error"
@@ -237,17 +252,12 @@ load_tasks() {
     depends_serialized="$(track_serialize_items "${TRACK_depends_on[@]-}")"
     files_serialized="$(track_serialize_items "${TRACK_files[@]-}")"
     effective_status="$TRACK_status"
+    observed_status=''
     pr_url=''
 
-    if [[ "$TRACK_status" == 'blocked' ]]; then
-      effective_status='blocked'
-    elif ! track_is_terminal_status "$TRACK_status"; then
-      if find_open_pr_index_by_task_id "$TRACK_id"; then
-        pr_url="${OPEN_PR_URLS[$OPEN_PR_MATCH_INDEX]}"
-        effective_status="${OPEN_PR_STATUSES[$OPEN_PR_MATCH_INDEX]}"
-      else
-        effective_status='todo'
-      fi
+    if find_open_pr_index_by_task_id "$TRACK_id"; then
+      pr_url="${OPEN_PR_URLS[$OPEN_PR_MATCH_INDEX]}"
+      observed_status="${OPEN_PR_STATUSES[$OPEN_PR_MATCH_INDEX]}"
     fi
 
     TASK_FILES+=("$file")
@@ -255,6 +265,7 @@ load_tasks() {
     TASK_TITLES+=("$TRACK_title")
     TASK_RAW_STATUSES+=("$TRACK_status")
     TASK_EFFECTIVE_STATUSES+=("$effective_status")
+    TASK_OBSERVED_PR_STATUSES+=("$observed_status")
     TASK_MODES+=("$TRACK_mode")
     TASK_PRIORITIES+=("$TRACK_priority")
     TASK_PROJECT_IDS+=("$TRACK_project_id")
@@ -264,7 +275,59 @@ load_tasks() {
     TASK_PRS+=("$pr_url")
     TASK_UPDATED+=("$TRACK_updated")
     TASK_BLOCKED_REASONS+=("$TRACK_blocked_reason")
+    TASK_STALE_REASONS+=('')
   done < <(find "$SOURCE_ROOT/.track/tasks" -maxdepth 1 -type f -name '*.md' | sort)
+}
+
+observed_status_hint() {
+  case "$1" in
+    active) printf 'open draft PR suggests active' ;;
+    review) printf 'open ready-for-review PR suggests review' ;;
+    *) printf 'open PR suggests %s' "$1" ;;
+  esac
+}
+
+note_task_stale_status() {
+  local task_index="$1"
+  local reason="$2"
+
+  TASK_STALE_REASONS[$task_index]="$reason"
+  warn "task '${TASK_IDS[$task_index]}' status may be stale: canonical '${TASK_RAW_STATUSES[$task_index]}', $reason"
+}
+
+resolve_task_stale_statuses() {
+  local task_index canonical_status observed_status stale_reason=''
+
+  for ((task_index = 0; task_index < ${#TASK_IDS[@]}; task_index++)); do
+    TASK_STALE_REASONS[$task_index]=''
+    canonical_status="${TASK_RAW_STATUSES[$task_index]}"
+    observed_status="${TASK_OBSERVED_PR_STATUSES[$task_index]}"
+
+    find_open_pr_index_by_task_id "${TASK_IDS[$task_index]}" || true
+    if [[ ${OPEN_PR_MATCH_COUNT:-0} -gt 1 ]]; then
+      TASK_STALE_REASONS[$task_index]='Multiple open PRs map to this task; resolve manually before continuing.'
+      warn "multiple open PRs map to task '${TASK_IDS[$task_index]}'"
+      continue
+    fi
+
+    stale_reason=''
+    if [[ -n "$observed_status" ]]; then
+      case "$canonical_status:$observed_status" in
+        todo:active|todo:review|active:review|review:active)
+          stale_reason="$(observed_status_hint "$observed_status"); run \`bash .track/scripts/track-reconcile.sh\`."
+          ;;
+        blocked:active|blocked:review|done:active|done:review|cancelled:active|cancelled:review)
+          stale_reason="$(observed_status_hint "$observed_status"), which conflicts with canonical status '$canonical_status'; inspect manually."
+          ;;
+      esac
+    elif [[ "$PR_LOOKUP_STATE" == 'available' && ( "$canonical_status" == 'active' || "$canonical_status" == 'review' ) ]]; then
+      stale_reason="no linked open PR found for canonical status '$canonical_status'; inspect manually."
+    fi
+
+    if [[ -n "$stale_reason" ]]; then
+      note_task_stale_status "$task_index" "$stale_reason"
+    fi
+  done
 }
 
 task_blocked_by_dependencies() {
@@ -291,7 +354,7 @@ resolve_dep_blocked_statuses() {
   local task_index
   for ((task_index = 0; task_index < ${#TASK_IDS[@]}; task_index++)); do
     [[ "${TASK_EFFECTIVE_STATUSES[$task_index]}" != 'todo' ]] && continue
-    if task_blocked_by_dependencies "$task_index"; then
+    if task_blocked_by_dependencies "$task_index" || [[ -n "${TASK_STALE_REASONS[$task_index]}" ]]; then
       TASK_EFFECTIVE_STATUSES[$task_index]='blocked'
     fi
   done
@@ -405,7 +468,7 @@ task_depends_display() {
 
 task_status_display() {
   local index="$1"
-  local status_display="${TASK_EFFECTIVE_STATUSES[$index]}"
+  local status_display="${TASK_RAW_STATUSES[$index]}"
   if [[ -n "${TASK_PRS[$index]}" ]]; then
     status_display+=" · [PR](${TASK_PRS[$index]})"
   fi
@@ -691,8 +754,13 @@ render_todo_section_items() {
               [[ -n "$reasons" ]] && reasons+="; "
               reasons+="Blocked by active work in $overlap"
             fi
-            if [[ -z "$reasons" && -n "${TASK_BLOCKED_REASONS[$task_index]}" ]]; then
-              reasons="${TASK_BLOCKED_REASONS[$task_index]}"
+            if [[ -n "${TASK_BLOCKED_REASONS[$task_index]}" ]]; then
+              [[ -n "$reasons" ]] && reasons+="; "
+              reasons+="${TASK_BLOCKED_REASONS[$task_index]}"
+            fi
+            if [[ -n "${TASK_STALE_REASONS[$task_index]}" ]]; then
+              [[ -n "$reasons" ]] && reasons+="; "
+              reasons+="${TASK_STALE_REASONS[$task_index]}"
             fi
             if [[ -n "$reasons" ]]; then
               printf -- '- [ ] [%s] [%s](.track/tasks/%s) *(%s)*\n' \
@@ -742,6 +810,7 @@ render_todo() {
     render_todo_section_items blocked
     printf '## Recently Completed\n\n'
     render_todo_section_items completed
+    render_warnings
     render_footer
   } > "$TODO_OUTPUT_PATH"
 }
@@ -778,6 +847,7 @@ render_projects() {
     done < <(printf '%s' "$project_sort_lines" | sort)
 
     printf '\n'
+    render_warnings
     render_footer
   } > "$PROJECTS_OUTPUT_PATH"
 }
@@ -834,6 +904,7 @@ main() {
   load_projects
   load_open_prs
   load_tasks
+  resolve_task_stale_statuses
   resolve_dep_blocked_statuses
   generate_views
   printf 'Wrote %s\n' "$BOARD_OUTPUT_PATH"

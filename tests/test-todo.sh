@@ -5,6 +5,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 FIXTURE_DIR="$SCRIPT_DIR/fixtures"
 COMMON_SCRIPT="$SCRIPT_DIR/../skills/runtime/scripts/track-common.sh"
 TODO_SCRIPT="$SCRIPT_DIR/../skills/todo/scripts/track-todo.sh"
+TASK_STATUS_HELPER="$SCRIPT_DIR/../skills/work/scripts/track-task-status.sh"
+RECONCILE_SCRIPT="$SCRIPT_DIR/../skills/work/scripts/track-reconcile.sh"
 PASS=0
 FAIL=0
 
@@ -30,7 +32,7 @@ check_contains() {
   local file="$2"
   local pattern="$3"
 
-  if grep -q "$pattern" "$file"; then
+  if grep -Fq -- "$pattern" "$file"; then
     printf '  PASS: %s\n' "$name"
     PASS=$((PASS + 1))
   else
@@ -44,7 +46,7 @@ check_not_contains() {
   local file="$2"
   local pattern="$3"
 
-  if grep -q "$pattern" "$file"; then
+  if grep -Fq -- "$pattern" "$file"; then
     printf '  FAIL: %s (pattern "%s" unexpectedly found in %s)\n' "$name" "$pattern" "$file"
     FAIL=$((FAIL + 1))
   else
@@ -60,18 +62,17 @@ setup_repo() {
   mkdir -p "$tmp/.track/scripts"
   cp "$COMMON_SCRIPT" "$tmp/.track/scripts/"
   cp "$TODO_SCRIPT" "$tmp/.track/scripts/"
-  # Initialize a git repo so track-todo.sh doesn't fail on git commands
+  cp "$TASK_STATUS_HELPER" "$tmp/.track/scripts/"
+  cp "$RECONCILE_SCRIPT" "$tmp/.track/scripts/"
   (cd "$tmp" && git init -q && git add -A && git commit -q -m "init" 2>/dev/null) || true
   printf '%s' "$tmp"
 }
 
 printf 'Running track-todo tests...\n'
 
-# Test 1: view generation succeeds in local+offline mode
 repo="$(setup_repo)"
 run_test "local+offline generates Track views" 0 bash "$repo/.track/scripts/track-todo.sh" --local --offline --output "$repo/BOARD.md"
 
-# Test 2: Outputs contain expected content
 if [[ -f "$repo/BOARD.md" && -f "$repo/TODO.md" && -f "$repo/PROJECTS.md" ]]; then
   check_contains "BOARD.md contains board header" "$repo/BOARD.md" "# Board"
   check_contains "BOARD.md contains project title" "$repo/BOARD.md" "Test Project"
@@ -81,6 +82,9 @@ if [[ -f "$repo/BOARD.md" && -f "$repo/TODO.md" && -f "$repo/PROJECTS.md" ]]; th
   check_contains "TODO.md contains immediate starts section" "$repo/TODO.md" "## Immediate Starts"
   check_contains "TODO.md contains blocked section" "$repo/TODO.md" "## Blocked"
   check_contains "PROJECTS.md contains projects header" "$repo/PROJECTS.md" "# Projects Overview"
+  check_contains "BOARD.md warns when GitHub lookup is unavailable" "$repo/BOARD.md" "GitHub PR lookup unavailable (offline mode enabled); task status may be stale"
+  check_contains "TODO.md warns when GitHub lookup is unavailable" "$repo/TODO.md" "GitHub PR lookup unavailable (offline mode enabled); task status may be stale"
+  check_contains "PROJECTS.md warns when GitHub lookup is unavailable" "$repo/PROJECTS.md" "GitHub PR lookup unavailable (offline mode enabled); task status may be stale"
   check_contains "footer text lands in BOARD.md" "$repo/BOARD.md" 'projects derived from `.track/` state.'
   check_contains "footer text lands in TODO.md" "$repo/TODO.md" 'projects derived from `.track/` state.'
   check_contains "footer text lands in PROJECTS.md" "$repo/PROJECTS.md" 'projects derived from `.track/` state.'
