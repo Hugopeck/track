@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 FIXTURE_DIR="$SCRIPT_DIR/fixtures"
 COMMON_SCRIPT="$SCRIPT_DIR/../skills/runtime/scripts/track-common.sh"
 COMPLETE_SCRIPT="$SCRIPT_DIR/../skills/work/scripts/track-complete.sh"
+TASK_STATUS_SCRIPT="$SCRIPT_DIR/../skills/work/scripts/track-task-status.sh"
 WRITEBACK_SCRIPT="$SCRIPT_DIR/../skills/work/scripts/track-complete-writeback.sh"
 COMPLETE_WORKFLOW="$SCRIPT_DIR/../skills/setup-track/assets/workflows/track-complete.yml"
 PASS=0
@@ -26,6 +27,7 @@ setup_repo() {
   cp -r "$FIXTURE_DIR/.track" "$tmp/.track"
   mkdir -p "$tmp/.track/scripts"
   cp "$COMMON_SCRIPT" "$tmp/.track/scripts/"
+  cp "$TASK_STATUS_SCRIPT" "$tmp/.track/scripts/"
   cp "$COMPLETE_SCRIPT" "$tmp/.track/scripts/"
   cat > "$tmp/.track/tasks/1.4-related-task.md" <<'TASK'
 ---
@@ -169,10 +171,17 @@ else
   fail 'writeback helper script exists'
 fi
 
+if [[ -f "$TASK_STATUS_SCRIPT" ]]; then
+  pass 'task status helper script exists'
+else
+  fail 'task status helper script exists'
+fi
+
 repo="$(setup_repo)"
 run_capture bash "$repo/.track/scripts/track-complete.sh" 'task/1.1-test-task' 'https://github.com/test/pull/14'
 assert_code 'single-task branch-only completion works' 0
 assert_file_contains 'single-task marks done' "$repo/.track/tasks/1.1-test-task.md" 'status: done'
+assert_file_contains 'single-task writes pr url' "$repo/.track/tasks/1.1-test-task.md" 'pr: "https://github.com/test/pull/14"'
 assert_file_contains 'dependency-blocked task is unblocked' "$repo/.track/tasks/1.5-blocked-task.md" 'status: todo'
 assert_file_not_contains 'dependency-blocked reason removed after unblock' "$repo/.track/tasks/1.5-blocked-task.md" 'blocked_reason:'
 assert_stdout_contains 'unblocked task is reported' 'Unblocked '
