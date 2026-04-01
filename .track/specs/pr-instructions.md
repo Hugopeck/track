@@ -2,13 +2,13 @@
 title: "Track PR Instructions for AI Agents"
 status: approved
 created: 2026-03-31
-updated: 2026-03-31
+updated: 2026-04-01
 ---
 
 ## Track PR Instructions
 
 Use this when opening or updating a PR in a repo with `.track/`.
-Goal: link the PR to the right task, keep task status in sync, and avoid overlapping work.
+Goal: link the PR to the right task, let Track scripts own lifecycle status, and keep the PR mergeable under GitHub rules.
 
 ---
 
@@ -17,8 +17,13 @@ Goal: link the PR to the right task, keep task status in sync, and avoid overlap
 1. Run `bash .track/scripts/track-validate.sh`.
 2. Review the current diff with `git diff HEAD`.
 3. Check `.track/tasks/*.md` for tasks whose `files:` globs overlap the changed files.
+4. If the PR already exists, inspect GitHub state before changing anything:
+   ```bash
+   gh pr view <number> --json isDraft,mergeStateStatus,mergeable,statusCheckRollup
+   ```
 
-If validation fails, stop and fix it before continuing.
+If validation fails, STOP and fix it before continuing.
+If another active or review task owns the same files, STOP and resolve the overlap first.
 
 ---
 
@@ -46,13 +51,22 @@ Do not mark partially addressed work as `Also-Completed`.
 
 ## 4. Sync task status with PR state
 
-Before opening or updating the PR:
+Use Track scripts, not manual frontmatter edits.
 
-- Draft PR → set task `status: active`
-- Ready-for-review PR → set task `status: review`
-- Update `updated:` to today's date
+- Draft PR or opening work locally:
+  ```bash
+  bash .track/scripts/track-start.sh {task_id}
+  ```
+  This sets `status: active`, updates `updated:`, and validates.
+- Ready-for-review PR:
+  ```bash
+  bash .track/scripts/track-ready.sh {task_id}
+  ```
+  This sets `status: review`, updates `updated:`, and validates.
+- Merged PRs are completed by Track automation. Do not hand-edit `status: done` on the branch.
 
-Track's generated views use the open PR plus the task file together. If they drift, status will look wrong.
+BAD: edit `status: active` or `status: review` by hand, then create or update the PR later.
+GOOD: run the lifecycle script first, then push/create/update the PR.
 
 ---
 
@@ -80,19 +94,19 @@ Default allowed types:
 
 Repo-local overrides may exist in `.track/config.yml` under `commit_types:`.
 
-Use a real subsystem for `scope`, such as `init`, `skills`, `scripts`, `tests`, `docs`, or `ci`.
+Use a real subsystem for `scope`, such as `setup-track`, `skills`, `scripts`, `tests`, `docs`, or `ci`.
 
 BAD: `Update stuff`
 BAD: `feat: add task support`
-GOOD: `feat(validate): [1.4] configurable commit types in conventional-commit-lint`
+GOOD: `feat(scripts): [9.2] add PR lifecycle status sync`
 
 `Co-Authored-By` lines are optional. Track does not require them.
 
 ---
 
-## 6. Create the PR
+## 6. Create or update the PR
 
-Push the branch, then create the PR.
+Push the branch, then create or update the PR.
 
 Prefer a conventional-commit PR title that includes the task ID:
 
@@ -103,7 +117,7 @@ type(scope): [task-id] short description
 Example:
 
 ```text
-fix(validate): [8.2] correct scope matching for nested globs
+fix(ci): [9.2] run required checks on PR updates
 ```
 
 ### Body rules
@@ -116,8 +130,8 @@ fix(validate): [8.2] correct scope matching for nested globs
 Tracked template:
 
 ```text
-Track-Task: 8.2
-Also-Completed: 8.1
+Track-Task: 9.2
+Also-Completed: 9.1
 
 ## Summary
 One short paragraph covering the full PR diff.
@@ -141,7 +155,28 @@ One short paragraph covering the full PR diff.
 
 ---
 
-## 7. After PR creation
+## 7. Keep the PR mergeable
+
+After every push, inspect mergeability and required checks:
+
+```bash
+gh pr view <number> --json mergeStateStatus,mergeable,statusCheckRollup
+```
+
+Interpret the result conservatively:
+
+- `mergeStateStatus: CLEAN` + required checks green → PR is mergeable
+- `mergeStateStatus: BEHIND` → rebase or merge `origin/main`, then push again
+- `mergeStateStatus: BLOCKED` with missing required checks → fix the workflow or wait for checks
+- `mergeable: CONFLICTING` → resolve merge conflicts locally and push
+
+Important finding: if the repo uses **strict required status checks**, a PR can be blocked even when old checks passed. The current head must be up to date with `main`, and the required check names must run on the latest commit after `synchronize`.
+
+If required checks are `Track Validate` and `Track PR Lint`, ensure those workflows still trigger on direct PR updates, not only through `workflow_call`.
+
+---
+
+## 8. After PR creation or update
 
 Run:
 
@@ -149,4 +184,10 @@ Run:
 bash .track/scripts/track-todo.sh --local --offline
 ```
 
-Confirm the task shows the expected effective status.
+Then confirm all three:
+
+1. the task file has the expected raw status (`active` for draft, `review` for ready)
+2. `TODO.md` shows the expected in-progress state
+3. `gh pr checks <number>` shows the required checks for the latest head commit
+
+If any of these drift, fix the drift before asking for review or merge.

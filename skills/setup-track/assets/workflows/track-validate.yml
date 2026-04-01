@@ -1,9 +1,30 @@
 name: Track Validate
 
 on:
+  pull_request:
+    types: [synchronize, edited, labeled, unlabeled]
   push:
     branches: [main]
-  pull_request:
+  workflow_call:
+    inputs:
+      checkout_repository:
+        required: false
+        type: string
+      checkout_ref:
+        required: false
+        type: string
+      head_ref:
+        required: false
+        type: string
+      pr_title:
+        required: false
+        type: string
+      pr_body:
+        required: false
+        type: string
+      pr_labels:
+        required: false
+        type: string
 
 jobs:
   validate:
@@ -11,14 +32,16 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
-      GITHUB_HEAD_REF: ${{ github.head_ref }}
-      PR_TITLE: ${{ github.event.pull_request.title || '' }}
-      PR_BODY: ${{ github.event.pull_request.body || '' }}
-      PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+      GITHUB_HEAD_REF: ${{ inputs.head_ref || github.head_ref || '' }}
+      PR_TITLE: ${{ inputs.pr_title || github.event.pull_request.title || '' }}
+      PR_BODY: ${{ inputs.pr_body || github.event.pull_request.body || '' }}
+      PR_LABELS: ${{ inputs.pr_labels || join(github.event.pull_request.labels.*.name, ',') || '' }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          repository: ${{ inputs.checkout_repository || github.repository }}
+          ref: ${{ inputs.checkout_ref || github.ref }}
 
       - name: Validate Track state
         run: bash .track/scripts/track-validate.sh

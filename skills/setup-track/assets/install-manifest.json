@@ -26,6 +26,26 @@
       "executable": true
     },
     {
+      "source": "skills/work/scripts/track-task-status.sh",
+      "dest": ".track/scripts/track-task-status.sh",
+      "executable": true
+    },
+    {
+      "source": "skills/work/scripts/track-sync-pr-status.sh",
+      "dest": ".track/scripts/track-sync-pr-status.sh",
+      "executable": true
+    },
+    {
+      "source": "skills/work/scripts/track-start.sh",
+      "dest": ".track/scripts/track-start.sh",
+      "executable": true
+    },
+    {
+      "source": "skills/work/scripts/track-ready.sh",
+      "dest": ".track/scripts/track-ready.sh",
+      "executable": true
+    },
+    {
       "source": "skills/work/scripts/track-complete.sh",
       "dest": ".track/scripts/track-complete.sh",
       "executable": true
@@ -47,6 +67,10 @@
     }
   ],
   "workflows": [
+    {
+      "source": "skills/setup-track/assets/workflows/track-status-sync.yml",
+      "dest": ".github/workflows/track-status-sync.yml"
+    },
     {
       "source": "skills/setup-track/assets/workflows/track-validate.yml",
       "dest": ".github/workflows/track-validate.yml"
