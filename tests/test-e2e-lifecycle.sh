@@ -292,6 +292,7 @@ completed_task="$repo/.track/tasks/1.1-foundation-plumbing.md"
 completed_pr='https://github.com/test/repo/pull/73'
 
 run_test "initial validation passes" 0 run_validate_clean "$repo/.track/scripts/track-validate.sh"
+run_test "pull_request context tolerates pre-sync todo state" 0 env PATH='/usr/bin:/bin' GITHUB_EVENT_NAME='pull_request' GITHUB_HEAD_REF='task/1.1-foundation-plumbing' PR_TITLE='[1.1] Foundation plumbing' PR_BODY='Track-Task: 1.1' bash "$repo/.track/scripts/track-validate.sh"
 run_test "initial Track view generation passes" 0 bash "$repo/.track/scripts/track-todo.sh" --local --offline --output "$board_before"
 
 if [[ -f "$board_before" && -f "$repo/TODO.md" && -f "$repo/PROJECTS.md" ]]; then
