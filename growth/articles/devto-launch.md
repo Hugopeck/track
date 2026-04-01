@@ -86,7 +86,7 @@ No more "can you move that ticket to done?" conversations.
 - **~600 lines** of bash scripts (bash 3.2+, works on stock macOS)
 - **0** external dependencies (just git)
 - **0** dollars/month
-- **6** Claude Code skills (init, work, create, decompose, validate, todo)
+- **6** Claude Code skills (setup-track, work, create, decompose, validate, todo)
 - **4** bash scripts (validate, todo, pr-lint, complete)
 
 ### Linear vs Track: An Honest Comparison
@@ -120,7 +120,7 @@ The protocol is simple enough that it works for anything. A GitHub account and a
 git clone https://github.com/Hugopeck/track.git ~/.local/share/agent-skills/track && ~/.local/share/agent-skills/track/install.sh
 ```
 
-Then in any repo: `/track:init`
+Then in any repo: `/track:setup-track`
 
 GitHub: https://github.com/Hugopeck/track
 

@@ -38,49 +38,49 @@
   ],
   "workflows": [
     {
-      "source": "skills/init/assets/workflows/track-validate.yml",
+      "source": "skills/setup-track/assets/workflows/track-validate.yml",
       "dest": ".github/workflows/track-validate.yml"
     },
     {
-      "source": "skills/init/assets/workflows/track-pr-lint.yml",
+      "source": "skills/setup-track/assets/workflows/track-pr-lint.yml",
       "dest": ".github/workflows/track-pr-lint.yml"
     },
     {
-      "source": "skills/init/assets/workflows/conventional-commit-lint.yml",
+      "source": "skills/setup-track/assets/workflows/conventional-commit-lint.yml",
       "dest": ".github/workflows/conventional-commit-lint.yml"
     },
     {
-      "source": "skills/init/assets/workflows/track-complete.yml",
+      "source": "skills/setup-track/assets/workflows/track-complete.yml",
       "dest": ".github/workflows/track-complete.yml"
     }
   ],
   "hooks": [
     {
-      "source": "skills/init/assets/hooks/commit-msg",
+      "source": "skills/setup-track/assets/hooks/commit-msg",
       "dest": ".git/hooks/commit-msg",
       "executable": true
     },
     {
-      "source": "skills/init/assets/hooks/post-commit",
+      "source": "skills/setup-track/assets/hooks/post-commit",
       "dest": ".git/hooks/post-commit",
       "executable": true
     }
   ],
   "repo_assets": [
     {
-      "source": "skills/init/assets/track-readme.md",
+      "source": "skills/setup-track/assets/track-readme.md",
       "dest": ".track/README.md"
     },
     {
-      "source": "skills/init/assets/projects-readme.md",
+      "source": "skills/setup-track/assets/projects-readme.md",
       "dest": ".track/projects/README.md"
     },
     {
-      "source": "skills/init/assets/plans-readme.md",
+      "source": "skills/setup-track/assets/plans-readme.md",
       "dest": ".track/plans/README.md"
     },
     {
-      "source": "skills/init/assets/specs-readme.md",
+      "source": "skills/setup-track/assets/specs-readme.md",
       "dest": ".track/specs/README.md"
     }
   ]

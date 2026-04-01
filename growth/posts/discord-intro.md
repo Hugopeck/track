@@ -26,7 +26,7 @@ Less managing, more getting shit done. Would love feedback from anyone running m
 
 ## Server-specific notes
 
-**Claude Code Discord:** Emphasize the plugin angle, `/track:init` command
+**Claude Code Discord:** Emphasize the plugin angle, `/track:setup-track` command
 **Cursor Discord:** Mention Cursor plugin support, link to marketplace listing
 **AI builders:** Focus on the protocol design, multi-agent coordination problem
 **Indie hackers:** Focus on the build-in-public story, open-core model

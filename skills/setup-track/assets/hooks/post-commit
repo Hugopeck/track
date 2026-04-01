@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # post-commit: Track event emitter
-# Deployed by track init to .git/hooks/post-commit (or .husky/post-commit)
+# Deployed by track setup-track to .git/hooks/post-commit (or .husky/post-commit)
 # Requires bash 3.2+
 #
 # Behavior:

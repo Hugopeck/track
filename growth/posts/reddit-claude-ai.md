@@ -17,7 +17,7 @@ I've been running multiple Claude Code agents in parallel (via Conductor) and ke
 So I built Track — a Claude Code plugin that adds task coordination to your repo. Here's how it works:
 
 **The setup:**
-- Run `/track:init` in any repo
+- Run `/track:setup-track` in any repo
 - It creates a `.track/` folder with markdown task files
 - Each task has a `files:` field listing which files it'll touch
 

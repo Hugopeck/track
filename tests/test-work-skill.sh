@@ -54,7 +54,7 @@ assert_contains 'link completion requirement documented' '`link` is complete onl
 assert_contains 'context writes task file back' 'Write the updated task file back to disk.'
 assert_contains 'context validates after edit' 'Run `bash .track/scripts/track-validate.sh`.'
 assert_contains 'context completion requirement documented' '`context` is complete only after the task file is written and validation passes.'
-assert_contains 'hook awareness checks explicit marker one' 'contains `Deployed by track init` or `Track event emitter`'
+assert_contains 'hook awareness checks explicit marker one' 'contains `Deployed by track setup-track` or `Track event emitter`'
 assert_contains 'link task validation do not documented' 'Do not emit a `track.link` event without validating the task ID exists'
 assert_contains 'notes append-only do not documented' 'Do not overwrite existing `## Notes` content — append only'
 assert_contains 'PR body is primary linkage' 'Always include `Track-Task: {id}` on the first line of the PR body'

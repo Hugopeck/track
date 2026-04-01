@@ -111,7 +111,7 @@ track/                              # repo root
 ├── LICENSE
 │
 ├── skills/
-│   ├── init/
+│   ├── setup-track/
 │   │   ├── SKILL.md
 │   │   └── assets/
 │   │       ├── install-manifest.json
@@ -150,7 +150,7 @@ track/                              # repo root
 ### Naming conventions
 
 - Repo name usually matches the project/domain (`track`, `archeia`).
-- Skills are peers named for capabilities or workflows (`init`, `work`, `create`, `decompose`). Utility skills may keep implementation-oriented directory names (`todo/` ships `/track:refresh-track`, `update-track/` ships `/update-skills`).
+- Skills are peers named for capabilities or workflows (`setup-track`, `work`, `create`, `decompose`). Utility skills may keep implementation-oriented directory names (`todo/` ships `/track:refresh-track`, `update-track/` ships `/update-skills`).
 - Project prefixes are optional; use them only when they improve clarity or prevent collisions.
 
 Auto-loading is not hierarchy. In Track, `work` auto-loads in repos with `.track/`,
@@ -168,7 +168,7 @@ These are separate decisions:
 - **Deployed runtime** can still be assembled into the adopting repo.
 
 Track uses this split deliberately: `validate`, `todo`, and `work` own their
-runtime scripts in the skill repo, while `/track:init` assembles those sources
+runtime scripts in the skill repo, while `/track:setup-track` assembles those sources
 into `.track/scripts/` so local commands and GitHub workflows keep stable repo-local paths.
 
 ---

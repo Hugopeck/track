@@ -4,7 +4,7 @@ set -euo pipefail
 PASS=0
 FAIL=0
 INSTALL_FILE='install.sh'
-MANIFEST_FILE='skills/init/assets/install-manifest.json'
+MANIFEST_FILE='skills/setup-track/assets/install-manifest.json'
 
 contains_literal() {
   local pattern="$1"
@@ -64,10 +64,10 @@ else
   fail 'work is missing PR lifecycle scripts'
 fi
 
-if [[ ! -d skills/init/assets/scripts ]]; then
-  pass 'init no longer owns a monolithic assets/scripts directory'
+if [[ ! -d skills/setup-track/assets/scripts ]]; then
+  pass 'setup-track no longer owns a monolithic assets/scripts directory'
 else
-  fail 'init still owns assets/scripts'
+  fail 'setup-track still owns assets/scripts'
 fi
 
 printf '\nSummary: %d passed, %d failed\n' "$PASS" "$FAIL"

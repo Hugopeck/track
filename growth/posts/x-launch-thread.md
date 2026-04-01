@@ -52,9 +52,9 @@ No server. No account. No vendor.
 
 ## Tweet 5
 
-[ATTACH: Demo GIF showing init → agents working → PRs completing]
+[ATTACH: Demo GIF showing setup-track → agents working → PRs completing]
 
-`/track:init` sets up your repo in 30 seconds.
+`/track:setup-track` sets up your repo in 30 seconds.
 
 Then your agents just... coordinate.
 

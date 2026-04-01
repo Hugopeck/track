@@ -3,8 +3,8 @@ set -euo pipefail
 
 PASS=0
 FAIL=0
-SKILL_FILE="skills/init/SKILL.md"
-INSTALL_MANIFEST_FILE="skills/init/assets/install-manifest.json"
+SKILL_FILE="skills/setup-track/SKILL.md"
+INSTALL_MANIFEST_FILE="skills/setup-track/assets/install-manifest.json"
 TRACK_MD="TRACK.md"
 
 contains_literal() {
@@ -29,7 +29,7 @@ fail() {
   FAIL=$((FAIL + 1))
 }
 
-printf 'Running init skill regression tests...
+printf 'Running setup-track skill regression tests...
 
 '
 
@@ -52,75 +52,75 @@ else
 fi
 
 if [[ -f "$INSTALL_MANIFEST_FILE" ]] &&    contains_literal 'install-manifest.json' "$SKILL_FILE"; then
-  pass 'init skill documents manifest-driven installation'
+  pass 'setup-track skill documents manifest-driven installation'
 else
-  fail 'init skill is missing manifest-driven installation'
+  fail 'setup-track skill is missing manifest-driven installation'
 fi
 
 if ! contains_literal 'opencode.json' "$SKILL_FILE" &&    ! contains_literal 'opencode.json' "$INSTALL_MANIFEST_FILE"; then
-  pass 'init stays free of OpenCode-specific repo config'
+  pass 'setup-track stays free of OpenCode-specific repo config'
 else
-  fail 'init still references OpenCode-specific repo config'
+  fail 'setup-track still references OpenCode-specific repo config'
 fi
 
 if contains_literal '### Phase 5: Explain the recommended branch/worktree workflow' "$SKILL_FILE" &&    contains_literal 'one git worktree and one branch per active task' "$SKILL_FILE"; then
-  pass 'init skill documents branch and worktree guidance'
+  pass 'setup-track skill documents branch and worktree guidance'
 else
-  fail 'init skill is missing branch and worktree guidance'
+  fail 'setup-track skill is missing branch and worktree guidance'
 fi
 
 if contains_literal '### Phase 4.5: Install git hooks' "$SKILL_FILE" &&    contains_literal 'If the destination file already exists, read both the existing file and' "$SKILL_FILE" &&    contains_literal 'the asset version and compare the full contents' "$SKILL_FILE"; then
-  pass 'init skill documents safe hook installation'
+  pass 'setup-track skill documents safe hook installation'
 else
-  fail 'init skill is missing safe hook installation guidance'
+  fail 'setup-track skill is missing safe hook installation guidance'
 fi
 
 if contains_literal 'ask before overwriting in both `fresh-init` and' "$SKILL_FILE" &&    contains_literal 'If one hook installs and another is skipped' "$SKILL_FILE"; then
-  pass 'init skill handles differing hooks safely in all modes'
+  pass 'setup-track skill handles differing hooks safely in all modes'
 else
-  fail 'init skill does not handle differing hooks safely in all modes'
+  fail 'setup-track skill does not handle differing hooks safely in all modes'
 fi
 
 if contains_literal '### Phase 4.75: Apply GitHub Ruleset' "$SKILL_FILE" &&    contains_literal 'Apply the Track Protection ruleset now?' "$SKILL_FILE"; then
-  pass 'init skill asks before applying ruleset'
+  pass 'setup-track skill asks before applying ruleset'
 else
-  fail 'init skill does not ask before applying ruleset'
+  fail 'setup-track skill does not ask before applying ruleset'
 fi
 
 if contains_literal 'block deletion and force-pushes' "$SKILL_FILE" &&    contains_literal 'require linear history' "$SKILL_FILE"; then
-  pass 'init skill explains ruleset impact before consent'
+  pass 'setup-track skill explains ruleset impact before consent'
 else
-  fail 'init skill does not explain ruleset impact before consent'
+  fail 'setup-track skill does not explain ruleset impact before consent'
 fi
 
 if contains_literal 'Hooks: {installed to .git/hooks/ | installed to .husky/ | partial — details | skipped — reason}' "$SKILL_FILE" &&    contains_literal 'Ruleset: {applied | skipped — gh missing | skipped — gh not authenticated | skipped — not a GitHub repo | skipped — no admin access | skipped — already exists | skipped — user declined | skipped — API error}' "$SKILL_FILE"; then
-  pass 'init checkpoint summary includes hook and ruleset outcomes'
+  pass 'setup-track checkpoint summary includes hook and ruleset outcomes'
 else
-  fail 'init checkpoint summary is missing hook and ruleset outcomes'
+  fail 'setup-track checkpoint summary is missing hook and ruleset outcomes'
 fi
 
 if contains_literal 'Track marks tasks `active` and `review`' "$SKILL_FILE" &&    contains_literal 'Track-Task: {id}' "$SKILL_FILE"; then
-  pass 'init skill ties PR lifecycle to task linkage'
+  pass 'setup-track skill ties PR lifecycle to task linkage'
 else
-  fail 'init skill is missing PR lifecycle linkage guidance'
+  fail 'setup-track skill is missing PR lifecycle linkage guidance'
 fi
 
 if contains_literal 'fresh worktree or branch' "$SKILL_FILE"; then
-  pass 'init closing messages offer a clean branch or worktree'
+  pass 'setup-track closing messages offer a clean branch or worktree'
 else
-  fail 'init closing messages still assume a vendor workspace'
+  fail 'setup-track closing messages still assume a vendor workspace'
 fi
 
 if contains_literal '### Phase 7: Update `CLAUDE.md` and `AGENTS.md`' "$SKILL_FILE" &&    contains_literal '${CLAUDE_SKILL_DIR}/../../TRACK.md' "$SKILL_FILE" &&    contains_literal '<!-- TRACK:START -->' "$SKILL_FILE"; then
-  pass 'init skill documents unified CLAUDE.md/AGENTS.md Track section support'
+  pass 'setup-track skill documents unified CLAUDE.md/AGENTS.md Track section support'
 else
-  fail 'init skill is missing unified Track section support'
+  fail 'setup-track skill is missing unified Track section support'
 fi
 
-if [[ ! -f skills/init/assets/conductor.json && ! -f skills/init/assets/conductor-prefs.md ]]; then
-  pass 'init no longer ships Conductor-specific assets'
+if [[ ! -f skills/setup-track/assets/conductor.json && ! -f skills/setup-track/assets/conductor-prefs.md ]]; then
+  pass 'setup-track no longer ships Conductor-specific assets'
 else
-  fail 'Conductor-specific init assets still exist'
+  fail 'Conductor-specific setup-track assets still exist'
 fi
 
 if [[ -f "$TRACK_MD" ]] && contains_literal '## Track — Task Coordination' "$TRACK_MD"; then

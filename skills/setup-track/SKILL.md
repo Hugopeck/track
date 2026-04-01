@@ -1,5 +1,5 @@
 ---
-name: init
+name: setup-track
 description: |
   Set up Track from scratch or re-run it on an existing Track repo. Deploy
   everything an adopting repo needs — directories, scripts, CI workflows, and
@@ -20,7 +20,7 @@ allowed-tools:
 
 ## Purpose
 
-`/track:init` owns the full Track initialization lifecycle for the current
+`/track:setup-track` owns the full Track initialization lifecycle for the current
 repository. That includes first-time setup, safe re-runs on existing Track
 repos, importing existing markdown work, onboarding fallback, final validation,
 and the closing handoff.
@@ -35,7 +35,7 @@ This skill does not stop at copying files. It owns the entire init flow:
 4. Fall back to onboarding if nothing is imported
 5. Verify the final state and hand the user off cleanly
 
-If the user invoked `/track:init`, your job is to complete that lifecycle unless
+If the user invoked `/track:setup-track`, your job is to complete that lifecycle unless
 they explicitly abort.
 
 ## Persona — The Onboarding Guide
@@ -107,7 +107,7 @@ version, it is user content — preserve it.
 
 ## Definition of Done
 
-`/track:init` is done only when the active mode reaches the end of the full flow:
+`/track:setup-track` is done only when the active mode reaches the end of the full flow:
 
 - `fresh-init` is done only after Phases 2–10 complete
 - `upgrade-continue` is done only after the upgrade work completes and then
@@ -226,7 +226,7 @@ have to think about them."
    - Write to `{dest}` inside the adopting repo
    - Make executable with `chmod +x`
 4. Runtime scripts are assembled from the owning skills via the manifest rather
-   than coming from a monolithic `assets/scripts/` directory owned by `init`
+   than coming from a monolithic `assets/scripts/` directory owned by `setup-track`
 
 ### Phase 4: Install GitHub workflows
 
@@ -241,7 +241,7 @@ the bookkeeping takes care of itself. You're one step closer to tracking."
    - Resolve `{source}` relative to the skill repo root
    - Read the asset version
    - Write to `{dest}`
-4. Workflows stay owned by `init` because they are universal bootstrap glue
+4. Workflows stay owned by `setup-track` because they are universal bootstrap glue
 
 ### Phase 4.5: Install git hooks
 
@@ -311,7 +311,7 @@ message — never fail init over remote configuration.
      "You don't have admin access to this repo. Skipping branch protection.
      Ask a repo admin to apply the Track ruleset — it enforces PR-based merges
      to main/master with track-validate and track-pr-lint as required checks.
-     The ruleset file is at `skills/init/assets/track-ruleset.json` in the
+     The ruleset file is at `skills/setup-track/assets/track-ruleset.json` in the
      Track skill project."
    - Continue to Phase 5
 5. Check for existing ruleset: run
@@ -506,7 +506,7 @@ content so you can avoid collisions.
    required body sections (`## Context`, `## Acceptance Criteria`, `## Notes`).
 6. In `## Context`, reference the source: "Imported from `{source_file}`, line
    {N}."
-7. In `## Notes`, write: "Auto-imported during `/track:init`."
+7. In `## Notes`, write: "Auto-imported during `/track:setup-track`."
 8. Preserve all existing user-authored Track content
 
 #### Phase 8d: Generate preview and present selection
@@ -609,7 +609,7 @@ teaches the Track workflow by doing.
 - Migrating completed/archived items
 
 ## Shared Context
-This project was auto-created during /track:init as a guided onboarding.
+This project was auto-created during /track:setup-track as a guided onboarding.
 The first task doubles as a tutorial — it teaches the Track workflow while
 accomplishing real work.
 
@@ -688,7 +688,7 @@ When working this task, follow these steps:
 - [ ] Plan approved by user
 
 ## Notes
-Auto-created during /track:init onboarding.
+Auto-created during /track:setup-track onboarding.
 ```
 
 Create `.track/tasks/1.2-execute-migration.md` if missing:
@@ -733,7 +733,7 @@ project and tasks using /track:create or /track:decompose.
 - [ ] User confirms the import looks correct
 
 ## Notes
-Auto-created during /track:init onboarding.
+Auto-created during /track:setup-track onboarding.
 ```
 
 ### Phase 10: Verify and hand off
@@ -852,7 +852,7 @@ Your Track views have the full picture. Happy tracking!
   Phase 7
 - Existing `.track/` state is not a reason to skip import or onboarding; it is
   only a reason to avoid duplicating first-time setup
-- If the user invoked `/track:init` and did not abort, complete the init flow
+- If the user invoked `/track:setup-track` and did not abort, complete the init flow
 - Do not overwrite user-authored files in `.track/tasks/` or `.track/projects/` without asking
 - Do not silently switch from `upgrade-continue` to recreating everything — preserve user content
 - Do not be silent through multiple phases — narrate progress at every phase
