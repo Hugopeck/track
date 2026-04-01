@@ -288,7 +288,7 @@ main_task_status_for_path() {
 
 validate_open_prs() {
   local pr_lines number url is_draft head_ref base_ref state title pr_body pr_labels resolver_code
-  local task_id file_on_main main_status branch_task_file current_head_ref
+  local task_id file_on_main task_status branch_task_file current_head_ref
   local pr_task_ids=() pr_urls=()
   local i j
 
@@ -345,19 +345,32 @@ validate_open_prs() {
     OPEN_PR_TASK_IDS+=("$task_id")
     OPEN_PR_URLS+=("$url")
 
-    file_on_main="$(main_task_file_for_id "$task_id")"
-    if [[ -z "$file_on_main" ]]; then
+    branch_task_file=''
+    if [[ -n "$current_head_ref" && "$head_ref" == "$current_head_ref" ]]; then
       branch_task_file="$(find "$TASK_DIR" -maxdepth 1 -type f -name "${task_id}-*.md" | head -n 1)"
-      if [[ -n "$current_head_ref" && "$head_ref" == "$current_head_ref" && -n "$branch_task_file" ]]; then
+    fi
+
+    file_on_main="$(main_task_file_for_id "$task_id")"
+    if [[ -n "$branch_task_file" ]]; then
+      if ! track_parse_task_file "$branch_task_file"; then
+        print_error "$branch_task_file: $TRACK_parse_error"
         continue
       fi
+      task_status="$TRACK_status"
+    elif [[ -n "$file_on_main" ]]; then
+      task_status="$(main_task_status_for_path "$file_on_main")"
+    else
       print_error "open PR '$url' references task '$task_id' but no matching task file exists on origin/$DEFAULT_BRANCH. Create the task file or close the orphaned PR"
       continue
     fi
 
-    main_status="$(main_task_status_for_path "$file_on_main")"
-    if [[ "$main_status" == 'done' || "$main_status" == 'cancelled' ]]; then
-      print_error "open PR '$url' references terminal task '$task_id' (done/cancelled) on origin/$DEFAULT_BRANCH. Close the PR or reopen the task"
+    if [[ "$task_status" == 'blocked' ]]; then
+      print_error "open PR '$url' references blocked task '$task_id'. Unblock the task or close the PR"
+      continue
+    fi
+
+    if [[ "$task_status" == 'done' || "$task_status" == 'cancelled' ]]; then
+      print_error "open PR '$url' references terminal task '$task_id' (done/cancelled). Close the PR or reopen the task"
     fi
   done <<< "$pr_lines"
 
@@ -371,7 +384,7 @@ validate_open_prs() {
 }
 
 validate_pull_request_context() {
-  local head_ref pr_title pr_body pr_labels pr_draft_state resolver_code task_id task_file
+  local head_ref pr_title pr_body pr_labels resolver_code task_id task_file
   head_ref="${GITHUB_HEAD_REF:-}"
   pr_title="${PR_TITLE:-}"
   pr_body="${PR_BODY:-}"
@@ -392,10 +405,6 @@ validate_pull_request_context() {
     return
   fi
 
-  if command -v gh >/dev/null 2>&1; then
-    pr_draft_state="$(gh pr list --head "$head_ref" --state open --json isDraft --template '{{range .}}{{printf "%t\n" .isDraft}}{{end}}' 2>/dev/null || true)"
-  fi
-
   task_id="$TRACK_RESOLVED_TASK_ID"
   task_file="$(find "$TASK_DIR" -maxdepth 1 -type f -name "${task_id}-*.md" | head -n 1)"
 
@@ -410,20 +419,11 @@ validate_pull_request_context() {
   fi
 
   if [[ "$TRACK_status" == 'done' || "$TRACK_status" == 'cancelled' ]]; then
-    print_error "$task_file: task on implementation branch may not be '$TRACK_status' while PR is open. Set status to 'active' (draft PR) or 'review' (ready PR)"
+    print_error "$task_file: terminal task '$TRACK_status' should not have an open PR. Close the PR or reopen the task"
   fi
 
   if [[ "$TRACK_status" == 'blocked' ]]; then
     print_error "$task_file: blocked task should not have an open PR. Unblock the task first or close the PR"
-  fi
-
-  if [[ -n "$pr_draft_state" ]]; then
-    if [[ "$pr_draft_state" == 'true' && "$TRACK_status" != 'active' ]]; then
-      print_error "$task_file: draft PR requires raw status 'active' but found '$TRACK_status'. Set status: active"
-    fi
-    if [[ "$pr_draft_state" == 'false' && "$TRACK_status" != 'review' ]]; then
-      print_error "$task_file: ready-for-review PR requires raw status 'review' but found '$TRACK_status'. Set status: review"
-    fi
   fi
 }
 

@@ -199,6 +199,79 @@ A valid test task.
 Test fixture.
 '
 
+todo_task_1_1='---
+id: "1.1"
+title: "Test task"
+status: todo
+mode: implement
+priority: medium
+project_id: "1"
+created: 2026-01-01
+updated: 2026-01-01
+depends_on: []
+files: []
+pr: ""
+---
+
+## Context
+A valid test task before lifecycle sync runs.
+
+## Acceptance Criteria
+- [ ] Tests pass
+
+## Notes
+Pre-sync fixture.
+'
+
+blocked_task_1_1='---
+id: "1.1"
+title: "Blocked task"
+status: blocked
+mode: implement
+priority: medium
+project_id: "1"
+created: 2026-01-01
+updated: 2026-01-01
+depends_on: []
+files: []
+pr: ""
+blocked_reason: "Waiting on external dependency"
+---
+
+## Context
+Blocked task with an open PR.
+
+## Acceptance Criteria
+- [ ] Work is unblocked
+
+## Notes
+Blocked fixture.
+'
+
+done_task_1_1='---
+id: "1.1"
+title: "Done task"
+status: done
+mode: implement
+priority: medium
+project_id: "1"
+created: 2026-01-01
+updated: 2026-01-02
+depends_on: []
+files: []
+pr: "https://example.com/pr/199"
+---
+
+## Context
+Terminal task with an open PR.
+
+## Acceptance Criteria
+- [x] Work is already complete
+
+## Notes
+Done fixture.
+'
+
 active_task_1_3='---
 id: "1.3"
 title: "Dependent task"
@@ -273,6 +346,41 @@ mock_bin="$(mktemp -d)"
 write_gh_mock "$mock_bin" single-pr
 run_capture env PATH="$mock_bin:$PATH" TRACK_DEFAULT_BRANCH='skip-main' GITHUB_EVENT_NAME='pull_request' GITHUB_HEAD_REF='task/1.1-test-task' PR_TITLE='[1.1] Single context' PR_BODY='Track-Task: 1.1' bash "$repo/.track/scripts/track-validate.sh"
 assert_code 'PR context with single Track-Task resolves' 0
+cleanup_capture
+rm -rf "$repo" "$bare_dir" "$mock_bin"
+
+# PR context tolerates pre-sync todo status on the current branch
+setup_repo
+write_task "$repo" '1.1-test-task.md' "$todo_task_1_1"
+commit_and_push_main "$repo"
+mock_bin="$(mktemp -d)"
+write_gh_mock "$mock_bin" single-pr
+run_capture env PATH="$mock_bin:$PATH" TRACK_DEFAULT_BRANCH='skip-main' GITHUB_EVENT_NAME='pull_request' GITHUB_HEAD_REF='task/1.1-test-task' PR_TITLE='[1.1] Pre-sync context' PR_BODY='Track-Task: 1.1' bash "$repo/.track/scripts/track-validate.sh"
+assert_code 'PR context tolerates pre-sync todo status' 0
+cleanup_capture
+rm -rf "$repo" "$bare_dir" "$mock_bin"
+
+# Open PR mapped to blocked task still fails
+setup_repo
+write_task "$repo" '1.1-test-task.md' "$blocked_task_1_1"
+commit_and_push_main "$repo"
+mock_bin="$(mktemp -d)"
+write_gh_mock "$mock_bin" single-pr
+run_capture run_validate_clean env PATH="$mock_bin:$PATH" bash "$repo/.track/scripts/track-validate.sh"
+assert_code 'blocked task with open PR fails' 1
+assert_stderr_contains 'blocked task error surfaced' 'references blocked task'
+cleanup_capture
+rm -rf "$repo" "$bare_dir" "$mock_bin"
+
+# Open PR mapped to terminal task still fails
+setup_repo
+write_task "$repo" '1.1-test-task.md' "$done_task_1_1"
+commit_and_push_main "$repo"
+mock_bin="$(mktemp -d)"
+write_gh_mock "$mock_bin" single-pr
+run_capture run_validate_clean env PATH="$mock_bin:$PATH" bash "$repo/.track/scripts/track-validate.sh"
+assert_code 'terminal task with open PR fails' 1
+assert_stderr_contains 'terminal task error surfaced' 'references terminal task'
 cleanup_capture
 rm -rf "$repo" "$bare_dir" "$mock_bin"
 

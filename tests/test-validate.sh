@@ -286,5 +286,13 @@ EOF
 run_test "project with mismatched id fails" 1 run_validate_clean "$repo/.track/scripts/track-validate.sh"
 rm -rf "$repo"
 
+# Test 10: Pull request context tolerates pre-sync todo status
+repo="$(setup_valid_repo)"
+run_test \
+  "pull request context allows pre-sync todo state" \
+  0 \
+  env PATH='/usr/bin:/bin' GITHUB_EVENT_NAME='pull_request' GITHUB_HEAD_REF='task/1.1-test-task' PR_TITLE='[1.1] Test task' PR_BODY='Track-Task: 1.1' bash "$repo/.track/scripts/track-validate.sh"
+rm -rf "$repo"
+
 printf '\nResults: %d passed, %d failed\n' "$PASS" "$FAIL"
 [[ $FAIL -eq 0 ]]
