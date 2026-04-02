@@ -203,6 +203,12 @@ assert_not_contains 'stale task does not appear in ready queues' '- [ ] [1.1] [T
 rm -rf "$repo"
 
 repo="$(setup_repo)"
+perl -0pi -e 's/status: active/status: paused/' "$repo/.track/projects/1-test-project.md"
+PATH="$mock_bin:$PATH" MOCK_SCENARIO=stale bash "$repo/.track/scripts/track-todo.sh" --local --output "$repo/BOARD.md" >/dev/null
+assert_contains 'projects honor paused frontmatter status' '| [1](.track/projects/1-test-project.md) | Test Project | A test project for validation. | `[███░░░░░░░] 33%` (1/3) | Paused |' "$repo/PROJECTS.md"
+rm -rf "$repo"
+
+repo="$(setup_repo)"
 PATH="$mock_bin:$PATH" MOCK_SCENARIO=partial bash "$repo/.track/scripts/track-todo.sh" --local --output "$repo/BOARD.md" >/dev/null
 assert_contains 'board warns when GitHub lookup is partial' "GitHub PR lookup partial: open PR 'https://example.com/pr/201' body unavailable; falling back to labels/title/branch only" "$repo/BOARD.md"
 assert_contains 'todo warns when GitHub lookup is partial' "GitHub PR lookup partial: open PR 'https://example.com/pr/201' body unavailable; falling back to labels/title/branch only" "$repo/TODO.md"

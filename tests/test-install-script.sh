@@ -35,9 +35,27 @@ else
 fi
 
 if contains_literal '[ -f "$skill/SKILL.md" ] || continue' "$INSTALL_FILE"; then
-  pass 'install.sh only symlinks directories with SKILL.md'
+  pass 'install.sh only installs directories with SKILL.md'
 else
-  fail 'install.sh still symlinks every directory under skills/'
+  fail 'install.sh still installs every directory under skills/'
+fi
+
+if contains_literal 'copy_skill_dir() {' "$INSTALL_FILE"; then
+  pass 'install.sh defines copied skill install helper'
+else
+  fail 'install.sh missing copied skill install helper'
+fi
+
+if contains_literal 'cp -R "$source_dir" "$dest_dir"' "$INSTALL_FILE"; then
+  pass 'install.sh copies skill directories'
+else
+  fail 'install.sh does not copy skill directories'
+fi
+
+if contains_literal 'ln -sfn' "$INSTALL_FILE"; then
+  fail 'install.sh still symlinks skill directories'
+else
+  pass 'install.sh no longer symlinks skill directories'
 fi
 
 if [[ -f scripts/lib/track-common.sh ]]; then
