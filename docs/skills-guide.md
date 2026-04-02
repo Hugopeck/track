@@ -122,20 +122,20 @@ track/                              # repo root
 │   │   └── scripts/
 │   │       ├── track-pr-lint.sh
 │   │       └── track-complete.sh
-│   ├── validate/
-│   │   └── scripts/
-│   │       ├── track-validate.sh
-│   │       └── track-conventional-commit-lint.sh
 │   ├── todo/
 │   │   ├── SKILL.md                 # ships /track:refresh-track
 │   │   └── scripts/
 │   │       └── track-todo.sh
 │   ├── create/SKILL.md
 │   ├── decompose/SKILL.md
-│   ├── update-track/SKILL.md        # ships /update-skills
-│   └── runtime/                     # internal shared support, not a skill
-│       └── scripts/
-│           └── track-common.sh
+│   └── update-track/SKILL.md        # ships /update-skills
+│
+├── scripts/
+│   ├── lib/
+│   │   └── track-common.sh
+│   └── validate/
+│       ├── track-validate.sh
+│       └── track-conventional-commit-lint.sh
 │
 ├── tests/
 │   ├── test-validate.sh
@@ -167,9 +167,10 @@ These are separate decisions:
 - **Source ownership** lives with the skill that defines the behavior.
 - **Deployed runtime** can still be assembled into the adopting repo.
 
-Track uses this split deliberately: `validate`, `todo`, and `work` own their
-runtime scripts in the skill repo, while `/track:setup-track` assembles those sources
-into `.track/scripts/` so local commands and GitHub workflows keep stable repo-local paths.
+Track uses this split deliberately: shared support scripts live under `scripts/`,
+while `todo` and `work` keep skill-specific helpers in their own directories.
+`/track:setup-track` assembles those sources into `.track/scripts/` so local
+commands and GitHub workflows keep stable repo-local paths.
 
 ---
 
@@ -353,7 +354,7 @@ track-claude-plugin/
 ├── skills/                        # Copied from track repo via CI
 │   ├── work/
 │   │   └── SKILL.md
-│   ├── validate/
+│   ├── setup-track/
 │   │   └── SKILL.md
 │   └── todo/
 │       └── SKILL.md
@@ -437,7 +438,7 @@ track-codex-plugin/
 │   │   ├── SKILL.md
 │   │   └── agents/
 │   │       └── openai.yaml        # Codex-specific UI metadata
-│   ├── validate/
+│   ├── create/
 │   │   └── SKILL.md
 │   └── todo/
 │       └── SKILL.md
@@ -501,7 +502,7 @@ track-opencode-plugin/
 └── skills/                        # Same skills, copied
     ├── work/
     │   └── SKILL.md
-    ├── validate/
+    ├── create/
     │   └── SKILL.md
     └── todo/
         └── SKILL.md

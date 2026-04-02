@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 FIXTURE_DIR="$SCRIPT_DIR/fixtures"
-COMMON_SCRIPT="$SCRIPT_DIR/../skills/runtime/scripts/track-common.sh"
+COMMON_SCRIPT="$SCRIPT_DIR/../scripts/lib/track-common.sh"
 PR_LINT_SCRIPT="$SCRIPT_DIR/../skills/work/scripts/track-pr-lint.sh"
 PASS=0
 FAIL=0

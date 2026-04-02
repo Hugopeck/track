@@ -1,17 +1,17 @@
 {
   "runtime_scripts": [
     {
-      "source": "skills/runtime/scripts/track-common.sh",
+      "source": "scripts/lib/track-common.sh",
       "dest": ".track/scripts/track-common.sh",
       "executable": true
     },
     {
-      "source": "skills/validate/scripts/track-validate.sh",
+      "source": "scripts/validate/track-validate.sh",
       "dest": ".track/scripts/track-validate.sh",
       "executable": true
     },
     {
-      "source": "skills/validate/scripts/track-conventional-commit-lint.sh",
+      "source": "scripts/validate/track-conventional-commit-lint.sh",
       "dest": ".track/scripts/track-conventional-commit-lint.sh",
       "executable": true
     },

@@ -1,1 +1,1 @@
-../../skills/runtime/scripts/track-common.sh
+../../scripts/lib/track-common.sh

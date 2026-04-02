@@ -12,7 +12,7 @@ fi
 
 VALIDATE_SCRIPT="$ROOT_DIR/.track/scripts/track-validate.sh"
 if [[ ! -f "$VALIDATE_SCRIPT" ]]; then
-  VALIDATE_SCRIPT="$ROOT_DIR/skills/validate/scripts/track-validate.sh"
+  VALIDATE_SCRIPT="$ROOT_DIR/scripts/validate/track-validate.sh"
 fi
 
 TASK_ID="${1:-}"

@@ -2,8 +2,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-COMMON_SCRIPT="$SCRIPT_DIR/../skills/runtime/scripts/track-common.sh"
-VALIDATE_SCRIPT="$SCRIPT_DIR/../skills/validate/scripts/track-validate.sh"
+COMMON_SCRIPT="$SCRIPT_DIR/../scripts/lib/track-common.sh"
+VALIDATE_SCRIPT="$SCRIPT_DIR/../scripts/validate/track-validate.sh"
 TODO_SCRIPT="$SCRIPT_DIR/../skills/todo/scripts/track-todo.sh"
 COMPLETE_SCRIPT="$SCRIPT_DIR/../skills/work/scripts/track-complete.sh"
 TASK_STATUS_SCRIPT="$SCRIPT_DIR/../skills/work/scripts/track-task-status.sh"
