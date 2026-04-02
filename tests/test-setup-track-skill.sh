@@ -18,20 +18,16 @@ contains_literal() {
 }
 
 pass() {
-  printf '  PASS: %s
-' "$1"
+  printf '  PASS: %s\n' "$1"
   PASS=$((PASS + 1))
 }
 
 fail() {
-  printf '  FAIL: %s
-' "$1"
+  printf '  FAIL: %s\n' "$1"
   FAIL=$((FAIL + 1))
 }
 
-printf 'Running setup-track skill regression tests...
-
-'
+printf 'Running setup-track skill regression tests...\n\n'
 
 if contains_literal 'Continue immediately to Phase 2, then automatically continue through the' "$SKILL_FILE"; then
   pass 'upgrade flow repairs structure before reinstalling files'
@@ -99,10 +95,16 @@ else
   fail 'setup-track checkpoint summary is missing hook and ruleset outcomes'
 fi
 
-if contains_literal 'Track marks tasks `active` and `review`' "$SKILL_FILE" &&    contains_literal 'Track-Task: {id}' "$SKILL_FILE"; then
-  pass 'setup-track skill ties PR lifecycle to task linkage'
+if contains_literal '`bash .track/scripts/track-start.sh {id}` enters `active`' "$SKILL_FILE" &&    contains_literal 'tracked PRs should put `Track-Task: {id}` on the first' "$SKILL_FILE" &&    contains_literal 'untracked PRs may stay unlinked until one clear' "$SKILL_FILE"; then
+  pass 'setup-track skill documents tracked and untracked PR guidance'
 else
-  fail 'setup-track skill is missing PR lifecycle linkage guidance'
+  fail 'setup-track skill is missing tracked and untracked PR guidance'
+fi
+
+if ! contains_literal 'Track marks tasks `active` and `review`' "$SKILL_FILE" &&    ! contains_literal 'track-ready.sh {id}' "$SKILL_FILE"; then
+  pass 'setup-track skill no longer teaches track-ready from work guidance'
+else
+  fail 'setup-track skill still teaches track-ready from work guidance'
 fi
 
 if contains_literal 'fresh worktree or branch' "$SKILL_FILE"; then
@@ -129,9 +131,7 @@ else
   fail 'TRACK.md is missing or does not contain Track documentation'
 fi
 
-printf '
-Summary: %d passed, %d failed
-' "$PASS" "$FAIL"
+printf '\nSummary: %d passed, %d failed\n' "$PASS" "$FAIL"
 
 if [[ $FAIL -ne 0 ]]; then
   exit 1

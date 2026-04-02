@@ -49,24 +49,22 @@ Do not mark partially addressed work as `Also-Completed`.
 
 ---
 
-## 4. Sync task status with PR state
+## 4. Sync tracked status with PR state
 
-Use Track scripts, not manual frontmatter edits.
+Use Track scripts and PR lifecycle automation, not manual frontmatter edits.
 
-- Draft PR or opening work locally:
+- Starting tracked work locally or opening a tracked draft PR:
   ```bash
   bash .track/scripts/track-start.sh {task_id}
   ```
   This sets `status: active`, updates `updated:`, and validates.
-- Ready-for-review PR:
-  ```bash
-  bash .track/scripts/track-ready.sh {task_id}
-  ```
-  This sets `status: review`, updates `updated:`, and validates.
+- Ready-for-review tracked PR:
+  mark the draft PR ready for review and let `track-status-sync` write `status: review`.
 - Merged PRs are completed by Track automation. Do not hand-edit `status: done` on the branch.
+- Untracked PRs stay untracked until one task clearly and deterministically matches.
 
 BAD: edit `status: active` or `status: review` by hand, then create or update the PR later.
-GOOD: run the lifecycle script first, then push/create/update the PR.
+GOOD: run `track-start.sh` for tracked work, then let PR lifecycle automation handle review and later transitions.
 
 ---
 

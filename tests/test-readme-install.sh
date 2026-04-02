@@ -69,6 +69,8 @@ assert_contains 'README mentions draft PR lifecycle' "$README_FILE" 'draft PR'
 assert_contains 'README mentions slash commands' "$README_FILE" '/track:work'
 assert_contains 'README mentions GitHub Actions' "$README_FILE" 'GitHub Actions'
 assert_contains 'README mentions MIT license' "$README_FILE" '[MIT](LICENSE)'
+assert_contains 'README documents untracked workflow' "$README_FILE" 'stay untracked until one clear task deterministically matches'
+assert_contains 'README command table reflects tracked or untracked work' "$README_FILE" 'Work a tracked task or stay untracked until one clear task matches'
 
 # Track Cloud / open-core framing
 assert_contains 'README has Track Cloud section' "$README_FILE" '## Track Cloud'
@@ -84,6 +86,7 @@ assert_not_contains 'README no longer references local setup script' "$README_FI
 assert_not_contains 'README no longer references plugin-dir testing' "$README_FILE" 'claude --plugin-dir ./path/to/track'
 assert_not_contains 'README no longer references plugin registry install' "$README_FILE" 'claude plugin install hugopeck/track'
 assert_not_contains 'README no longer references conductor.json' "$README_FILE" 'conductor.json'
+assert_not_contains 'README no longer tells users to pick a task' "$README_FILE" 'Pick a task and start working:'
 
 printf '\nSummary: %d passed, %d failed\n' "$PASS" "$FAIL"
 
