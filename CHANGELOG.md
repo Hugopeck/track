@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.1.0](https://github.com/Hugopeck/track/compare/v3.0.0...v3.1.0) (2026-04-02)
+
+
+### Features
+
+* **setup-track:** [1.6] add pre-push validation hook ([#80](https://github.com/Hugopeck/track/issues/80)) ([609e33b](https://github.com/Hugopeck/track/commit/609e33b9f7f019d1c23d552fed282e56c27786be))
+
+
+### Bug Fixes
+
+* **ci:** pass GH_TOKEN to track-complete writeback ([#78](https://github.com/Hugopeck/track/issues/78)) ([24cd28c](https://github.com/Hugopeck/track/commit/24cd28c0f12bac2917b87b6d37aef66248ce6cb3))
+* **skills:** copy installs and honor paused projects ([#84](https://github.com/Hugopeck/track/issues/84)) ([527b97e](https://github.com/Hugopeck/track/commit/527b97ee238c2d24ac0dd553cae452288a05741c))
+* **track:** complete merged task for [#82](https://github.com/Hugopeck/track/issues/82) ([#83](https://github.com/Hugopeck/track/issues/83)) ([18ae1fb](https://github.com/Hugopeck/track/commit/18ae1fb7f08a3cecaadac1147b730062650eed54))
+
 ## [3.0.0](https://github.com/Hugopeck/track/compare/v2.5.0...v3.0.0) (2026-04-02)
 
 
