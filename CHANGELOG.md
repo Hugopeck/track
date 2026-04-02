@@ -1,5 +1,35 @@
 # Changelog
 
+## [3.0.0](https://github.com/Hugopeck/track/compare/v2.5.0...v3.0.0) (2026-04-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* **skills:** [8.11] rename init to setup-track ([#70](https://github.com/Hugopeck/track/issues/70))
+
+### Features
+
+* **scripts:** [9.1] add shared task status helpers ([#71](https://github.com/Hugopeck/track/issues/71)) ([c1ce439](https://github.com/Hugopeck/track/commit/c1ce439c1792f772c37bd68bbb5572f068064e44))
+* **scripts:** [9.2] add PR lifecycle status sync ([#73](https://github.com/Hugopeck/track/issues/73)) ([e258747](https://github.com/Hugopeck/track/commit/e258747ed45e30ea508c1850338c8a1e81e716f5))
+* **scripts:** [9.4] add reconcile warnings ([#72](https://github.com/Hugopeck/track/issues/72)) ([1624ca2](https://github.com/Hugopeck/track/commit/1624ca2e1adb1be73501d2f853f239c86e86dd7c))
+* **skills:** [8.11] rename init to setup-track ([#70](https://github.com/Hugopeck/track/issues/70)) ([4e053ac](https://github.com/Hugopeck/track/commit/4e053ac38456d7ff27414a6c88c4d94aaa01d80f))
+* **skills:** add discovery loop to create, rewrite decompose for agentic parallelism ([#69](https://github.com/Hugopeck/track/issues/69)) ([708f44d](https://github.com/Hugopeck/track/commit/708f44d31aea7d9677dfe07c2984e54c31ad312b))
+* **validate:** [1.4] configurable commit types in conventional-commit-lint ([47607b3](https://github.com/Hugopeck/track/commit/47607b3459ed49e838229faf18df0a54e409ce63))
+
+
+### Bug Fixes
+
+* **ci:** [8.12] run required checks for release PRs ([#77](https://github.com/Hugopeck/track/issues/77)) ([b6965e2](https://github.com/Hugopeck/track/commit/b6965e2f279cc28cfdd1ea3b2070c7bbe266de3e))
+* **init:** correct ruleset status check names to match workflow display names ([#67](https://github.com/Hugopeck/track/issues/67)) ([429ea5d](https://github.com/Hugopeck/track/commit/429ea5d1386e2afac9588f0a1360a626c5a14f1e))
+* **install:** add ~/.claude/skills symlinks for Claude Code discovery ([#63](https://github.com/Hugopeck/track/issues/63)) ([f454557](https://github.com/Hugopeck/track/commit/f454557abba1b006a651ed77f37b1362cc28883f))
+* **scripts:** [9.3] align validation with status sync ([#74](https://github.com/Hugopeck/track/issues/74)) ([bd434ed](https://github.com/Hugopeck/track/commit/bd434edcf6a1c2d40790f20ce5903e4bce57b4b9))
+* **track:** harden post-merge writeback flow ([#68](https://github.com/Hugopeck/track/issues/68)) ([24b4648](https://github.com/Hugopeck/track/commit/24b4648c43c6e2b7e6eb1343d57944396998499c))
+
+
+### Documentation
+
+* **track:** [9.5] rewrite canonical status docs ([#75](https://github.com/Hugopeck/track/issues/75)) ([2e0a22a](https://github.com/Hugopeck/track/commit/2e0a22a691d185d0c7a44597876579a8b75d5fda))
+
 ## [2.5.0](https://github.com/Hugopeck/track/compare/v2.4.2...v2.5.0) (2026-03-31)
 
 
