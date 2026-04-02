@@ -44,6 +44,24 @@ assert_not_contains() {
   fi
 }
 
+assert_order() {
+  local name="$1"
+  local first="$2"
+  local second="$3"
+  local file="$4"
+  local first_line second_line
+
+  first_line="$(grep -nF -- "$first" "$file" | head -n 1 | cut -d: -f1)"
+  second_line="$(grep -nF -- "$second" "$file" | head -n 1 | cut -d: -f1)"
+
+  if [[ -n "$first_line" && -n "$second_line" && "$first_line" -lt "$second_line" ]]; then
+    pass "$name"
+  else
+    fail "$name"
+    printf '    expected %q before %q in %s\n' "$first" "$second" "$file"
+  fi
+}
+
 assert_exit_code() {
   local name="$1"
   local expected="$2"
@@ -77,6 +95,7 @@ write_task() {
   local updated="$6"
   local depends_block="$7"
   local extra_fields="${8:-}"
+  local project_id="${9:-1}"
 
   cat > "$path" <<TASK
 ---
@@ -85,7 +104,7 @@ title: "$title"
 status: $status
 mode: implement
 priority: $priority
-project_id: "1"
+project_id: "$project_id"
 created: 2026-01-01
 updated: $updated
 $depends_block
@@ -103,6 +122,31 @@ Fixture task.
 ## Notes
 Fixture task.
 TASK
+}
+
+write_project() {
+  local path="$1"
+  local project_id="$2"
+  local title="$3"
+  local status="$4"
+  local updated="$5"
+  local goal="$6"
+
+  cat > "$path" <<PROJECT
+---
+id: "$project_id"
+title: "$title"
+priority: medium
+status: $status
+created: 2026-01-01
+updated: $updated
+---
+
+# $title
+
+## Goal
+$goal
+PROJECT
 }
 
 setup_gh_mock() {
@@ -203,9 +247,13 @@ assert_not_contains 'stale task does not appear in ready queues' '- [ ] [1.1] [T
 rm -rf "$repo"
 
 repo="$(setup_repo)"
+write_project "$repo/.track/projects/2-second-project.md" '2' 'Second Project' 'active' '2026-01-02' 'A second project used for sort-order testing.'
+write_task "$repo/.track/tasks/2.1-second-task.md" '2.1' 'Second task' 'todo' 'medium' '2026-01-02' 'depends_on: []' '' '2'
 perl -0pi -e 's/status: active/status: paused/' "$repo/.track/projects/1-test-project.md"
 PATH="$mock_bin:$PATH" MOCK_SCENARIO=stale bash "$repo/.track/scripts/track-todo.sh" --local --output "$repo/BOARD.md" >/dev/null
 assert_contains 'projects honor paused frontmatter status' '| [1](.track/projects/1-test-project.md) | Test Project | A test project for validation. | `[███░░░░░░░] 33%` (1/3) | Paused |' "$repo/PROJECTS.md"
+assert_order 'board sorts non-paused projects before paused projects' '## [Project 2: Second Project]' '## [Project 1: Test Project]' "$repo/BOARD.md"
+assert_order 'projects list sorts non-paused projects before paused projects' '| [2](.track/projects/2-second-project.md) | Second Project | A second project used for sort-order testing. | `[░░░░░░░░░░] 0%` (0/1) | Planning |' '| [1](.track/projects/1-test-project.md) | Test Project | A test project for validation. | `[███░░░░░░░] 33%` (1/3) | Paused |' "$repo/PROJECTS.md"
 rm -rf "$repo"
 
 repo="$(setup_repo)"

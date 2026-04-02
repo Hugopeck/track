@@ -435,7 +435,16 @@ task_sort_key() {
 
 project_sort_key() {
   local project_id="$1"
-  local i best_rank=99 has_open=0 rank
+  local i best_rank=99 has_open=0 rank paused_bucket=0 project_index project_status=''
+
+  if project_index="$(find_project_index_by_id "$project_id")"; then
+    project_status="${PROJECT_STATUSES[$project_index]}"
+  fi
+
+  if [[ "$project_status" == 'paused' ]]; then
+    paused_bucket=1
+  fi
+
   for ((i = 0; i < ${#TASK_IDS[@]}; i++)); do
     [[ "${TASK_PROJECT_IDS[$i]}" != "$project_id" ]] && continue
     if ! track_is_terminal_status "${TASK_EFFECTIVE_STATUSES[$i]}"; then
@@ -448,7 +457,7 @@ project_sort_key() {
   done
 
   [[ $has_open -eq 0 ]] && best_rank=99
-  printf '%02d\t%06d\t%s\n' "$best_rank" "$project_id" "$project_id"
+  printf '%01d\t%02d\t%06d\t%s\n' "$paused_bucket" "$best_rank" "$project_id" "$project_id"
 }
 
 completed_task_sort_key() {
@@ -843,7 +852,7 @@ render_projects() {
 
     for project_id in "${PROJECT_IDS[@]-}"; do
       [[ -z "$project_id" ]] && continue
-      project_sort_lines+="$(printf '%06d\t%s' "$project_id" "$project_id")"$'\n'
+      project_sort_lines+="$(project_sort_key "$project_id")"$'\n'
     done
 
     while IFS= read -r project_sort_line; do
