@@ -2,7 +2,8 @@ name: Track PR Lint
 
 on:
   pull_request:
-    types: [synchronize, edited, labeled, unlabeled]
+    # historical trigger set kept here for regression tests: types: [synchronize, edited, labeled, unlabeled]
+    types: [opened, reopened, synchronize, edited, labeled, unlabeled]
   workflow_call:
     inputs:
       checkout_repository:

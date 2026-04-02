@@ -2,6 +2,7 @@ name: conventional-commit-lint
 
 on:
   pull_request:
+    types: [opened, reopened, synchronize]
 
 jobs:
   conventional-commit-lint:
