@@ -61,8 +61,9 @@ Break a goal into tasks:
 /track:decompose Migrate the API layer to v2
 ```
 
-Pick a task and start working:
+Work a known task or stay untracked until one clear task matches:
 ```
+/track:work 1.7
 /track:work
 ```
 
@@ -88,8 +89,10 @@ Everything lives in a `.track/` folder at the root of your repo:
 Each task is a markdown file with YAML frontmatter — id, status, priority, dependencies, and file ownership. Tasks belong to projects. Dependencies are explicit.
 
 ```
-todo → active (`track-start` / draft PR) → review (`track-ready` / PR ready) → done (PR merged)
+todo → active (`track-start` / tracked draft PR) → review (PR ready lifecycle event) → done (PR merged)
 ```
+
+No task yet? `/track:work` can stay untracked until one clear task deterministically matches.
 
 The `files:` field is the coordination mechanism. No two active tasks can claim the same files, so parallel agents never collide. `/track:decompose` creates tasks with non-overlapping scopes by default.
 
@@ -102,7 +105,7 @@ See [TRACK.md](TRACK.md) for the full protocol, task format, and field reference
 | Command | What it does |
 |---|---|
 | `/track:setup-track` | Set up Track in a repo — `.track/`, scripts, hooks, workflows |
-| `/track:work` | Pick a task, open a draft PR, start working |
+| `/track:work` | Work a tracked task or stay untracked until one clear task matches |
 | `/track:create` | Create tasks and projects from plain English |
 | `/track:decompose` | Break a goal into tasks with non-overlapping file scopes |
 | `/track:refresh-track` | Regenerate `BOARD.md`, `TODO.md`, `PROJECTS.md` |

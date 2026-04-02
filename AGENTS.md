@@ -270,11 +270,11 @@ Append-only log.
 ### Canonical Task Status
 - `status:` in the task file is the canonical task status
 - Track scripts and workflows own lifecycle writes; do not hand-edit in-progress status as a substitute for lifecycle automation
-- `bash .track/scripts/track-start.sh {id}` writes `status: active` and updates `updated:`
-- `bash .track/scripts/track-ready.sh {id}` writes `status: review` and updates `updated:`
-- `track-status-sync` applies same-repo PR lifecycle changes before `Track Validate` and `Track PR Lint` run
+- `bash .track/scripts/track-start.sh {id}` writes `status: active` and updates `updated:` when tracked work begins
+- `track-status-sync` applies same-repo PR lifecycle changes such as `ready_for_review`, `converted_to_draft`, `reopened`, and `closed` before `Track Validate` and `Track PR Lint` run
 - `bash .track/scripts/track-reconcile.sh` repairs safe canonical-status drift when a lifecycle event was missed
 - The merged-PR completion flow writes `status: done`, `pr:`, and `updated:` on `main`
+- Untracked work has no canonical task status until it is attached to a task
 - `TODO.md` and related views render canonical task status and warn when GitHub-derived PR context is unavailable or stale; if task state and PR state drift, treat it as a sync bug and repair it with Track automation rather than hand edits
 
 ### Event Log and Attribution
@@ -282,7 +282,7 @@ Append-only log.
 - The wire format is defined in `.track/specs/event-contract.md`
 - Core event types are `track.commit`, `track.pr.opened`, `track.pr.ready`, `track.pr.merged`, `track.task.started`, and `track.link`
 - Untracked activity is first-class: an event may exist before it has a task attribution
-- If work happened outside the normal task branch flow, ask `/track:work` to link the current branch to a task; this appends a `track.link` event for retroactive attribution
+- Untracked work may stay untracked. If current branch history later needs task attribution, emit `track.link` for retroactive linkage.
 
 ### Hooks and Automation
 - `commit-msg` enforces conventional commit format locally and blocks invalid commit messages
@@ -304,33 +304,42 @@ Append-only log.
 
 ### Agent Protocol (primary)
 
-1. Read `TODO.md` for the execution queue and `BOARD.md` for project context. Pick a `todo` task or resume an `active` one.
-2. Check `files:` overlap against tasks already shown as `active` / `review` — do not touch files owned by another in-progress task.
-3. Create a branch or use the current one.
-4. Use `bash .track/scripts/track-start.sh {id}` before opening a draft PR, and `bash .track/scripts/track-ready.sh {id}` before marking the PR ready.
-5. Keep one primary task per PR. Use `Track-Task: {id}` for linkage, and use `Also-Completed: {id}` only for fully resolved extras.
+1. If a task is already known or the current branch or PR resolves to one, work it as a tracked session.
+2. If no task is known, untracked work is valid — do not force queue selection from `TODO.md`.
+3. Check `files:` overlap against tasks already shown as `active` / `review` before attaching work to a task.
+4. Use `bash .track/scripts/track-start.sh {id}` before opening a tracked draft PR.
+5. Keep one primary task per tracked PR. Use `Track-Task: {id}` for linkage, and use `Also-Completed: {id}` only for fully resolved extras.
 6. Use `.track/specs/pr-instructions.md` for the exact PR title, body, mergeability, and post-push check procedure.
-7. If `gh` auth fails or PR creation/update fails, **stop and surface the error.**
+7. If no task clearly matches the work, keep the session untracked until one deterministic match exists or a new task is created.
+8. If `gh` auth fails or PR creation/update fails, **stop and surface the error.**
 
 `BOARD.md`, `TODO.md`, and `PROJECTS.md` are generated — edit task files in `.track/tasks/`, not the generated views directly.
 
-`/track:work` contains the full protocol with edge cases. Use it when this section is insufficient.
+`/track:work` contains the full protocol with tracked, untracked, and deterministic auto-patch edge cases.
 
 ### Starting Work (details)
-1. Read the task's `## Context` and `## Notes` — previous sessions may have left important context
-2. Pick work that has no unresolved `depends_on` blockers
-3. If the task's mode is `investigate` or `plan`, focus on understanding and documenting findings before writing implementation code
-4. If acceptance criteria seem incomplete, update them before starting
-5. Use a dedicated worktree or branch per task when possible
+1. If work is tracked, read the task's `## Context` and `## Notes`. If work is untracked, inspect the branch, PR, and current diff first.
+2. Check unresolved `depends_on` blockers before attaching work to a task.
+3. If the task's mode is `investigate` or `plan`, focus on understanding and documenting findings before tracked implementation.
+4. If tracked acceptance criteria seem incomplete, update them before implementation.
+5. Use a dedicated worktree or branch per tracked task when possible. Untracked exploratory branches are fine.
 
-### Working a Task (Provisional PR lifecycle)
-1. Create a branch from `main` (or use the current branch)
+### Working a Session
+Tracked session:
+1. Create a branch from `main` (or use the current one)
 2. Start the lifecycle through Track with `bash .track/scripts/track-start.sh {id}`
 3. Push and open a **draft PR** immediately
 4. Follow `.track/specs/pr-instructions.md` for the exact PR title, body, required checks, rebasing, and mergeability handling
 5. Do the implementation work with as many commits as needed
-6. When ready for review, run `bash .track/scripts/track-ready.sh {id}` and then mark the PR ready for review
+6. When ready for review, verify each acceptance criterion as `MET`, `PARTIAL`, or `UNVERIFIED`, then mark the PR ready for review. `track-status-sync` writes `review`.
 7. When the PR merges, the post-merge workflow writes `status: done`, `pr:`, and `updated:` on `main`. If branch protections block direct writeback, it opens a follow-up writeback PR instead. Then it unblocks newly-cleared dependency tasks and regenerates Track views
+
+Untracked session:
+1. Create or use any branch
+2. Do not call `bash .track/scripts/track-start.sh`
+3. Work locally or open a draft PR with the untracked template from `.track/specs/pr-instructions.md`
+4. If one open task deterministically matches and the work is cohesive, promote the session to tracked work: run `track-start`, append a note, optionally emit `track.link`, and add `Track-Task: {id}` to the PR body
+5. If the work grows beyond one cohesive task, stay untracked or create/split a task instead of forcing attribution
 
 PR linkage details live in `.track/specs/pr-instructions.md`.
 Minimum body examples:
@@ -338,6 +347,8 @@ Minimum body examples:
 ```text
 Track-Task: {id}
 Also-Completed: {id}
+
+untracked task
 ```
 
 ### Worktree Workflow
@@ -405,7 +416,8 @@ bash .track/scripts/track-validate.sh
 - **Update task files as you work, not after.** When you discover new context, constraints, or dead ends, append to the task's `## Notes` immediately. Future sessions depend on this context.
 - **Check for conflicts before starting.** Scan active and review tasks for overlapping `files:` globs. Starting work on contested files creates merge conflicts.
 - **Scope aggressively.** If a task grows beyond its acceptance criteria, split the new work into a separate task rather than expanding the current one.
-- **Let Track scripts drive status.** Use `bash .track/scripts/track-start.sh {id}` for draft state and `bash .track/scripts/track-ready.sh {id}` for review state. `track-status-sync` keeps PR lifecycle events aligned before validation and linting. The post-merge workflow handles `status: done` automatically.
+- **No task is a valid state.** If work is exploratory or opportunistic, keep it untracked until one task deterministically matches or a new task is created.
+- **Let Track scripts and PR lifecycle events drive status.** Use `bash .track/scripts/track-start.sh {id}` for tracked draft state. Let `track-status-sync` write `review` and other PR-driven transitions before validation and linting. The post-merge workflow handles `status: done` automatically.
 - **Repair drift with automation, not hand edits.** If a task is stuck in `active` or `review` after PR state changed, run `bash .track/scripts/track-reconcile.sh` and then regenerate views.
 - **Validate early and often.** Run `bash .track/scripts/track-validate.sh` after every task file change. On PR events, let status sync run first, then validate the resulting canonical state.
 

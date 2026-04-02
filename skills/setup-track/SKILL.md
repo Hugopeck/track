@@ -353,10 +353,12 @@ worktree."
 1. Tell the user Track does not require worktrees for single-agent use
 2. Tell the user that if they run multiple agents or parallel sessions, they
    should use one git worktree and one branch per active task
-3. Tell the user to open a draft PR immediately after starting work because the
-   PR lifecycle is how Track marks tasks `active` and `review`
-4. Tell the user to keep one primary task per PR and put `Track-Task: {id}` on
-   the first line of the PR body
+3. Tell the user to open a draft PR immediately after starting work. For tracked
+   work, `bash .track/scripts/track-start.sh {id}` enters `active`, and PR
+   lifecycle automation moves tracked PRs into `review`
+4. Tell the user that tracked PRs should put `Track-Task: {id}` on the first
+   line of the PR body, while untracked PRs may stay unlinked until one clear
+   task match exists
 5. Do not block init on this explanation — it is guidance, not required setup
 
 ### Phase 6: Update `.gitignore`

@@ -9,7 +9,7 @@ Skills are the instruction layer. Scripts (in `.track/scripts/`) are the enforce
 | Skill | Command | Purpose | Auto-loaded? |
 |-------|---------|---------|:------------:|
 | [setup-track](setup-track/) | `/track:setup-track` | Scaffold Track into a repo, install scripts/hooks/workflows, import existing markdown | No |
-| [work](work/) | `/track:work` | Pick a task, open a draft PR, implement, hand off to merge | Yes |
+| [work](work/) | `/track:work` | Work a tracked task or stay untracked until one clear task matches | Yes |
 | [create](create/) | `/track:create` | Create tasks and projects from natural language | No |
 | [decompose](decompose/) | `/track:decompose` | Break a goal into parallelizable tasks with non-overlapping file scopes | No |
 | [refresh-track](todo/) | `/track:refresh-track` | Regenerate `BOARD.md`, `TODO.md`, and `PROJECTS.md` | No |

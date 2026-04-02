@@ -81,12 +81,12 @@ Append-only log of decisions and updates.
 
 The `status` field in the task file is the single task status Track owns.
 
-1. `bash .track/scripts/track-start.sh {id}` writes `status: active` before opening a draft PR.
-2. `bash .track/scripts/track-ready.sh {id}` writes `status: review` before marking the PR ready.
-3. Same-repo PR lifecycle events are synced into canonical task status before validation and PR lint run.
-4. The merged-PR completion flow writes `status: done`, `pr:`, and `updated:`.
-5. `track-todo.sh` renders canonical status and warns when GitHub-derived PR context is unavailable or stale.
-6. `bash .track/scripts/track-reconcile.sh` repairs safe canonical-status drift when a lifecycle event was missed.
+1. `bash .track/scripts/track-start.sh {id}` writes `status: active` before opening a tracked draft PR.
+2. Same-repo PR lifecycle events sync `review` and the other PR-driven transitions before validation and PR lint run.
+3. The merged-PR completion flow writes `status: done`, `pr:`, and `updated:`.
+4. `track-todo.sh` renders canonical status and warns when GitHub-derived PR context is unavailable or stale.
+5. `bash .track/scripts/track-reconcile.sh` repairs safe canonical-status drift when a lifecycle event was missed.
+6. Untracked work has no canonical task status until it is attached to a task.
 
 ## Project Briefs
 
@@ -216,4 +216,4 @@ You never run this manually — the `.github/workflows/track-complete.yml` workf
 - Parallel arrays in bash mean the scripts get unwieldy past ~50-60 tasks (performance is fine, readability isn't)
 - Glob overlap detection is approximate — it compares path prefixes, not full glob semantics
 - One PR per task only — if multiple open PRs map to the same task ID, it's flagged as a warning
-- PRs need `Track-Task: {id}` in the body, task ID in the title, or a `task/{id}-{slug}` branch for linkage
+- Tracked PRs need `Track-Task: {id}` in the body, task ID in the title, or a `task/{id}-{slug}` branch for linkage; untracked PRs may use the untracked template
