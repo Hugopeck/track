@@ -33,6 +33,7 @@ jobs:
 
       - name: Write back completion changes
         env:
+          GH_TOKEN: ${{ github.token }}
           WRITEBACK_BRANCH: track/complete-${{ github.event.pull_request.number }}
           WRITEBACK_TITLE: 'fix(track): complete merged task for #${{ github.event.pull_request.number }}'
         run: bash .track/scripts/track-complete-writeback.sh
