@@ -8,7 +8,7 @@ Skills are the instruction layer. Scripts (in `.track/scripts/`) are the enforce
 
 | Skill | Command | Purpose | Auto-loaded? |
 |-------|---------|---------|:------------:|
-| [setup-track](setup-track/) | `/track:setup-track` | Scaffold Track into a repo, import existing markdown, onboard new users | No |
+| [setup-track](setup-track/) | `/track:setup-track` | Scaffold Track into a repo, install scripts/hooks/workflows, import existing markdown | No |
 | [work](work/) | `/track:work` | Pick a task, open a draft PR, implement, hand off to merge | Yes |
 | [create](create/) | `/track:create` | Create tasks and projects from natural language | No |
 | [decompose](decompose/) | `/track:decompose` | Break a goal into parallelizable tasks with non-overlapping file scopes | No |
@@ -30,7 +30,7 @@ directories are added only when they carry real content:
 
 - `scripts/` — executable helpers owned by that skill
 - `references/` — read-on-demand supporting documentation
-- `assets/` — static files, templates, or install-time resources
+- `assets/` — static files, templates, or install-time resources such as hook and workflow assets
 
 Discovery and installation must key off `SKILL.md`, not raw directory
 enumeration. That keeps internal support directories out of the user's skill

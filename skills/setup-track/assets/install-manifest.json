@@ -98,6 +98,11 @@
       "source": "skills/setup-track/assets/hooks/post-commit",
       "dest": ".git/hooks/post-commit",
       "executable": true
+    },
+    {
+      "source": "skills/setup-track/assets/hooks/pre-push",
+      "dest": ".git/hooks/pre-push",
+      "executable": true
     }
   ],
   "repo_assets": [

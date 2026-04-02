@@ -69,8 +69,9 @@ Append-only log.
 - If work happened outside the normal task branch flow, ask `/track:work` to link the current branch to a task; this appends a `track.link` event for retroactive attribution
 
 ### Hooks and Automation
-- `commit-msg` enforces conventional commit format locally
+- `commit-msg` enforces conventional commit format locally and blocks invalid commit messages
 - `post-commit` writes `track.commit` events to the JSONL activity log and never blocks the commit
+- `pre-push` runs `bash .track/scripts/track-validate.sh` locally and blocks pushes when Track state is invalid
 - `track-status-sync` maps same-repo PR lifecycle events to canonical task status updates before downstream checks run
 - `Track Validate` and `Track PR Lint` run on PR updates and can also be called from the ordered status-sync workflow
 - `track-reconcile` repairs safe canonical-status drift and reports unresolved conflicts for manual follow-up

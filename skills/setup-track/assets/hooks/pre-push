@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# pre-push: Track validation guard
+# Deployed by track setup-track to .git/hooks/pre-push (or .husky/pre-push)
+# Requires bash 3.2+, git, zero external dependencies
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+
+if [[ -z "$REPO_ROOT" ]]; then
+  printf 'ERROR: could not determine repo root for Track pre-push validation\n' >&2
+  exit 1
+fi
+
+VALIDATE_SCRIPT="$REPO_ROOT/.track/scripts/track-validate.sh"
+if [[ ! -f "$VALIDATE_SCRIPT" ]]; then
+  VALIDATE_SCRIPT="$REPO_ROOT/scripts/validate/track-validate.sh"
+fi
+
+if [[ ! -f "$VALIDATE_SCRIPT" ]]; then
+  printf 'ERROR: Track validation script not found. Expected %s or %s\n' \
+    "$REPO_ROOT/.track/scripts/track-validate.sh" \
+    "$REPO_ROOT/scripts/validate/track-validate.sh" >&2
+  exit 1
+fi
+
+printf 'Running Track validation before push...\n'
+
+if ! (
+  cd "$REPO_ROOT"
+  bash "$VALIDATE_SCRIPT"
+); then
+  printf '\nERROR: Track validation failed. Fix the errors above before pushing.\n' >&2
+  exit 1
+fi
+
