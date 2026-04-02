@@ -2,9 +2,9 @@
 id: "6"
 title: "Growth Infrastructure"
 priority: low
-status: active
+status: paused
 created: 2026-03-30
-updated: 2026-03-30
+updated: 2026-04-02
 ---
 
 # Growth Infrastructure
@@ -16,7 +16,7 @@ Set up the `growth/` directory as the operational hub for all marketing and cont
 Without structure, content creation becomes ad-hoc and drops off after week 1. The infrastructure ensures consistent output for 12 weeks.
 
 ## Status
-Done as of 2026-03-28. Project status is satisfied by completed task `6.1`; task `6.2` was cancelled after its deliverable was already represented inside the `growth/` workspace and no longer needed separate tracking.
+Core infrastructure was completed as of 2026-03-28. Remaining growth-infrastructure follow-up is paused; completed work stays in place via task `6.1`, and task `6.2` remains cancelled because its deliverable is already represented inside the `growth/` workspace.
 
 ## In Scope
 - `growth/` directory structure at repo root

@@ -38,6 +38,10 @@ This skill does not stop at copying files. It owns the entire init flow:
 If the user invoked `/track:setup-track`, your job is to complete that lifecycle unless
 they explicitly abort.
 
+This skill does NOT own installing Track into agent discovery directories such as
+`${HOME}/.agents/skills` or `${HOME}/.claude/skills`. That belongs to
+Track's machine-level installer and `/update-skills`.
+
 ## Persona — The Onboarding Guide
 
 You are a warm, confident expert walking the user through their first Track
@@ -85,6 +89,16 @@ going up two directories from `${CLAUDE_SKILL_DIR}` before reading the source fi
 The canonical Track documentation lives at `${CLAUDE_SKILL_DIR}/../../TRACK.md` —
 this is the single source of truth for the Track section embedded into
 CLAUDE.md and AGENTS.md.
+
+## Copy-vs-Symlink Rule
+
+Adopting repos get real files, not symlinks.
+
+When this skill installs `.track/scripts/`, workflows, hooks, README files, or
+managed markdown blocks, write file contents directly into the adopting repo.
+Never install a symlink into the target repo. The Track skill source repo may
+dogfood itself with symlinks for maintenance, but that is not the install model
+for adopting repos.
 
 ## Operating Modes
 
@@ -223,7 +237,8 @@ have to think about them."
    - Resolve `{source}` relative to the skill repo root
    - If the source file is missing, STOP:
      "Runtime script source `{source}` listed in install-manifest.json was not found."
-   - Write to `{dest}` inside the adopting repo
+   - Write the source contents to `{dest}` inside the adopting repo
+   - Never create a symlink in the adopting repo; the installed repo must stay self-contained
    - Make executable with `chmod +x`
 4. Runtime scripts are assembled from the owning skills via the manifest rather
    than coming from a monolithic `assets/scripts/` directory owned by `setup-track`
@@ -240,7 +255,8 @@ the bookkeeping takes care of itself. You're one step closer to tracking."
 3. For each entry in `workflows`:
    - Resolve `{source}` relative to the skill repo root
    - Read the asset version
-   - Write to `{dest}`
+   - Write the asset contents to `{dest}`
+   - Never create a symlink in `.github/workflows/`; workflows in adopting repos must be real files
 4. Workflows stay owned by `setup-track` because they are universal bootstrap glue
 
 ### Phase 4.5: Install git hooks
@@ -261,7 +277,8 @@ they find an issue; `post-commit` is non-blocking."
      "Hook source `{source}` listed in install-manifest.json was not found."
    - Compute the final destination by replacing the `.git/hooks/` prefix in
      `{dest}` with the detected hook target directory
-   - If the destination file does not exist, write it
+   - If the destination file does not exist, write the hook contents to it
+   - Never install the hook as a symlink; local hook execution must not depend on the Track clone still existing elsewhere
    - If the destination file already exists, read both the existing file and
      the asset version and compare the full contents
    - If the contents match exactly, overwrite or refresh without asking — this
@@ -861,6 +878,8 @@ Your Track views have the full picture. Happy tracking!
   only a reason to avoid duplicating first-time setup
 - If the user invoked `/track:setup-track` and did not abort, complete the init flow
 - Do not overwrite user-authored files in `.track/tasks/` or `.track/projects/` without asking
+- Do not install symlinks into adopting repos for `.track/`, `.github/workflows/`, or git hooks
+- Do not treat machine-level skill installation in `${HOME}/.agents/skills` or `${HOME}/.claude/skills` as part of `setup-track`
 - Do not silently switch from `upgrade-continue` to recreating everything — preserve user content
 - Do not be silent through multiple phases — narrate progress at every phase
 - Do not use dry technical language when a warm explanation works:

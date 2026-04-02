@@ -46,27 +46,39 @@ Commit to one mode at the start. Do not drift.
    - If the skill was auto-loaded at session start, lock `session-start`
    - If the user explicitly asked to update Track, lock `manual`
 2. At session start: silently check for updates, pull if available, print one line (`Track skills updated to vX.Y.Z.`, `Track skills up to date.`, or `Track skills update blocked: {reason}.`), then stop. Do not wait for user prompt.
-3. Find the Track repo by resolving the installed skill directory, then following
-   its symlink back to the source clone:
+3. Find the Track repo from the installed skill directory. Support both copied installs and older symlinked installs:
    ```bash
    if [ -n "${CLAUDE_SKILL_DIR:-}" ]; then
      SKILL_DIR="$CLAUDE_SKILL_DIR"
    else
-     printf 'CLAUDE_SKILL_DIR is not set. Locate the installed update-skills skill directory before continuing.\n' >&2
+     printf 'CLAUDE_SKILL_DIR is not set. Locate the installed update-skills skill directory before continuing\n' >&2
      exit 1
    fi
 
-   while [ -L "$SKILL_DIR" ]; do
-     LINK_TARGET="$(readlink "$SKILL_DIR")"
-     case "$LINK_TARGET" in
-       /*) SKILL_DIR="$LINK_TARGET" ;;
-       *)
-         SKILL_DIR="$(cd "$(dirname "$SKILL_DIR")" && cd "$(dirname "$LINK_TARGET")" && pwd)/$(basename "$LINK_TARGET")"
-         ;;
-     esac
-   done
+   REPO=''
+   TRACK_CLONE_DIR="${TRACK_CLONE_DIR:-${HOME}/.local/share/agent-skills/track}"
 
-   REPO="$(cd "$SKILL_DIR/../.." && git rev-parse --show-toplevel 2>/dev/null)"
+   if [ -d "$TRACK_CLONE_DIR/.git" ]; then
+     REPO="$(cd "$TRACK_CLONE_DIR" && git rev-parse --show-toplevel 2>/dev/null)"
+   fi
+
+   if [ -z "$REPO" ]; then
+     REPO="$(cd "$SKILL_DIR/../.." && git rev-parse --show-toplevel 2>/dev/null)"
+   fi
+
+   if [ -z "$REPO" ]; then
+     while [ -L "$SKILL_DIR" ]; do
+       LINK_TARGET="$(readlink "$SKILL_DIR")"
+       case "$LINK_TARGET" in
+         /*) SKILL_DIR="$LINK_TARGET" ;;
+         *)
+           SKILL_DIR="$(cd "$(dirname "$SKILL_DIR")" && cd "$(dirname "$LINK_TARGET")" && pwd)/$(basename "$LINK_TARGET")"
+           ;;
+       esac
+     done
+
+     REPO="$(cd "$SKILL_DIR/../.." && git rev-parse --show-toplevel 2>/dev/null)"
+   fi
    ```
 4. If `REPO` is empty, STOP and report that Track was not installed from a git
    clone, so there is nothing to update in place.
@@ -74,13 +86,22 @@ Commit to one mode at the start. Do not drift.
    ```bash
    cd "$REPO" && git pull --ff-only
    ```
-5.5. Refresh symlinks so any newly added skills become discoverable:
+5.5. Refresh installed skill directories so any newly added skills become discoverable in both copied and legacy layouts:
    ```bash
+   copy_skill_dir() {
+     local source_dir="$1"
+     local dest_dir="$2"
+
+     rm -rf "$dest_dir"
+     mkdir -p "$(dirname "$dest_dir")"
+     cp -R "$source_dir" "$dest_dir"
+   }
+
    for skill in "$REPO/skills"/*/; do
      [ -f "$skill/SKILL.md" ] || continue
      name="$(basename "$skill")"
-     ln -sfn "$skill" "${HOME}/.agents/skills/$name"
-     ln -sfn "$skill" "${HOME}/.claude/skills/$name"
+     copy_skill_dir "$skill" "${HOME}/.agents/skills/$name"
+     copy_skill_dir "$skill" "${HOME}/.claude/skills/$name"
    done
    ```
 6. Report the result with one line:
@@ -103,4 +124,5 @@ git stash && git pull --ff-only && git stash pop
 
 - Do not modify task files or repo content outside the installed Track clone
 - Do not run a non-fast-forward pull
+- Do not recreate symlinks in `${HOME}/.agents/skills` or `${HOME}/.claude/skills` as the primary install model
 - Do not prompt the user before the session-start check unless a conflict blocks the update
