@@ -2,9 +2,9 @@
 id: "4"
 title: "Growth Content"
 priority: medium
-status: planning
+status: paused
 created: 2026-03-30
-updated: 2026-03-30
+updated: 2026-04-02
 ---
 
 # Growth Content
