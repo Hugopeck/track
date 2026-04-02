@@ -69,7 +69,7 @@ else
   fail 'setup-track skill is missing branch and worktree guidance'
 fi
 
-if contains_literal '### Phase 4.5: Install git hooks' "$SKILL_FILE" &&    contains_literal 'If the destination file already exists, read both the existing file and' "$SKILL_FILE" &&    contains_literal 'the asset version and compare the full contents' "$SKILL_FILE"; then
+if contains_literal '### Phase 4.5: Install git hooks' "$SKILL_FILE" &&    contains_literal 'If the destination file already exists, read both the existing file and' "$SKILL_FILE" &&    contains_literal 'the asset version and compare the full contents' "$SKILL_FILE" &&    contains_literal '`pre-push` runs `bash .track/scripts/track-validate.sh` and blocks pushes when Track state is invalid' "$SKILL_FILE"; then
   pass 'setup-track skill documents safe hook installation'
 else
   fail 'setup-track skill is missing safe hook installation guidance'

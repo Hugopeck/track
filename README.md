@@ -21,7 +21,7 @@ A `.track/` folder in your repo replaces your PM tool. Markdown task files, bash
 
 - **Slash commands** — Six commands cover the full workflow: decompose goals, create tasks, pick work, open PRs, and regenerate views. Or skip the agent and use the bash scripts directly.
 
-- **Self-enforcing** — Conventional commit hooks, ordered PR status sync, validation, reconciliation, and post-merge automation. The system catches drift before it spreads.
+- **Self-enforcing** — `commit-msg` linting, `pre-push` Track validation, ordered PR status sync, reconciliation, and post-merge automation. The system catches drift before it spreads.
 
 - **Dependency cascading** — When a blocking task's PR merges, downstream tasks auto-unblock. No one has to remember to update the board.
 
@@ -52,7 +52,7 @@ Migration note: `/track:init` is now `/track:setup-track` to avoid colliding wit
 /track:setup-track
 ```
 
-Creates `.track/`, installs scripts, hooks, and GitHub Actions. If it finds existing markdown TODOs or roadmaps, it offers to import them as tasks.
+Creates `.track/`, installs scripts, `commit-msg` / `post-commit` / `pre-push` hooks, and GitHub Actions. If it finds existing markdown TODOs or roadmaps, it offers to import them as tasks.
 
 ### Start using it
 

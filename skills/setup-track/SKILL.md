@@ -246,8 +246,9 @@ the bookkeeping takes care of itself. You're one step closer to tracking."
 ### Phase 4.5: Install git hooks
 
 **Tell the user:** "Setting up commit hooks — these enforce conventional commit
-messages and emit events so Track can see what's happening in your repo. They're
-lightweight and never block your work."
+messages, emit Track events, and validate Track state before push so problems
+are caught locally instead of in CI. `commit-msg` and `pre-push` can block when
+they find an issue; `post-commit` is non-blocking."
 
 1. Read `${CLAUDE_SKILL_DIR}/assets/install-manifest.json`
 2. Detect the hook target directory:
@@ -272,9 +273,13 @@ lightweight and never block your work."
    - Make executable with `chmod +x`
 4. Ensure `.track/events/` exists — create the directory if missing. This is
    where the post-commit hook writes its event log.
-5. If the hook target is `.husky/`, tell the user: "Detected Husky — hooks
+5. Explain hook behavior plainly:
+   - `commit-msg` enforces conventional commit format and can block invalid commits
+   - `post-commit` appends Track activity events and never blocks the commit
+   - `pre-push` runs `bash .track/scripts/track-validate.sh` and blocks pushes when Track state is invalid
+6. If the hook target is `.husky/`, tell the user: "Detected Husky — hooks
    installed to `.husky/` instead of `.git/hooks/`."
-6. If one hook installs and another is skipped, report the partial result in
+7. If one hook installs and another is skipped, report the partial result in
    the Phase 7 checkpoint summary rather than claiming full hook installation
 
 ---

@@ -23,7 +23,7 @@ Goal: link the PR to the right task, let Track scripts own lifecycle status, and
    ```
 
 If validation fails, STOP and fix it before continuing.
-If another active or review task owns the same files, STOP and resolve the overlap first.
+If another active or review task owns the same files, STOP and resolve the overlap first. If the overlap comes from a task stuck in `active` or `review` after its PR already merged or closed, treat that as canonical-status drift and repair it with Track automation before continuing. Do not hand-edit another task's `files:` or status just to make the warning disappear.
 
 ---
 
