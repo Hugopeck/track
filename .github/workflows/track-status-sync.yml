@@ -53,6 +53,223 @@ jobs:
           bash .track/scripts/track-todo.sh --local --offline >/dev/null
           bash .track/scripts/track-complete-writeback.sh
 
+  sync-writeback-metadata:
+    name: Track Status Sync writeback metadata
+    needs: sync-status
+    if: github.event.action != 'closed' && needs.sync-status.result == 'success' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      previous_head_sha: ${{ steps.metadata.outputs.previous_head_sha }}
+      head_sha: ${{ steps.metadata.outputs.head_sha }}
+      head_ref: ${{ steps.metadata.outputs.head_ref }}
+      pr_title: ${{ steps.metadata.outputs.pr_title }}
+      pr_body: ${{ steps.metadata.outputs.pr_body }}
+      pr_labels: ${{ steps.metadata.outputs.pr_labels }}
+      pr_number: ${{ steps.metadata.outputs.pr_number }}
+    steps:
+      - id: metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+
+          pr_json="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}")"
+          current_head_sha="$(printf '%s' "$pr_json" | jq -r '.head.sha')"
+
+          if [[ -z "$current_head_sha" || "$current_head_sha" == "$EVENT_HEAD_SHA" ]]; then
+            exit 0
+          fi
+
+          echo "previous_head_sha=$EVENT_HEAD_SHA" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$current_head_sha" >> "$GITHUB_OUTPUT"
+          echo "head_ref=$(printf '%s' "$pr_json" | jq -r '.head.ref')" >> "$GITHUB_OUTPUT"
+          echo "pr_title=$(printf '%s' "$pr_json" | jq -r '.title')" >> "$GITHUB_OUTPUT"
+          echo "pr_labels=$(printf '%s' "$pr_json" | jq -r '[.labels[].name] | join(",")')" >> "$GITHUB_OUTPUT"
+          echo "pr_number=$(printf '%s' "$pr_json" | jq -r '.number')" >> "$GITHUB_OUTPUT"
+          {
+            echo 'pr_body<<EOF'
+            printf '%s\n' "$(printf '%s' "$pr_json" | jq -r '.body // ""')"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+  writeback-track-validate:
+    name: Track Status Sync writeback Track Validate
+    needs: sync-writeback-metadata
+    if: needs.sync-writeback-metadata.outputs.head_sha != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      statuses: write
+    steps:
+      - name: Mark Track Validate pending
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ needs.sync-writeback-metadata.outputs.head_sha }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" \
+            -f state=pending \
+            -f context='Track Validate' \
+            -f description='Running from Track Status Sync' \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.sync-writeback-metadata.outputs.head_sha }}
+
+      - name: Validate writeback head Track state
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_HEAD_REF: ${{ needs.sync-writeback-metadata.outputs.head_ref }}
+          PR_TITLE: ${{ needs.sync-writeback-metadata.outputs.pr_title }}
+          PR_BODY: ${{ needs.sync-writeback-metadata.outputs.pr_body }}
+          PR_LABELS: ${{ needs.sync-writeback-metadata.outputs.pr_labels }}
+        run: bash .track/scripts/track-validate.sh
+
+      - name: Mark Track Validate success
+        if: ${{ success() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ needs.sync-writeback-metadata.outputs.head_sha }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" \
+            -f state=success \
+            -f context='Track Validate' \
+            -f description='Passed from Track Status Sync' \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+      - name: Mark Track Validate failure
+        if: ${{ failure() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ needs.sync-writeback-metadata.outputs.head_sha }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" \
+            -f state=failure \
+            -f context='Track Validate' \
+            -f description='Failed from Track Status Sync' \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+  writeback-track-pr-lint:
+    name: Track Status Sync writeback Track PR Lint
+    needs: sync-writeback-metadata
+    if: needs.sync-writeback-metadata.outputs.head_sha != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      statuses: write
+    steps:
+      - name: Mark Track PR Lint pending
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ needs.sync-writeback-metadata.outputs.head_sha }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" \
+            -f state=pending \
+            -f context='Track PR Lint' \
+            -f description='Running from Track Status Sync' \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.sync-writeback-metadata.outputs.head_sha }}
+
+      - name: Lint writeback head PR branch and title
+        env:
+          GITHUB_HEAD_REF: ${{ needs.sync-writeback-metadata.outputs.head_ref }}
+          PR_TITLE: ${{ needs.sync-writeback-metadata.outputs.pr_title }}
+          PR_BODY: ${{ needs.sync-writeback-metadata.outputs.pr_body }}
+          PR_LABELS: ${{ needs.sync-writeback-metadata.outputs.pr_labels }}
+          PR_NUMBER: ${{ needs.sync-writeback-metadata.outputs.pr_number }}
+        run: bash .track/scripts/track-pr-lint.sh
+
+      - name: Mark Track PR Lint success
+        if: ${{ success() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ needs.sync-writeback-metadata.outputs.head_sha }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" \
+            -f state=success \
+            -f context='Track PR Lint' \
+            -f description='Passed from Track Status Sync' \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+      - name: Mark Track PR Lint failure
+        if: ${{ failure() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ needs.sync-writeback-metadata.outputs.head_sha }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" \
+            -f state=failure \
+            -f context='Track PR Lint' \
+            -f description='Failed from Track Status Sync' \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+  writeback-conventional-commit-lint:
+    name: Track Status Sync writeback conventional-commit-lint
+    needs: sync-writeback-metadata
+    if: needs.sync-writeback-metadata.outputs.head_sha != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      statuses: write
+    steps:
+      - name: Mark conventional-commit-lint pending
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ needs.sync-writeback-metadata.outputs.head_sha }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" \
+            -f state=pending \
+            -f context='conventional-commit-lint' \
+            -f description='Running from Track Status Sync' \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.sync-writeback-metadata.outputs.head_sha }}
+
+      - name: Lint writeback commit messages
+        env:
+          BASE_SHA: ${{ needs.sync-writeback-metadata.outputs.previous_head_sha }}
+          HEAD_SHA: ${{ needs.sync-writeback-metadata.outputs.head_sha }}
+        run: bash .track/scripts/track-conventional-commit-lint.sh
+
+      - name: Mark conventional-commit-lint success
+        if: ${{ success() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ needs.sync-writeback-metadata.outputs.head_sha }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" \
+            -f state=success \
+            -f context='conventional-commit-lint' \
+            -f description='Passed from Track Status Sync' \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+      - name: Mark conventional-commit-lint failure
+        if: ${{ failure() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ needs.sync-writeback-metadata.outputs.head_sha }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" \
+            -f state=failure \
+            -f context='conventional-commit-lint' \
+            -f description='Failed from Track Status Sync' \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
   validate:
     needs: sync-status
     if: github.event.action != 'closed' && needs.sync-status.result == 'success'
