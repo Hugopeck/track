@@ -4,6 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 WRITEBACK_SCRIPT="$SCRIPT_DIR/../skills/work/scripts/track-complete-writeback.sh"
 MANIFEST_FILE="$SCRIPT_DIR/../skills/setup-track/assets/install-manifest.json"
+REPO_COMPLETE_WORKFLOW="$SCRIPT_DIR/../.github/workflows/track-complete.yml"
 COMPLETE_WORKFLOW="$SCRIPT_DIR/../skills/setup-track/assets/workflows/track-complete.yml"
 PASS=0
 FAIL=0
@@ -72,6 +73,18 @@ assert_text_contains() {
   else
     fail "$name"
     printf '    missing pattern %q in %s\n' "$pattern" "$text"
+  fi
+}
+
+assert_files_equal() {
+  local name="$1"
+  local left="$2"
+  local right="$3"
+  if cmp -s "$left" "$right"; then
+    pass "$name"
+  else
+    fail "$name"
+    printf '    files differ: %s %s\n' "$left" "$right"
   fi
 }
 
@@ -160,6 +173,92 @@ if grep -Fq -- 'bash .track/scripts/track-complete-writeback.sh' "$COMPLETE_WORK
   pass 'workflow uses writeback helper'
 else
   fail 'workflow uses writeback helper'
+fi
+
+assert_files_equal 'track-complete workflow matches asset copy' "$REPO_COMPLETE_WORKFLOW" "$COMPLETE_WORKFLOW"
+
+if grep -Fq -- 'completion-writeback-metadata:' "$COMPLETE_WORKFLOW"; then
+  pass 'workflow defines writeback metadata job'
+else
+  fail 'workflow defines writeback metadata job'
+fi
+
+if grep -Fq -- 'WRITEBACK_BRANCH: track/complete-${{ github.event.pull_request.number }}' "$COMPLETE_WORKFLOW"; then
+  pass 'workflow names writeback branch deterministically'
+else
+  fail 'workflow names writeback branch deterministically'
+fi
+
+if grep -Fq -- 'gh pr list \' "$COMPLETE_WORKFLOW"; then
+  pass 'workflow looks up writeback PR'
+else
+  fail 'workflow looks up writeback PR'
+fi
+
+if grep -Fq -- 'Expected open writeback PR for $WRITEBACK_BRANCH, but none was found.' "$COMPLETE_WORKFLOW"; then
+  pass 'workflow errors when branch exists without PR'
+else
+  fail 'workflow errors when branch exists without PR'
+fi
+
+if grep -Fq -- "-f context='Track Validate'" "$COMPLETE_WORKFLOW"; then
+  pass 'workflow posts Track Validate status'
+else
+  fail 'workflow posts Track Validate status'
+fi
+
+if grep -Fq -- "-f context='Track PR Lint'" "$COMPLETE_WORKFLOW"; then
+  pass 'workflow posts Track PR Lint status'
+else
+  fail 'workflow posts Track PR Lint status'
+fi
+
+if grep -Fq -- "-f context='conventional-commit-lint'" "$COMPLETE_WORKFLOW"; then
+  pass 'workflow posts conventional-commit-lint status'
+else
+  fail 'workflow posts conventional-commit-lint status'
+fi
+
+if grep -Fq -- 'Mark Track Validate pending' "$COMPLETE_WORKFLOW" && grep -Fq -- 'Mark Track Validate success' "$COMPLETE_WORKFLOW" && grep -Fq -- 'Mark Track Validate failure' "$COMPLETE_WORKFLOW"; then
+  pass 'workflow covers Track Validate pending success failure'
+else
+  fail 'workflow covers Track Validate pending success failure'
+fi
+
+if grep -Fq -- 'Mark Track PR Lint pending' "$COMPLETE_WORKFLOW" && grep -Fq -- 'Mark Track PR Lint success' "$COMPLETE_WORKFLOW" && grep -Fq -- 'Mark Track PR Lint failure' "$COMPLETE_WORKFLOW"; then
+  pass 'workflow covers Track PR Lint pending success failure'
+else
+  fail 'workflow covers Track PR Lint pending success failure'
+fi
+
+if grep -Fq -- 'Mark conventional-commit-lint pending' "$COMPLETE_WORKFLOW" && grep -Fq -- 'Mark conventional-commit-lint success' "$COMPLETE_WORKFLOW" && grep -Fq -- 'Mark conventional-commit-lint failure' "$COMPLETE_WORKFLOW"; then
+  pass 'workflow covers conventional-commit-lint pending success failure'
+else
+  fail 'workflow covers conventional-commit-lint pending success failure'
+fi
+
+if grep -Fq -- 'bash .track/scripts/track-validate.sh' "$COMPLETE_WORKFLOW"; then
+  pass 'workflow runs track validate on writeback head'
+else
+  fail 'workflow runs track validate on writeback head'
+fi
+
+if grep -Fq -- 'bash .track/scripts/track-pr-lint.sh' "$COMPLETE_WORKFLOW"; then
+  pass 'workflow runs track pr lint on writeback head'
+else
+  fail 'workflow runs track pr lint on writeback head'
+fi
+
+if grep -Fq -- 'bash .track/scripts/track-conventional-commit-lint.sh' "$COMPLETE_WORKFLOW"; then
+  pass 'workflow runs conventional commit lint on writeback head'
+else
+  fail 'workflow runs conventional commit lint on writeback head'
+fi
+
+if grep -Fq -- 'writeback head has no parent commit; cannot lint commit range' "$COMPLETE_WORKFLOW"; then
+  pass 'workflow errors clearly when writeback head has no parent'
+else
+  fail 'workflow errors clearly when writeback head has no parent'
 fi
 
 repo_info="$(setup_remote_repo allow-main)"

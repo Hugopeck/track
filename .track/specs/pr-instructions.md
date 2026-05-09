@@ -172,6 +172,12 @@ Important finding: if the repo uses **strict required status checks**, a PR can 
 
 If required checks are `Track Validate` and `Track PR Lint`, ensure those workflows still trigger on direct PR updates, not only through `workflow_call`.
 
+Completion writeback PRs use the branch pattern `track/complete-{number}`. They should expose the same required contexts as normal Track PRs: `Track Validate`, `Track PR Lint`, and `conventional-commit-lint`.
+
+If a completion writeback PR is `BEHIND`, rebase it onto `origin/main`, push the writeback branch again, and re-check `gh pr checks <number>` before merging.
+
+If a completion writeback PR still shows no required contexts after a human-authenticated push, treat that as a workflow regression and stop. Do not hand-edit the task file.
+
 ---
 
 ## 8. After PR creation or update
