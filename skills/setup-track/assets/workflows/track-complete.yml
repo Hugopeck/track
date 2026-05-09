@@ -37,3 +37,242 @@ jobs:
           WRITEBACK_BRANCH: track/complete-${{ github.event.pull_request.number }}
           WRITEBACK_TITLE: 'fix(track): complete merged task for #${{ github.event.pull_request.number }}'
         run: bash .track/scripts/track-complete-writeback.sh
+
+  completion-writeback-metadata:
+    needs: complete-task
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      head_sha: ${{ steps.lookup.outputs.head_sha }}
+      head_ref: ${{ steps.lookup.outputs.head_ref }}
+      pr_title: ${{ steps.lookup.outputs.pr_title }}
+      pr_body: ${{ steps.lookup.outputs.pr_body }}
+      pr_labels: ${{ steps.lookup.outputs.pr_labels }}
+      pr_number: ${{ steps.lookup.outputs.pr_number }}
+    steps:
+      - name: Find completion writeback PR
+        id: lookup
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          WRITEBACK_BRANCH: track/complete-${{ github.event.pull_request.number }}
+        run: |
+          pr_json=''
+          for attempt in 1 2 3 4 5 6; do
+            pr_json="$(gh pr list \
+              --base "$BASE_REF" \
+              --head "$WRITEBACK_BRANCH" \
+              --state open \
+              --json number \
+              --jq '.[0]')"
+
+            if [[ -n "$pr_json" && "$pr_json" != 'null' ]]; then
+              break
+            fi
+
+            sleep 5
+          done
+
+          if [[ -z "$pr_json" || "$pr_json" == 'null' ]]; then
+            remote_branch="$(git ls-remote --heads origin "$WRITEBACK_BRANCH")"
+            if [[ -n "$remote_branch" ]]; then
+              echo "Expected open writeback PR for $WRITEBACK_BRANCH, but none was found." >&2
+              exit 1
+            fi
+            exit 0
+          fi
+
+          pr_number="$(printf '%s' "$pr_json" | jq -r '.number')"
+          pr_json="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${pr_number}")"
+
+          echo "head_sha=$(printf '%s' "$pr_json" | jq -r '.head.sha')" >> "$GITHUB_OUTPUT"
+          echo "head_ref=$(printf '%s' "$pr_json" | jq -r '.head.ref')" >> "$GITHUB_OUTPUT"
+          echo "pr_title=$(printf '%s' "$pr_json" | jq -r '.title')" >> "$GITHUB_OUTPUT"
+          echo "pr_labels=$(printf '%s' "$pr_json" | jq -r '[.labels[].name] | join(",")')" >> "$GITHUB_OUTPUT"
+          echo "pr_number=$(printf '%s' "$pr_json" | jq -r '.number')" >> "$GITHUB_OUTPUT"
+          {
+            echo 'pr_body<<EOF'
+            printf '%s\n' "$(printf '%s' "$pr_json" | jq -r '.body // ""')"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+  writeback-track-validate:
+    name: Track Complete writeback Track Validate
+    needs: completion-writeback-metadata
+    if: needs.completion-writeback-metadata.outputs.head_sha != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      statuses: write
+    steps:
+      - name: Mark Track Validate pending
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ needs.completion-writeback-metadata.outputs.head_sha }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" \
+            -f state=pending \
+            -f context='Track Validate' \
+            -f description='Running from Track Complete' \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.completion-writeback-metadata.outputs.head_sha }}
+
+      - name: Validate writeback head Track state
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_HEAD_REF: ${{ needs.completion-writeback-metadata.outputs.head_ref }}
+          PR_TITLE: ${{ needs.completion-writeback-metadata.outputs.pr_title }}
+          PR_BODY: ${{ needs.completion-writeback-metadata.outputs.pr_body }}
+          PR_LABELS: ${{ needs.completion-writeback-metadata.outputs.pr_labels }}
+        run: bash .track/scripts/track-validate.sh
+
+      - name: Mark Track Validate success
+        if: ${{ success() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ needs.completion-writeback-metadata.outputs.head_sha }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" \
+            -f state=success \
+            -f context='Track Validate' \
+            -f description='Passed from Track Complete' \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+      - name: Mark Track Validate failure
+        if: ${{ failure() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ needs.completion-writeback-metadata.outputs.head_sha }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" \
+            -f state=failure \
+            -f context='Track Validate' \
+            -f description='Failed from Track Complete' \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+  writeback-track-pr-lint:
+    name: Track Complete writeback Track PR Lint
+    needs: completion-writeback-metadata
+    if: needs.completion-writeback-metadata.outputs.head_sha != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      statuses: write
+    steps:
+      - name: Mark Track PR Lint pending
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ needs.completion-writeback-metadata.outputs.head_sha }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" \
+            -f state=pending \
+            -f context='Track PR Lint' \
+            -f description='Running from Track Complete' \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.completion-writeback-metadata.outputs.head_sha }}
+
+      - name: Lint writeback head PR branch and title
+        env:
+          GITHUB_HEAD_REF: ${{ needs.completion-writeback-metadata.outputs.head_ref }}
+          PR_TITLE: ${{ needs.completion-writeback-metadata.outputs.pr_title }}
+          PR_BODY: ${{ needs.completion-writeback-metadata.outputs.pr_body }}
+          PR_LABELS: ${{ needs.completion-writeback-metadata.outputs.pr_labels }}
+          PR_NUMBER: ${{ needs.completion-writeback-metadata.outputs.pr_number }}
+        run: bash .track/scripts/track-pr-lint.sh
+
+      - name: Mark Track PR Lint success
+        if: ${{ success() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ needs.completion-writeback-metadata.outputs.head_sha }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" \
+            -f state=success \
+            -f context='Track PR Lint' \
+            -f description='Passed from Track Complete' \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+      - name: Mark Track PR Lint failure
+        if: ${{ failure() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ needs.completion-writeback-metadata.outputs.head_sha }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" \
+            -f state=failure \
+            -f context='Track PR Lint' \
+            -f description='Failed from Track Complete' \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+  writeback-conventional-commit-lint:
+    name: Track Complete writeback conventional-commit-lint
+    needs: completion-writeback-metadata
+    if: needs.completion-writeback-metadata.outputs.head_sha != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      statuses: write
+    steps:
+      - name: Mark conventional-commit-lint pending
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ needs.completion-writeback-metadata.outputs.head_sha }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" \
+            -f state=pending \
+            -f context='conventional-commit-lint' \
+            -f description='Running from Track Complete' \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          ref: ${{ needs.completion-writeback-metadata.outputs.head_sha }}
+
+      - name: Lint writeback commit messages
+        env:
+          HEAD_SHA: ${{ needs.completion-writeback-metadata.outputs.head_sha }}
+        run: |
+          BASE_SHA="$(git rev-parse HEAD^ 2>/dev/null)" || {
+            echo 'writeback head has no parent commit; cannot lint commit range' >&2
+            exit 1
+          }
+          export BASE_SHA
+          bash .track/scripts/track-conventional-commit-lint.sh
+
+      - name: Mark conventional-commit-lint success
+        if: ${{ success() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ needs.completion-writeback-metadata.outputs.head_sha }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" \
+            -f state=success \
+            -f context='conventional-commit-lint' \
+            -f description='Passed from Track Complete' \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+      - name: Mark conventional-commit-lint failure
+        if: ${{ failure() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ needs.completion-writeback-metadata.outputs.head_sha }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" \
+            -f state=failure \
+            -f context='conventional-commit-lint' \
+            -f description='Failed from Track Complete' \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
